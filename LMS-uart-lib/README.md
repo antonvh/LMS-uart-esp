@@ -29,7 +29,7 @@ u.sndrcv('led',[[100,100,100],[100,0,0],[0,0,100]])
 ```
 
 
-### `class UartComm(port,baudrate=115200,timeout=1000,debug=False`
+### `class UartComm(port,baudrate=115200,timeout=1000,debug=False)`
 
 Constructs a Uart communication class for Uart port `port`. Baudrate and timeout defitions for the Uart port can be changed. De boolean `debug` allows for debugging this class.
 

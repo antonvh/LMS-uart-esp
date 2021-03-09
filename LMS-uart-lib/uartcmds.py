@@ -1,8 +1,34 @@
 """
 from uartcmds import *
+
+def led(v):
+    print('led')
+    for i in v:
+        print(i)
+    return 'ok'
+
+def imu():
+    return([12.3,11.1,180.0])
+
+def grideye(addr):
+    a=[20,21,22,23,24,25,26,27,28]
+    return a[addr%9]
+
+
+def mag():
+    x, y, z = mag_sensor.read()                                                                 
+    return [x,y,z]   
+
+# disable repl on uart
+uos.dupterm(None, 1)
+
+
 u=UartComm(0)
 u.addcmd('grid',grideye)
 u.addcmd('led',led)
+from compas import *
+mag_sensor = HMC5883L(scl=5,sda=4) 
+u.addcmd('mag',mag)
 
 """
 
@@ -117,33 +143,3 @@ class UartComm:
         while True:
             self.waitcmd()
 
-def led(v):
-    print('led')
-    for i in v:
-        print(i)
-    return 'ok'
-
-def imu():
-    return([12.3,11.1,180.0])
-
-def grideye(addr):
-    a=[20,21,22,23,24,25,26,27,28]
-    return a[addr%9]
-
-
-def mag():
-    x, y, z = mag_sensor.read()                                                                 
-    return [x,y,z]   
-
- 
-
-# init devices
-mag_sensor = HMC5883L(scl=5,sda=4) 
-
-# set rxbuf to 100 bytes
-uart = UART(0, baudrate=115200,rxbuf=100)
-# disable repl on uart
-uos.dupterm(None, 1)
-
-
-com = UartCom(0)
