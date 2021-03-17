@@ -38,7 +38,7 @@ while True:
 
 # Code explained
 
-##`neo_ESP8266.py`
+## `neo_ESP8266.py`
 
 ```
 import neopixel,machine
@@ -74,7 +74,7 @@ The UartRemote class is instantiated and a two commands are defined with the `ad
 
 The `u.loop()` command waits for a command to be received through the UART and executes the commmand.
 
-##`neo_EV3.py`
+## `neo_EV3.py`
 
 ```
 from uartremote import *
