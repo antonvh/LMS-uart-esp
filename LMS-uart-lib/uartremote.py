@@ -7,6 +7,18 @@ def led(v):
         print(i)
     return 'ok'
 
+
+def neo(v):
+    print(v)
+    n=v['n']
+    pixels=v['p']
+    np = neopixel.NeoPixel(machine.Pin(4), n)
+    for i,pixel in enumerate(pixels):
+        print(i,pixel)
+        r,g,b=pixel
+        np[i]=(r,g,b)
+    np.write()
+
 def imu():
     return([12.3,11.1,180.0])
 
