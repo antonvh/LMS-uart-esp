@@ -22,7 +22,7 @@ def mag():
 # disable repl on uart
 uos.dupterm(None, 1)
 
-
+from uartcmds import *
 u=UartComm(0)
 u.addcmd('grid',grideye)
 u.addcmd('led',led)
@@ -40,8 +40,16 @@ try:
 except:
     PLATFORM="ESP8266"
 
+# check OpenMV H7 platform
+try:
+    import omv
+    PLATFORM="H7"
+except:
+    pass
+
 import json
 import struct
+
 if PLATFORM=="ESP8266":
     from machine import UART
     from machine import Pin,I2C
@@ -50,17 +58,21 @@ if PLATFORM=="ESP8266":
 elif PLATFORM=="EV3":
     from pybricks.iodevices import UARTDevice
     from pybricks.parameters import Port
+elif PLATFORM=="H7":
+    from pyb import UART
 
 
 
 class UartComm:
     cmds={}
 
-    def __init__(self,port,baud=115200,timeout=1000,debug=False):
+    def __init__(self,port,baudrate=115200,timeout=1000,debug=False):
         if PLATFORM=="EV3":
-            self.uart = UARTDevice(port,baudrate=baud,timeout=timeout)
+            self.uart = UARTDevice(port,baudrate=baudrate,timeout=timeout)
+        elif PLATFORM=="H7":
+            self.uart = UART(3, baudrate, timeout_char=timeout)                         # P4,P5 default uart
         else:
-            self.uart = UART(port,baudrate=baud,timeout=timeout,rxbuf=100)
+            self.uart = UART(port,baudrate=baudrate,timeout=timeout,rxbuf=100)
         self.DEBUG=debug
 
     def addcmd(self,cmd,cmd_func):
