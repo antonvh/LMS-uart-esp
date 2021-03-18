@@ -1,6 +1,6 @@
 # Try to drive Neopixel/ws2812 from the MINDSTORMS Robot Inventor Hub
-# Using the SPI class from machin
-# THIS DIDN'T WORK.
+# Using the SPI class from machine
+# THIS DIDN'T WORK. I DIDN'T DEBUG IT WITH A SCOPE.
 
 
 
@@ -28,20 +28,20 @@ GRBW = "GRBW"
 """
 `adafruit_pypixelbuf` - A pure python implementation of _pixelbuf
 =================================================================
-This class is used when _pixelbuf is not available in CircuitPython.  It is based on the work
+This class is used when _pixelbuf is not available in CircuitPython.It is based on the work
 in neopixel.py and adafruit_dotstar.py.
-* Author(s): Damien P. George &  Limor Fried & Scott Shawcroft & Roy Hooper
+* Author(s): Damien P. George &Limor Fried & Scott Shawcroft & Roy Hooper
 """
 
 __version__ = "0.0.0-auto.0"
 __repo__ = "https://github.com/adafruit/Adafruit_CircuitPython_Pypixelbuf.git"
 
 DOTSTAR_LED_START_FULL_BRIGHT = 0xFF
-DOTSTAR_LED_START = 0b11100000  # Three "1" bits, followed by 5 brightness bits
+DOTSTAR_LED_START = 0b11100000# Three "1" bits, followed by 5 brightness bits
 DOTSTAR_LED_BRIGHTNESS = 0b00011111
 
 
-class PixelBuf:  # pylint: disable=too-many-instance-attributes
+class PixelBuf:# pylint: disable=too-many-instance-attributes
     """
     A sequence of RGB/RGBW pixels.
     This is the pure python implementation of CircuitPython's _pixelbuf.
@@ -53,7 +53,7 @@ class PixelBuf:  # pylint: disable=too-many-instance-attributes
     :param bytes trailer: Sequence of bytes to always send after pixel values.
     """
 
-    def __init__(  # pylint: disable=too-many-locals,too-many-arguments
+    def __init__(# pylint: disable=too-many-locals,too-many-arguments
         self,
         n,
         byteorder="BGR",
@@ -161,7 +161,7 @@ class PixelBuf:  # pylint: disable=too-many-instance-attributes
     @property
     def brightness(self):
         """
-        Float value between 0 and 1.  Output brightness.
+        Float value between 0 and 1.Output brightness.
         When brightness is less than 1.0, a second buffer will be used to store the color values
         before they are adjusted for brightness.
         """
@@ -274,7 +274,7 @@ class PixelBuf:  # pylint: disable=too-many-instance-attributes
 
     def _set_item(
         self, index, r, g, b, w
-    ):  # pylint: disable=too-many-locals,too-many-branches,too-many-arguments
+    ):# pylint: disable=too-many-locals,too-many-branches,too-many-arguments
         if index < 0:
             index += len(self)
         if index >= self._pixels or index < 0:
@@ -411,11 +411,11 @@ class NeoPixel_SPI(PixelBuf):
         self._spi = spi
         self._spi.init(baudrate=frequency)
         # with self._spi as spibus:
-        #     try:
-        #         # get actual SPI frequency
-        #         freq = spibus.frequency
-        #     except AttributeError:
-        #         # use nominal
+        #    try:
+        #        # get actual SPI frequency
+        #        freq = spibus.frequency
+        #    except AttributeError:
+        #        # use nominal
         freq = frequency
         self._reset = bytes([0] * round(freq * self._trst / 8))
         self._spibuf = bytearray(8 * n * bpp)
@@ -463,7 +463,9 @@ class NeoPixel_SPI(PixelBuf):
                 k += 1
 
 from machine import Pin,SPI
-spi = SPI(sck=Pin.board.PE15, mosi=Pin.board.PE2, miso=Pin.board.PE3)
+spi = SPI(sck=Pin.board.PD14, mosi=Pin.board.PE2, miso=Pin.board.PE3)
 npspi = NeoPixel_SPI(spi,8)
 # This should fill our leds with a dim red. But they kept shining bright.
 npspi.fill((100,0,0))
+npspi[1] = (0, 128, 0)
+npspi.show()
