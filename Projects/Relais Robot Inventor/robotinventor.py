@@ -1,8 +1,12 @@
 from hub import port
 from utime import sleep_ms
 
-# Connect the breakout board with wifi to port C
+# Switch a relais connected to gnd/3v3/sda on the wifi board using motor B
+# Connect the wifi breakout board with wifi to port C on robot inventor
 # Connect a motor to port B and turn it to control the relais
+
+class WifiBoardError(Exception):
+    pass
 
 class WifiBoard():
     def __init__(self, port_string):
@@ -28,7 +32,8 @@ class WifiBoard():
     def enter_raw_repl(self):
         self.board.write(b"r\x03\x03\x01") # Ctrl-c, Ctrl-c, Ctrl-a
         result = self.read_all()
-        if not result[-14:] == b'L-B to exit\r\n>': return "Raw repl failed"
+        if not result[-14:] == b'L-B to exit\r\n>': 
+            raise WifiBoardError("Raw REPL failed")
 
     def execute(self, command, result_pause=10):
         self.board.write(b"\x05A\x01") # Enter raw paste
@@ -50,6 +55,7 @@ mb = port.B.motor
 wifi.enter_raw_repl()
 wifi.execute("from machine import Pin")
 wifi.execute("p4 = Pin(4, Pin.OUT)")
+
 while True:
     absolute_pos = mb.get()[2]
     if absolute_pos > 0:
