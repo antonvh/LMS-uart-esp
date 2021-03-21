@@ -123,8 +123,11 @@ The library allows for simultaneously sending and receiving commands from both s
 ```python
 import time
 from uartfast import *
+    
+def imu():
+    return('f',[12.3,11.1,180.0])
 
-u=UartFast(2)
+u=UartRemote(Port.S1)
 u.add_command("imu",imu)
 
 t_old=time.ticks_ms()+2000                      # wait 2 seconds before starting
@@ -140,8 +143,15 @@ while True:
 
 ### ESP8266
 ```python
+import time
 from uartfast import *
-u=UartFast(2)
+u=UartRemote(0)
+
+def led(v):
+    print('led')
+    for i in v:
+        print(i)
+
 u.add_command("led",led)
 
 
