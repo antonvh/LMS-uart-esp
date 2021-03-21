@@ -1,25 +1,23 @@
 import neopixel,machine
 
-from uartfastb import *
+from uartfast import *
 
-np=[]
+class Neo:
+    def neo_init(self,number_pixels,pin=machine.Pin(13)):
+        self.np = neopixel.NeoPixel(pin, number_pixels[0])
 
-def neo_init(number_pixels,pin=machine.Pin(4)):
-    global np
-    np = neopixel.NeoPixel(pin, number_pixels)
+    def neo_setpixel(self,pix):
+        n=pix[0]
+        (r,g,b)=pix[1:]
+        self.np[n]=(r,g,b)
+        self.np.write()
     #return 'ok'
 
-def neo_setpixel(pix):
-    global np
-    n=pix[0]
-    (r,g,b)=pix[1:]
-    np[n]=(r,g,b)
-    np.write()
-    #return 'ok'
+u=UartRemote(0)
+neo=Neo()
+u.add_command('neo',neo.neo_init)
+u.add_command('nes',neo.neo_setpixel)
 
-u=UartFast(0)
-u.add_command('neo','rnr',neo_init)
-u.add_command('nes','rns',neo_setpixel)
 u.loop()
 
 

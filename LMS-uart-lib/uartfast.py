@@ -41,7 +41,7 @@ elif PLATFORM=="H7":
 class UartRemote:
     commands={}  
  
-    def __init__(self,port,baudrate=115200,timeout=1000,debug=False):
+    def __init__(self,port,baudrate=230400,timeout=1000,debug=False):
         if PLATFORM=="EV3":
             self.uart = UARTDevice(port,baudrate=baudrate,timeout=timeout)
         elif PLATFORM=="H7":
