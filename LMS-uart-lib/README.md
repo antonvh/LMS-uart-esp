@@ -48,7 +48,8 @@ The Slave acknowledges a command by sending back an acknowledge command, where t
 ### packet format
 When a command with its accompanying values is transmitted over the Uart, the following packet format is used:
 
-`<l><cl><cmd><n><type><data>`
+```<l><cl><cmd><n><type><data>```
+
 with
 `l` the length of the total packet encoded as a single byte,
 `cl` the length of the command string `<cmd>` as a single byte,
@@ -60,7 +61,12 @@ with
 When the command
 `send_receive('test','B',[1,2,3,4,5]`
 is used, the following packet will be transmitted over the line:
-`b'\r\x04test\x05B\x01\x02\x03\x04\x05'`
+
+```b'\r\x04test\x05B\x01\x02\x03\x04\x05'```
+
+or in hex:
+
+```0d047465737405420102030405```
 
 ## Library description
 ### `class UartRemote(port,baudrate=115200,timeout=1000,debug=False)`
