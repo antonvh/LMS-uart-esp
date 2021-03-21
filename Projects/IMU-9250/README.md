@@ -9,7 +9,7 @@ This example uses the micropython libraries at https://github.com/tuupola/microp
 
 ## ESP8266
 
-Install the libaries `mpu9250.py`, `mpu6500,py`, and `ak8963.py`. Upload the code `imu_ESP.py`.
+Install the libaries `mpu9250.py`, `mpu6500,py`, and `ak8963.py`. Furthermore, install the library `uartfast.py` that can be found in this repository. Upload the code `imu_ESP.py`.
 
 ```python
 import utime
