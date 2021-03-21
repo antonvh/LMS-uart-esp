@@ -154,4 +154,42 @@ In repl the following examples result in:
 ('error', [b'n', b'o', b'k'])
 ```
 
+# Simultaneous sending and receiving
 
+The library allows for simultaneously sending and receiving commands from both sides. Below the code for both sides is shown. In this example we use the EV3 and the ESP8266 board.
+
+## EV3
+```python
+import time
+from uartfast import *
+
+u=UartFast(2)
+u.add_command("imu",imu)
+
+t_old=time.ticks_ms()+2000                      # wait 2 seconds before starting
+q=u.flush()                                     # flush uart rx buffer
+while True:
+    if u.available():                           # check if a command is available
+        u.wait_for_command()
+    if time.ticks_ms()-t_old>1000:              # send a command every second
+        t_old=time.ticks_ms()
+        print("send led")                       # send 'led' command with data
+        print("recv=",u.send_receive('led','b',[1,2,3,4]))
+```
+
+## ESP8266
+```python
+from uartfast import *
+u=UartFast(2)
+u.add_command("led",led)
+
+
+t_old=time.ticks_ms()+2000                      # wait 2 seconds before starting
+q=u.flush()                                     # flush uart rx buffer
+while True:
+    if u.available():                           # check if a command is available
+        u.wait_for_command()
+    if time.ticks_ms()-t_old>1000:              # send a command every second
+        t_old=time.ticks_ms()
+        print("send imu")
+        print("recv=",u.send_receive('imu'))    # send 'imu' command & receive result
