@@ -45,7 +45,7 @@ The `send_receive` method allows the Master to send a command to the Slave. When
 
 The Slave acknowledges a command by sending back an acknowledge command, where the `ack` is appended to the command, and return values of the function being called are are send back. When an error occurs, the `<cmd>` that is sent back, contains `error`.
 
-### packet format
+## packet format
 When a command with its accompanying values is transmitted over the Uart, the following packet format is used:
 
 ```<l><cl><cmd><n><type><data>```
@@ -68,7 +68,95 @@ or in hex:
 
 ```0d047465737405420102030405```
 
-## Library description
+# Example application
+## Slave code
+On the slave, the following code is used;
+```python
+def led(v):
+    print('led')
+    for i in v:
+        print(i)
+    
+def imu():
+    return('f',[12.3,11.1,180.0])
+
+def grideye(v):
+    addr=v[0]
+    a=[20,21,22,23,24,25,26,27,28]
+    return('B',a[addr%9])
+
+from uartfast import *
+u=UartRemote(0)
+u.add_command("led",led)
+u.add_command("imu",imu)
+u.add_command("grid",grideye)
+u.loop()
+```
+Here three different example functions are used: `led` which takes a value, but does not return a value, `imu` which returns a value, but does not take a value, and `grideye` wich takes a values and returns a value.
+The functions that return a value, need to return a tuple
+`<type>, <data>`
+with `<type>` the Format character, and where `<value>` can be a string, a single value, or a list of values.
+
+## Master code
+On the Master the following code is used:
+```python
+from uartfast import *
+u=UartFast(Port.S1)
+```
+In repl the following examples result in:
+```
+>>> u.send_receive('led','B',[1,2,3,4])
+('ledack', [])
+>>> u.send_receive('imu')
+('imuack', [12.29999923706055, 11.09999847412109, 180.0])
+>>> u.send_receive('grid','B',1)
+('gridack', [21])
+>>> u.send_receive('unknown')
+('error', [b'n', b'o', b'k'])
+```
+
+# Simultaneous sending and receiving
+
+The library allows for simultaneously sending and receiving commands from both sides. Below the code for both sides is shown. In this example we use the EV3 and the ESP8266 board.
+
+### EV3
+```python
+import time
+from uartfast import *
+
+u=UartFast(2)
+u.add_command("imu",imu)
+
+t_old=time.ticks_ms()+2000                      # wait 2 seconds before starting
+q=u.flush()                                     # flush uart rx buffer
+while True:
+    if u.available():                           # check if a command is available
+        u.wait_for_command()
+    if time.ticks_ms()-t_old>1000:              # send a command every second
+        t_old=time.ticks_ms()
+        print("send led")                       # send 'led' command with data
+        print("recv=",u.send_receive('led','b',[1,2,3,4]))
+```
+
+### ESP8266
+```python
+from uartfast import *
+u=UartFast(2)
+u.add_command("led",led)
+
+
+t_old=time.ticks_ms()+2000                      # wait 2 seconds before starting
+q=u.flush()                                     # flush uart rx buffer
+while True:
+    if u.available():                           # check if a command is available
+        u.wait_for_command()
+    if time.ticks_ms()-t_old>1000:              # send a command every second
+        t_old=time.ticks_ms()
+        print("send imu")
+        print("recv=",u.send_receive('imu'))    # send 'imu' command & receive result
+```
+
+# Library description
 ### `class UartRemote(port,baudrate=115200,timeout=1000,debug=False)`
 
 Constructs a Uart communication class for Uart port `port`. Baudrate and timeout definitions for the Uart port can be changed.  The boolean `debug` allows for debugging this class.
@@ -106,90 +194,3 @@ Loops the `UartRemote.wait-for_command()` command.
 #### `UartRemote.add_command(command,command_function)`
 
 Adds a command `command` to the dictionary of `UartRemote.commands` together with a fucntion name `command_function`. The dictionary with commands is used by the `UartRemote.wait_for_command()` method to call the function as defined upon receiving a specific command. As an argument the `data` that is received is used.
-
-## Example application
-### Slave code
-On the slave, the following code is used;
-```python
-def led(v):
-    print('led')
-    for i in v:
-        print(i)
-    
-def imu():
-    return('f',[12.3,11.1,180.0])
-
-def grideye(v):
-    addr=v[0]
-    a=[20,21,22,23,24,25,26,27,28]
-    return('B',a[addr%9])
-
-from uartfast import *
-u=UartRemote(0)
-u.add_command("led",led)
-u.add_command("imu",imu)
-u.add_command("grid",grideye)
-u.loop()
-```
-Here three different example functions are used: `led` which takes a value, but does not return a value, `imu` which returns a value, but does not take a value, and `grideye` wich takes a values and returns a value.
-The functions that return a value, need to return a tuple
-`<type>, <data>`
-with `<type>` the Format character, and where `<value>` can be a string, a single value, or a list of values.
-
-### Master code
-On the Master the following code is used:
-```python
-from uartfast import *
-u=UartFast(Port.S1)
-```
-In repl the following examples result in:
-```
->>> u.send_receive('led','B',[1,2,3,4])
-('ledack', [])
->>> u.send_receive('imu')
-('imuack', [12.29999923706055, 11.09999847412109, 180.0])
->>> u.send_receive('grid','B',1)
-('gridack', [21])
->>> u.send_receive('unknown')
-('error', [b'n', b'o', b'k'])
-```
-
-# Simultaneous sending and receiving
-
-The library allows for simultaneously sending and receiving commands from both sides. Below the code for both sides is shown. In this example we use the EV3 and the ESP8266 board.
-
-## EV3
-```python
-import time
-from uartfast import *
-
-u=UartFast(2)
-u.add_command("imu",imu)
-
-t_old=time.ticks_ms()+2000                      # wait 2 seconds before starting
-q=u.flush()                                     # flush uart rx buffer
-while True:
-    if u.available():                           # check if a command is available
-        u.wait_for_command()
-    if time.ticks_ms()-t_old>1000:              # send a command every second
-        t_old=time.ticks_ms()
-        print("send led")                       # send 'led' command with data
-        print("recv=",u.send_receive('led','b',[1,2,3,4]))
-```
-
-## ESP8266
-```python
-from uartfast import *
-u=UartFast(2)
-u.add_command("led",led)
-
-
-t_old=time.ticks_ms()+2000                      # wait 2 seconds before starting
-q=u.flush()                                     # flush uart rx buffer
-while True:
-    if u.available():                           # check if a command is available
-        u.wait_for_command()
-    if time.ticks_ms()-t_old>1000:              # send a command every second
-        t_old=time.ticks_ms()
-        print("send imu")
-        print("recv=",u.send_receive('imu'))    # send 'imu' command & receive result
