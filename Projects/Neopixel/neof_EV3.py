@@ -1,5 +1,5 @@
 from uartfast import *
-u=UartFast(Port.S1)
+u=UartRemote(Port.S1)
 from time import sleep
 
 class Neo:

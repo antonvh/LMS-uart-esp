@@ -47,7 +47,7 @@ class UartRemote:
         elif PLATFORM=="H7":
             self.uart = UART(3, baudrate, timeout_char=timeout)                         # P4,P5 default self.uart
         elif PLATFORM=="ESP8266":    
-            self.uart = UART(port,baudrate=baudrate,timeout=timeout) #,rxbuf=100)
+            self.uart = UART(port,baudrate=baudrate,timeout=timeout,rxbuf=100)
         else:
             raise RuntimeError('MicroPython Platform not defined')
         self.DEBUG=debug
@@ -137,22 +137,23 @@ class UartRemote:
 
     def wait_for_command(self):
         command,value=self.receive()
-        if command in self.commands:
-            command_ack=command+"ack"
-            if value!=[]:
-                resp=self.commands[command](value)
+        if command[-3:]!='ack':   # discard any ack from other command
+            if command in self.commands:
+                command_ack=command+"ack"
+                if value!=[]:
+                    resp=self.commands[command](value)
+                else:
+                    resp=self.commands[command]()
+                if resp!=None:
+                    t=resp[0]
+                    data=resp[1]
+                    if type(data).__name__!='list':
+                        data=[data]
+                    self.send(command_ack,t,data)
+                else:
+                    self.send(command_ack,'s','')
             else:
-                resp=self.commands[command]()
-            if resp!=None:
-                t=resp[0]
-                data=resp[1]
-                if type(data).__name__!='list':
-                    data=[data]
-                self.send(command_ack,t,data)
-            else:
-                self.send(command_ack,'s','')
-        else:
-            self.send('error','s','nok')
+                self.send('error','s','nok')
 
     def loop(self):
         while True:
