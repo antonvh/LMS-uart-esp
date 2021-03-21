@@ -43,7 +43,7 @@ The `send_receive` method allows the Master to send a command to the Slave. When
 | `d` | double | 8 |
 | `s` | char[] | 
 
-The Slave acknowledges a command by sending back an acknowledge command, where the `ack` is appended to the command, and return values of the function being called are are send back. When an error occurs, the `<cmd>` that is sent back, contains `error`.
+The Slave acknowledges a command by sending back an acknowledge command, where the string `ack` is appended to the command, and return values of the function being called are are send back. When an error occurs, the `<cmd>` that is sent back, contains `error`.
 
 ## packet format
 When a command with its accompanying values is transmitted over the Uart, the following packet format is used:
