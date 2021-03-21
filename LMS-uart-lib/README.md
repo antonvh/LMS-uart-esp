@@ -10,7 +10,7 @@ Below is an example of how to use this library.
 
 On the slave (ESP8266):
 
-```
+```python
 from uartfast import *
 u=UartRemote(0)
 u.add_command('imu',imu)
@@ -24,7 +24,7 @@ In this example two functions are defined `imu`, `led` and `grideye`. These func
 ## Sending commands
 
 On the master (EV3):
-```
+```python
 from uartcommands import *
 u=UartRemote(Port.S1)
 u.send_receive('imu')
@@ -104,7 +104,7 @@ Adds a command `command` to the dictionary of `UartRemote.commands` together wit
 ## Example application
 ### Slave code
 On the slave, the following code is used;
-```
+```python
 def led(v):
     print('led')
     for i in v:
@@ -132,7 +132,7 @@ with `<type>` the Format character, and where `<value>` can be a string, a singl
 
 ### Master code
 On the Master the following code is used:
-```
+```python
 from uartfast import *
 u=UartFast(Port.S1)
 ```
