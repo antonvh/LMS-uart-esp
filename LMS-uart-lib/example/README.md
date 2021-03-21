@@ -12,5 +12,5 @@ from sim_EV3 import *
 ```
 On the ESP8266
 ```
-from sim_8266 import *
+from sim_ESP8266 import *
 ```
