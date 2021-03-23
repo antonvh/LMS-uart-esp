@@ -22,9 +22,11 @@ def vl53(jnk):
 u.add_command('vl53',vl53):
  
 u.loop()
+```
 
 ## example EV3, using uartfast
 
+```python
 import time
 from uartfast import *
 u=UartRemote(Port.S1)
@@ -33,4 +35,4 @@ while True:
     r,value=u.send_receive('vl53','b',[1])  # dummy variable, as used in uartfast, need to be fixed!
     print(value)
     #time.sleep(1)
-    
+```    
