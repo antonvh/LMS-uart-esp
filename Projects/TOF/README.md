@@ -1,6 +1,11 @@
 # VL53 Time of Flight sensor
 
 We use the standard VL53 micropython library. This library is too big to fit in the memory of the ESP8266. Therefore, we use the pre-compiled version: vl53.mpy.
+The library as compikled using the following command:
+
+```./mpy-cross -march=xtensa vl53.py -o vl53.mpy```
+
+`mpy-cross` is a standard tool that comes with the micropython distribution.
 
 ## example ESP8266, using uartfast
 
