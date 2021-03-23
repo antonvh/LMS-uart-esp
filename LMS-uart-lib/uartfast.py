@@ -56,25 +56,31 @@ class UartRemote:
         self.commands[command]=command_function
 
     def encode(self,cmd,*argv):
-        f=argv[0]
-        if len(argv)==2:
-            data=argv[1]
-            td=type(data).__name__
-            nf=struct.pack('B',len(f))
-            if td=='list': 
-                n=len(data)
-                ff="a%d"%n+f
-                s=struct.pack('B',len(ff))+ff.encode('utf-8')
-                for d in data:
-                    s+=struct.pack(f,d)
-            elif td=='str':
-                n=len(data)
-                ff="%d"%n+f
-                s=struct.pack('B',len(ff))+ff.encode('utf-8')
-                s+=data.encode('utf-8')
+        if len(argv)>0:
+            if len(argv)==2:
+                f=argv[0]
+                data=argv[1]
+                td=type(data).__name__
+                nf=struct.pack('B',len(f))
+                if td=='list': 
+                    n=len(data)
+                    ff="a%d"%n+f
+                    s=struct.pack('B',len(ff))+ff.encode('utf-8')
+                    for d in data:
+                        s+=struct.pack(f,d)
+                elif td=='str':
+                    n=len(data)
+                    ff="%d"%n+f
+                    s=struct.pack('B',len(ff))+ff.encode('utf-8')
+                    s+=data.encode('utf-8')
+                else:
+                    s=struct.pack("B",len(f))+f.encode('utf-8')
+                    s+=struct.pack(f,*argv[1:])    
+            else:
+                s=struct.pack("B",len(f))+f.encode('utf-8')
+                s+=struct.pack(f,*argv[1:])
         else:
-            s=struct.pack("B",len(f))+f.encode('utf-8')
-            s+=struct.pack(f,*argv[1:])
+            s=b'\x01z\x00'  # dummy format 'z' for no arguments
         s=struct.pack("B",len(cmd))+cmd.encode('utf-8')+s
         s=struct.pack("B",len(s))+s 
         return s 
@@ -88,6 +94,8 @@ class UartRemote:
         nf=struct.unpack('B',s[p:p+1])[0]
         p+=1
         f=s[p:p+nf].decode('utf-8')
+        if f=="z":  # code for empty data
+            return cmd,None
         p+=nf
         if f[0]=='a':
             data=list(struct.unpack(f[1:],s[p:]))
@@ -150,7 +158,7 @@ class UartRemote:
         if command[-3:]!='ack':   # discard any ack from other command
             if command in self.commands:
                 command_ack=command+"ack"
-                if value!=[]:
+                if value!=None:
                     resp=self.commands[command](value)
                 else:
                     resp=self.commands[command]()
