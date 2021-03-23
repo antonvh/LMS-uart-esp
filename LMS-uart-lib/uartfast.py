@@ -55,28 +55,47 @@ class UartRemote:
     def add_command(self,command,command_function):
         self.commands[command]=command_function
 
-    def encode(self,command,t,data):
-        lc=len(command)
-        n=len(data)
-        s=struct.pack("B",lc)
-        s+=command.encode('utf-8')
-        s+=struct.pack("B",n)
-        s+=t.encode('utf-8')
-        for i in data:
-            s+=struct.pack(t,i)
-        l=len(s)+1
-        s=struct.pack("B",l)+s
-        return s
+    def encode(self,cmd,*argv):
+        f=argv[0]
+        if len(argv)==2:
+            data=argv[1]
+            td=type(data).__name__
+            nf=struct.pack('B',len(f))
+            if td=='list': 
+                n=len(data)
+                ff="a%d"%n+f
+                s=struct.pack('B',len(ff))+ff.encode('utf-8')
+                for d in data:
+                    s+=struct.pack(f,d)
+            elif td=='str':
+                n=len(data)
+                ff="%d"%n+f
+                s=struct.pack('B',len(ff))+ff.encode('utf-8')
+                s+=data.encode('utf-8')
+        else:
+            s=struct.pack("B",len(f))+f.encode('utf-8')
+            s+=struct.pack(f,*argv[1:])
+        s=struct.pack("B",len(cmd))+cmd.encode('utf-8')+s
+        s=struct.pack("B",len(s))+s 
+        return s 
 
     def decode(self,s):
-        l,lc=struct.unpack("BB",s[:2])
-        cmd=s[2:2+lc]
-        n=struct.unpack("B",s[2+lc:3+lc])[0]
-        t=s[3+lc:4+lc].decode('utf-8')
-        tt=t*n
-        ss=list(struct.unpack(tt,s[4+lc:]))
-        command=cmd.decode('utf-8')
-        return command,ss
+        p=1
+        nc=struct.unpack('B',s[p:p+1])[0]
+        p+=1
+        cmd=s[p:p+nc].decode('utf-8')
+        p+=nc
+        nf=struct.unpack('B',s[p:p+1])[0]
+        p+=1
+        f=s[p:p+nf].decode('utf-8')
+        p+=nf
+        if f[0]=='a':
+            data=list(struct.unpack(f[1:],s[p:]))
+        else:
+            data=struct.unpack(f,s[p:])
+            if len(data)==1:
+                data=data[0]
+        return cmd,data
 
     def available(self):
         if PLATFORM=="EV3":
@@ -105,7 +124,7 @@ class UartRemote:
         l=struct.unpack('B',ls)[0]
         #print(l+1)
         s=ls
-        for i in range(l-1):
+        for i in range(l):
             r=self.uart.read(1)
             if r!=None:
                 s+=r
@@ -115,23 +134,14 @@ class UartRemote:
         return result
 
 
-    def send(self,command,t,data):
-        s=self.encode(command,t,data)
+    def send(self,command,*argv):
+        s=self.encode(command,*argv)
         self.uart.write(s)
 
 
     def send_receive(self,command,*args):
         self.flush()
-        if len(args)==0:
-            t='B'
-            data=[]
-        else:
-            t=args[0]
-            data=args[1]
-        typename=type(data).__name__
-        if typename!='list' and typename!='str':
-            data=[args[1]] # make an array
-        self.send(command,t,data)
+        self.send(command,*args)
         return self.receive()
 
 
@@ -147,11 +157,9 @@ class UartRemote:
                 if resp!=None:
                     t=resp[0]
                     data=resp[1]
-                    if type(data).__name__!='list':
-                        data=[data]
                     self.send(command_ack,t,data)
                 else:
-                    self.send(command_ack,'s','')
+                    self.send(command_ack,'s','ok')
             else:
                 self.send('error','s','nok')
 
