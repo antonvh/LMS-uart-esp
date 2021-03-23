@@ -17,9 +17,9 @@ tof.start()
 
 def vl53(jnk):
   d=tof.read()
-  return ('i',[d]) # return integer, as array (need to be fixed in uartfast library!)
+  return ('i',d) # return integer
   
-u.add_command('vl53',vl53):
+u.add_command('vl53',vl53)
  
 u.loop()
 ```
@@ -32,7 +32,7 @@ from uartfast import *
 u=UartRemote(Port.S1)
 
 while True:
-    r,value=u.send_receive('vl53','b',[1])  # dummy variable, as used in uartfast, need to be fixed!
+    r,value=u.send_receive('vl53') 
     print(value)
-    #time.sleep(1)
+    time.sleep(1)
 ```    
