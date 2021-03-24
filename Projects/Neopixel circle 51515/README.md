@@ -4,7 +4,7 @@
 
 ## Example for EV3 <-> ESP8266 using uartfast lib
 
-This is an example that shows how the UartRemote library can be used to control the leds in a ws2812B ring. 
+This is an example that shows how the [UartRemote library](https://github.com/antonvh/LMS-uart-esp/tree/main/LMS-uart-lib) can be used to control the leds in a ws2812B ring. 
 
 ### --> on ESP8266
 Upload the code `neo_ESP8266.py` and execute
