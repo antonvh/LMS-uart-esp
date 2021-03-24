@@ -45,11 +45,11 @@ def swirl(r_speed=1, h_speed = 0.01):
     hue = 0.5
 
     import neopixel
-    np = neopixel.NeoPixel(machine.Pin(4),12)
+    np = neopixel.NeoPixel(machine.Pin(4),N_LEDS)
     while True:
         lightnesses = [gauss1((i*100/N_LEDS+offset)%100) for i in led_indexes]
         leds = [hsl_to_rgb(hue,1,l) for l in lightnesses]
-        for i in range(12): np[i]=leds[i]
+        for i in range(N_LEDS): np[i]=leds[i]
         np.write()
         offset += r_speed
         hue += h_speed
