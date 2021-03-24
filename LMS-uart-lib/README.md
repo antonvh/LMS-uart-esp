@@ -63,13 +63,15 @@ When the command
 `send_receive('test','B',[1,2,3,4,5]`
 is used, the following packet will be transmitted over the line:
 
-```b'\r\x04test\x05B\x01\x02\x03\x04\x05'```
+```b'\x0e\x04test\x03a5B\x01\x02\x03\x04\x05'```
 
 or in hex:
 
-```0d047465737405420102030405```
+```0e0474657374036135420102030405```
 
-When the Format string `f` is a single character, and the data is a list, each element of the list will be encoded using the specified Format character. The format field can also consist of multiple Format characters, such as `'3b3s1f'`, in that case, the parameters are `('3b2s1f',1,2,3,"aap",1.3)`.
+When the Format string `f` is a single character, and the data is a list, each element of the list will be encoded using the specified Format character. The format field can also consist of multiple Format characters, for example 
+
+```send_receive('special','3b2s1f',1,2,3,"aap",1.3)```.
 
 # Example application
 ## Slave code
