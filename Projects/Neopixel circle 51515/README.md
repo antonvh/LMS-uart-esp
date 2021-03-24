@@ -2,7 +2,7 @@
 
 ## Example for Robot Inventor <-> ESP8266 using direct repl commands
 
-## Example for EV3 <-> ESP8266 using uartfast lib
+## Example for EV3 <-> ESP8266 using UartRemote lib
 
 This is an example that shows how the [UartRemote library](https://github.com/antonvh/LMS-uart-esp/tree/main/LMS-uart-lib) can be used to control the leds in a ws2812B ring. 
 
