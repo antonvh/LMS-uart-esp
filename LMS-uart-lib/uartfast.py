@@ -57,8 +57,8 @@ class UartRemote:
 
     def encode(self,cmd,*argv):
         if len(argv)>0:
+            f=argv[0]
             if len(argv)==2:
-                f=argv[0]
                 data=argv[1]
                 td=type(data).__name__
                 nf=struct.pack('B',len(f))
