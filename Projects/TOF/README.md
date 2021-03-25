@@ -5,7 +5,11 @@ The library as compikled using the following command:
 
 ```./mpy-cross -march=xtensa vl53.py -o vl53.mpy```
 
-`mpy-cross` is a standard tool that comes with the micropython distribution.
+`mpy-cross` is a standard tool that comes with the micropython distribution. The tool can be installed using:
+
+```
+pip3 install mpy-cross
+```
 
 ## example ESP8266, using uartfast
 

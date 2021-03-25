@@ -57,18 +57,18 @@ class UartRemote:
 
     def encode(self,cmd,*argv):
         if len(argv)>0:
+            f=argv[0]
             if len(argv)==2:
-                f=argv[0]
                 data=argv[1]
-                td=type(data).__name__
+                td=type(data)
                 nf=struct.pack('B',len(f))
-                if td=='list': 
+                if td==list: 
                     n=len(data)
                     ff="a%d"%n+f
                     s=struct.pack('B',len(ff))+ff.encode('utf-8')
                     for d in data:
                         s+=struct.pack(f,d)
-                elif td=='str':
+                elif td==str:
                     n=len(data)
                     ff="%d"%n+f
                     s=struct.pack('B',len(ff))+ff.encode('utf-8')
@@ -159,7 +159,10 @@ class UartRemote:
             if command in self.commands:
                 command_ack=command+"ack"
                 if value!=None:
-                    resp=self.commands[command](value)
+                    if type(value)==tuple:
+                        resp=self.commands[command](*value)
+                    else:
+                        resp=self.commands[command](value)
                 else:
                     resp=self.commands[command]()
                 if resp!=None:
