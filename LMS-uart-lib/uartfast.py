@@ -1,4 +1,4 @@
-platforms={'linux':'EV3','esp32':'ESP32','esp8266':'ESP8266'}
+platforms={'linux':'EV3','esp32':'ESP32','esp8266':'ESP8266','OpenMV4P-H7':'H7'}
 
 import sys
 try:
@@ -130,9 +130,11 @@ class UartRemote:
             #print(l+1)
             s=ls
             for i in range(l):
-                r=self.uart.read(1)
-                if r!=None:
-                    s+=r
+                # OpenMV reads too fast and sometimes returns None
+                r=None
+                while r==None:
+                    r=self.uart.read(1)
+                s+=r
             result=self.decode(s)
         except:
             self.flush()

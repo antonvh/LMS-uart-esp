@@ -17,11 +17,14 @@ class Neo:
 
     def setpixelarray(self,pix):
         # array of m pixels starting form n [n,m,r1,g1,b1,...rm,gm,bm]
-        n=pix[0]
-        m=pix[1]
+        wr=pix[0]
+        n=pix[1]
+        m=pix[2]
         for p in range(m):
-            (r,g,b)=pix[2+3*p:5+3*p]
+            (r,g,b)=pix[3+3*p:6+3*p]
             self.np[p+n]=(r,g,b)
+        if wr==1:
+            self.np.write()
 
     def write(self):
         self.np.write()
