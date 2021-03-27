@@ -1,4 +1,4 @@
-﻿# LMS-uart-lib-fast
+﻿# Remote UART library: uartremote.py
 
 This is a library for robust communication between lego EV3/Spike and other MicroPython modules using the UART.
 
@@ -11,7 +11,7 @@ Below is an example of how to use this library.
 On the slave (ESP8266):
 
 ```python
-from uartfast import *
+from uartremote import *
 u=UartRemote(0)
 u.add_command('imu',imu)
 u.add_command('led',led)
@@ -25,7 +25,7 @@ In this example two functions are defined `imu`, `led` and `grideye`. These func
 
 On the master (EV3):
 ```python
-from uartfast import *
+from uartremote import *
 u=UartRemote(Port.S1)
 u.send_receive('imu')
 u.send_receive('grid','B',10)
@@ -90,7 +90,7 @@ def grideye(v):
     a=[20,21,22,23,24,25,26,27,28]
     return('B',a[addr%9])
 
-from uartfast import *
+from uartremote import *
 u=UartRemote(0)
 u.add_command("led",led)
 u.add_command("imu",imu)
@@ -105,8 +105,8 @@ with `<type>` the Format character, and where `<value>` can be a string, a singl
 ## Master code
 On the Master the following code is used:
 ```python
-from uartfast import *
-u=UartFast(Port.S1)
+from uartremote import *
+u=Uartremote(Port.S1)
 ```
 In repl the following examples result in:
 ```
@@ -127,7 +127,7 @@ The library allows for simultaneously sending and receiving commands from both s
 ### EV3
 ```python
 import time
-from uartfast import *
+from uartremote import *
     
 def imu():
     return('f',[12.3,11.1,180.0])
@@ -149,7 +149,7 @@ while True:
 ### ESP8266
 ```python
 import time
-from uartfast import *
+from uartremote import *
 u=UartRemote(0)
 
 def led(v):

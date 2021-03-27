@@ -1,6 +1,6 @@
 import neopixel,machine
 
-from uartfast import *
+from uartremote import *
 
 class Neo:
     def init(self,number_pixels,pin=machine.Pin(4)):

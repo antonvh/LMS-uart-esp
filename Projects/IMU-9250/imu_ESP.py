@@ -21,7 +21,7 @@ def acc():
     return ('f',[val[0],val[1],val[2]])
 
 
-from uartfast import *
+from uartremote import *
 
 u=UartRemote(0)
 u.add_command('acc',acc)

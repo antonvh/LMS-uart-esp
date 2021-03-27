@@ -1,5 +1,5 @@
 from machine import I2C, Pin
-from uartfast import *
+from uartremote import *
 import ssd1306
 
 class Oled:
@@ -15,7 +15,12 @@ class Oled:
 
     def fill(self,f):
         self.oled.fill(f)
+    
+    def line(self,x1,y1,x2,y2,color):
+        self.oled.line(x1,y1,x2,y2,color)
 
+    def pixel(self,x1,y1,color):
+        self.oled.line(x1,y1,color)
 
 u=UartRemote(0)
 oled=Oled()
@@ -23,13 +28,9 @@ u.add_command('oledi',oled.init)
 u.add_command('oledt',oled.text)
 u.add_command("oleds",oled.show)
 u.add_command("oledf",oled.fill)
+u.add_command("oledl",oled.line)
+u.add_command("oledp",oled.pixel)
 
 u.loop()
 
 
-"""
-from uartfast import *
-u=UartRemote(Port.S1)
-
-u.send_receive("oledi","BB",64,48)
-"""
