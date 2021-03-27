@@ -1,19 +1,14 @@
-PLATFORM="EV3"
-try:
-    from pybricks.iodevices import UARTDevice
-except:
-    PLATFORM="ESP8266"
+platforms={'linux':'EV3','esp32':'ESP32','esp8266':'ESP8266'}
 
-# check OpenMV H7 platform
+import sys
 try:
-    import omv
-    PLATFORM="H7"
+    PLATFORM=platforms[sys.platform]
 except:
-    pass
+    PLATFORM='H7'
 
 import struct
 
-if PLATFORM=="ESP8266":
+if PLATFORM=="ESP8266" or PLATFORM=="ESP32":
     from machine import UART
     from machine import Pin,I2C
     #from compas import *
@@ -41,13 +36,15 @@ elif PLATFORM=="H7":
 class UartRemote:
     commands={}  
  
-    def __init__(self,port,baudrate=230400,timeout=1000,debug=False):
+    def __init__(self,port=0,baudrate=230400,timeout=1000,debug=False):
         if PLATFORM=="EV3":
             self.uart = UARTDevice(port,baudrate=baudrate,timeout=timeout)
         elif PLATFORM=="H7":
             self.uart = UART(3, baudrate, timeout_char=timeout)                         # P4,P5 default self.uart
         elif PLATFORM=="ESP8266":    
-            self.uart = UART(port,baudrate=baudrate,timeout=timeout,rxbuf=100)
+            self.uart = UART(0,baudrate=baudrate,timeout=timeout,rxbuf=100)
+        elif PLATFORM=="ESP32":    
+            self.uart = UART(1,rx=18,tx=19,baudrate=baudrate,timeout=timeout)
         else:
             raise RuntimeError('MicroPython Platform not defined')
         self.DEBUG=debug
@@ -127,30 +124,40 @@ class UartRemote:
         else:
             while (self.uart.any()==0):
                 pass
-        #try:
-        ls=self.uart.read(1)
-        l=struct.unpack('B',ls)[0]
-        #print(l+1)
-        s=ls
-        for i in range(l):
-            r=self.uart.read(1)
-            if r!=None:
-                s+=r
-        result=self.decode(s)
-        #except:
-        #    result=("err",[])
+        try:
+            ls=self.uart.read(1)
+            l=struct.unpack('B',ls)[0]
+            #print(l+1)
+            s=ls
+            for i in range(l):
+                r=self.uart.read(1)
+                if r!=None:
+                    s+=r
+            result=self.decode(s)
+        except:
+            self.flush()
+            result=("err","nok")
         return result
 
 
     def send(self,command,*argv):
-        s=self.encode(command,*argv)
-        self.uart.write(s)
+        try:
+            s=self.encode(command,*argv)
+            self.uart.write(s)
+            return 1
+        except:
+            self.flush()
+            return 0
 
 
     def send_receive(self,command,*args):
         self.flush()
-        self.send(command,*args)
-        return self.receive()
+        try:
+            self.send(command,*args)
+            return self.receive()
+        except:
+            self.flush()
+            return ("err","nok")
 
 
     def wait_for_command(self):
@@ -176,5 +183,8 @@ class UartRemote:
 
     def loop(self):
         while True:
-            self.wait_for_command()
+            try:
+                self.wait_for_command()
+            except:
+                self.flush()
 
