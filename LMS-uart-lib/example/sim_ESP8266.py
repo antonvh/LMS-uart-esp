@@ -1,4 +1,4 @@
-from uartfast import *
+from uartremote import *
 import time
 
 u=UartRemote(0)

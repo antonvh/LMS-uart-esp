@@ -1,4 +1,4 @@
-from uartfast import *
+from uartremote import *
 from vl53 import *
 
 u=UartRemote(0)

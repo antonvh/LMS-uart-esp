@@ -1,5 +1,5 @@
 import time
-from uartfast import *
+from uartremote import *
     
 def imu():
     return('f',[12.3,11.1,180.0])
