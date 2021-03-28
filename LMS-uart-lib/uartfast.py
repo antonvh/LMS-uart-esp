@@ -7,6 +7,7 @@ except:
     PLATFORM='H7'
 
 import struct
+import time
 
 if PLATFORM=="ESP8266" or PLATFORM=="ESP32":
     from machine import UART
@@ -123,6 +124,7 @@ class UartRemote:
                 pass
         else:
             while (self.uart.any()==0):
+                time.sleep(0.01)
                 pass
         try:
             ls=self.uart.read(1)

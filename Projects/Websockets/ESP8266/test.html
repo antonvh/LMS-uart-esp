@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>WebSocket Client</title>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm"
+        crossorigin="anonymous">
+</head>
+
+<body>
+    <div class="container">
+        <form onsubmit="send(event)">
+            <div class="row mt-4">
+                <div class="col-sm-10" onsubmit="send(event)">
+                    <input type="text" class="form-control" id="command" placeholder="Command">
+                </div>
+                <div class="col-sm-2">
+                    <button type="submit" class="btn btn-primary btn-block mb-2">Send</button>
+                </div>
+            </div>
+        </form>
+        <div class="row">
+            <div class="col">
+                <h6>Received content:</h5>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col">
+                <textarea rows='15' class="form-control" id="response" aria-label="With textarea"></textarea>
+            </div>
+        </div>
+    </div>
+
+</body>
+<script>
+    var ws = new WebSocket("ws://" + location.hostname + ":80");
+    ws.onopen = function () {
+        ws.send("It's working!");
+    };
+
+    ws.onmessage = function (evt) {
+        var response = document.getElementById("response");
+        response.innerHTML += evt.data + "\n";
+        response.scrollTop = response.scrollHeight;
+    };
+
+    function send(e) {
+        e.preventDefault();
+        command = document.getElementById('command').value;
+        ws.send(command);
+    };
+</script>
+</html>
