@@ -4,6 +4,7 @@ A small WebSocket implementation can be found on https://github.com/BetaRavener/
 
 To run this demo, connect the ESP8266 to the wifi network. Once a succesfull connection is established, the ssid and the webkey are stored in flash and every reboot, the connection is reastablished.
 
+_Note_: this demo is not stable yet, but shows the potential of running a web server with websockets on the ESP8266.
 
 # ESP8266
 
@@ -21,7 +22,9 @@ Started WebSocket server.
 
 Browse to the the IP address that is shown. The websocket is ready and can be tested by sending a string in the browser.
 
-In the function `+check_socket_state` the socket is returns state 3 and closes. To prevent this, in the file `ws_connection.py` the follwoing lines were commented out:
+The files in the ESP8266 direcotry need to be uploaded to the ESP8266.
+
+In the function `+check_socket_state` the socket is returns state 3 and closes. To prevent this, in the file `ws_connection.py` the following lines were commented out:
 
 ```python
  def _check_socket_state(self):
