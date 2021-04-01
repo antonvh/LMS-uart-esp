@@ -34,7 +34,7 @@ elif PLATFORM=="H7":
 """
 Protocol used by this library:
 
-<l><lc><cmd><lf><f><data>
+'<'+<l><lc><cmd><lf><f><data>+'>'
 
 <l> = total length of packet
 <lc> = length command string
@@ -71,35 +71,50 @@ class UartRemote:
     def encode(self,cmd,*argv):
         if len(argv)>0:
             f=argv[0]
-            if len(argv)==2:
-                data=argv[1]
-                td=type(data)
-                nf=struct.pack('B',len(f))
-                if td==list: 
-                    n=len(data)
-                    ff="a%d"%n+f
-                    s=struct.pack('B',len(ff))+ff.encode('utf-8')
-                    for d in data:
-                        s+=struct.pack(f,d)
-                elif td==str:
-                    n=len(data)
-                    ff="%d"%n+f
-                    s=struct.pack('B',len(ff))+ff.encode('utf-8')
-                    s+=data.encode('utf-8')
+            i=0
+            ff=''
+            s=b''
+            f=argv[0]
+            while (len(f)>0):
+                nf,f=digitformat(f)
+                if nf==0:
+                    nf=1
+                    fo=f[0]
+                    data=argv[1+i]
+                    td=type(data)
+                    if td==list: 
+                        n=len(data)
+                        ff+="a%d"%n+fo
+                        for d in data:
+                            s+=struct.pack(fo,d)
+                    elif td==str:
+                        n=len(data)
+                        ff+="%d"%n+fo
+                        s+=data.encode('utf-8')
+                    else:
+                        ff+=fo
+                        s+=struct.pack(fo,data)
+                
                 else:
-                    s=struct.pack("B",len(f))+f.encode('utf-8')
-                    s+=struct.pack(f,*argv[1:])    
-            else:
-                s=struct.pack("B",len(f))+f.encode('utf-8')
-                s+=struct.pack(f,*argv[1:])
+                    fo="%d"%nf+f[0]
+                    data=argv[1+i:1+i+nf]
+                    ff+=fo
+                    s+=struct.pack(fo,*data)
+                i+=nf
+                f=f[1:]
+            s=struct.pack('B',len(ff))+ff.encode('utf-8')+s+b'>'   
         else:
-            s=b'\x01z\x00'  # dummy format 'z' for no arguments
+            s=b'\x01z>'  # dummy format 'z' for no arguments
         s=struct.pack("B",len(cmd))+cmd.encode('utf-8')+s
-        s=struct.pack("B",len(s))+s 
+        s=b'<'+struct.pack("B",len(s))+s 
         return s 
 
-    def decode(self,s):
-        p=1
+        def decode(self,s):
+        sizes={'b':1,'i':4,'f':4,'s':1}
+        nl=struct.unpack('B',s[1:2])[0]
+        if s[0]!=60 or len(s)!=nl+2:
+            return "error",None
+        p=2
         nc=struct.unpack('B',s[p:p+1])[0]
         p+=1
         cmd=s[p:p+nc].decode('utf-8')
@@ -107,16 +122,35 @@ class UartRemote:
         nf=struct.unpack('B',s[p:p+1])[0]
         p+=1
         f=s[p:p+nf].decode('utf-8')
-        if f=="z":  # dummy format 'z' for empty data
-            return cmd,None
         p+=nf
-        if f[0]=='a':
-            data=list(struct.unpack(f[1:],s[p:]))
-        else:
-            data=struct.unpack(f,s[p:])
-            if len(data)==1:
-                data=data[0]
+        data=()
+        if f=="z":  # dummy format 'z' for empty data
+            if s[p]!=62:
+                return "error",None
+            else:
+                return cmd,None
+        while (len(f)>0):
+            nf,f=digitformat(f)
+            fo=f[0]
+            if f[0]=='a': # array
+                f=f[1:]
+                nf,f=digitformat(f)
+                fo=f[0]
+                nr_bytes=nf*sizes[fo]
+                data=data+(list(struct.unpack("%d"%nf+fo,s[p:p+nr_bytes])),)
+            else:                           
+                ff=fo if nf==0 else "%d"%nf+fo
+                if nf==0: nf=1
+                nr_bytes=nf*sizes[fo]
+                data=data+(struct.unpack(ff,s[p:p+nr_bytes]))
+            p+=nr_bytes
+            f=f[1:]
+        if (s[p]!=62):  # check whether final character equals '>' 
+            return "error",None
+        if len(data)==1:
+            data=data[0]
         return cmd,data
+
 
     def available(self):
         if PLATFORM=="EV3":
