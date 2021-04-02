@@ -48,7 +48,15 @@ Protocol used by this library:
 
 class UartRemote:
     commands={}  
- 
+    def digitformat(f):
+    nn='0'
+    i=0
+    while f[i]>='0' and f[i]<='9':
+                nn+=f[i]
+                i+=1
+    return (int(nn),f[i:])     
+
+
     def __init__(self,*port_lego,baudrate=230400,timeout=1000,debug=False):
         if PLATFORM=="EV3":
             port=port_lego[0]
@@ -109,7 +117,7 @@ class UartRemote:
         s=b'<'+struct.pack("B",len(s))+s 
         return s 
 
-        def decode(self,s):
+    def decode(self,s):
         sizes={'b':1,'i':4,'f':4,'s':1}
         nl=struct.unpack('B',s[1:2])[0]
         if s[0]!=60 or len(s)!=nl+2:
