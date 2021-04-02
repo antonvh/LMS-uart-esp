@@ -19,12 +19,12 @@ When a command with its accompanying values is transmitted over the Uart, the fo
 | `\<`      |  `ln`   | `lc`    | `cmd` | `lf`    | `f` | binary data | `\>`|
 
 with
-`ln` the length of the total packet encoded as a single byte,
-`lc` the length of the command string `<cmd>` as a single byte,
-`cmd` the command specified as a string,
-`lf` the length of the format string
-`f` the Format character used for `struct.pack` to pack the values; when data is a list, the character `a` is prepended to `f`.
-`data` a number of values packed using `struct.pack`
+- `ln` the length of the total packet encoded as a single byte,
+- `lc` the length of the command string `<cmd>` as a single byte,
+- `cmd` the command specified as a string,
+- `lf` the length of the format string
+- `f` the Format character used for `struct.pack` to pack the values; when data is a list, the character `a` is prepended to `f`.
+- `data` a number of values packed using `struct.pack`
 
 When the command
 `send_receive('test','B',[1,2,3,4,5]`
