@@ -1,4 +1,4 @@
-﻿# Remote UART library: uartremote.py
+# Remote UART library: uartremote.py
 
 This is a library for robust communication between lego EV3/Spike and other MicroPython modules using the UART.
 

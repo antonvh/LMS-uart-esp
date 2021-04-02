@@ -48,13 +48,14 @@ Protocol used by this library:
 
 class UartRemote:
     commands={}  
-    def digitformat(f):
-    nn='0'
-    i=0
-    while f[i]>='0' and f[i]<='9':
+
+    def digitformat(self,f):
+       nn='0'
+       i=0
+       while f[i]>='0' and f[i]<='9':
                 nn+=f[i]
                 i+=1
-    return (int(nn),f[i:])     
+       return (int(nn),f[i:])     
 
 
     def __init__(self,*port_lego,baudrate=230400,timeout=1000,debug=False):
@@ -84,7 +85,7 @@ class UartRemote:
             s=b''
             f=argv[0]
             while (len(f)>0):
-                nf,f=digitformat(f)
+                nf,f=self.digitformat(f)
                 if nf==0:
                     nf=1
                     fo=f[0]
@@ -110,19 +111,17 @@ class UartRemote:
                     s+=struct.pack(fo,*data)
                 i+=nf
                 f=f[1:]
-            s=struct.pack('B',len(ff))+ff.encode('utf-8')+s+b'>'   
+            s=struct.pack('B',len(ff))+ff.encode('utf-8')+s 
         else:
-            s=b'\x01z>'  # dummy format 'z' for no arguments
+            s=b'\x01z'  # dummy format 'z' for no arguments
         s=struct.pack("B",len(cmd))+cmd.encode('utf-8')+s
-        s=b'<'+struct.pack("B",len(s))+s 
+        s=struct.pack("B",len(s))+s 
         return s 
 
     def decode(self,s):
-        sizes={'b':1,'i':4,'f':4,'s':1}
-        nl=struct.unpack('B',s[1:2])[0]
-        if s[0]!=60 or len(s)!=nl+2:
-            return "error",None
-        p=2
+        sizes={'b':1,'B':1,'i':4,'I':4,'f':4,'s':1}
+        nl=struct.unpack('B',s[:1])[0]
+        p=1
         nc=struct.unpack('B',s[p:p+1])[0]
         p+=1
         cmd=s[p:p+nc].decode('utf-8')
@@ -133,16 +132,13 @@ class UartRemote:
         p+=nf
         data=()
         if f=="z":  # dummy format 'z' for empty data
-            if s[p]!=62:
-                return "error",None
-            else:
-                return cmd,None
+            return cmd,None
         while (len(f)>0):
-            nf,f=digitformat(f)
+            nf,f=self.digitformat(f)
             fo=f[0]
             if f[0]=='a': # array
                 f=f[1:]
-                nf,f=digitformat(f)
+                nf,f=self.digitformat(f)
                 fo=f[0]
                 nr_bytes=nf*sizes[fo]
                 data=data+(list(struct.unpack("%d"%nf+fo,s[p:p+nr_bytes])),)
@@ -153,11 +149,12 @@ class UartRemote:
                 data=data+(struct.unpack(ff,s[p:p+nr_bytes]))
             p+=nr_bytes
             f=f[1:]
-        if (s[p]!=62):  # check whether final character equals '>' 
-            return "error",None
-        if len(data)==1:
+        if len(data)==1: # convert from tuple size 1 to single value
             data=data[0]
-        return cmd,data
+        if nl!=p-1:
+            return "error","len"
+        else:
+            return cmd,data
 
 
     def available(self):
@@ -184,6 +181,9 @@ class UartRemote:
                 time.sleep(0.01)
                 pass
         try:
+            delim=self.uart.read(1)
+            if delim!=b'<':
+                result=("err","nok")
             ls=self.uart.read(1)
             l=struct.unpack('B',ls)[0]
             s=ls
@@ -193,7 +193,12 @@ class UartRemote:
                 while r==None:
                     r=self.uart.read(1)
                 s+=r
-            result=self.decode(s)
+            delim=self.uart.read(1)
+            if delim!=b'>':
+                result=("err","nok")
+            else:
+                result=self.decode(s)
+            
         except:
             self.flush()
             result=("err","nok")
@@ -203,7 +208,8 @@ class UartRemote:
     def send(self,command,*argv):
         try:
             s=self.encode(command,*argv)
-            self.uart.write(s)
+            print('encoded=',s)
+            self.uart.write(b'<'+s+b'>')
             return 1
         except:
             self.flush()

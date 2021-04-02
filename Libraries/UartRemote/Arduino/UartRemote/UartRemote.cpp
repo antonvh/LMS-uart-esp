@@ -237,7 +237,6 @@ packresult UartRemote::vpack(const char* format, va_list list) {
                     break;
                 case 'f':
                     *(float*)(ans+totalsize) = (float)va_arg(list, double);
-                    printf("%x \n",*(int*)(ans+totalsize)); 
                     totalsize+=4;
                     break;
                 default:
@@ -297,6 +296,7 @@ void UartRemote::send(const char* cmd, const char* format, ... ) {
   unsigned char lf = strlen(format);
   unsigned char l=lc+lf+p.size+2; // +2 for the length fields of cmd and format
   int i;
+  UART.write('<');
   UART.write(l);
   UART.write(lc);
   for (i=0; i<lc; i++) UART.write(cmd[i]);
@@ -304,11 +304,18 @@ void UartRemote::send(const char* cmd, const char* format, ... ) {
   for (i=0; i<lf; i++) UART.write(format[i]);
   //printf("p.size= %d\n",p.size);
   for (i=0; i<p.size; i++) UART.write(p.data[i]);
+  UART.write('>');
 }
 
 unpackresult UartRemote::receive(char* cmd) {
+  unsigned char delim=readserial1();
+//   if (delim!=60) 
+//       cmd="error";
+//       return unpack("b","\x00");
+  printf("left delim %d   %d!=60: %d\n",delim,delim!=60);
   unsigned char l =readserial1();
   unsigned char lc = readserial1();
+
   for (int i=0; i<lc; i++) {
     cmd[i]=readserial1();
   }
@@ -322,6 +329,11 @@ unpackresult UartRemote::receive(char* cmd) {
   for (int i=0; i<l_data; i++) {
     data_buf[i]=readserial1();
   }
+  delim=readserial1();
+  printf("right delim %c\n",delim);
+//   if (delim!='>') 
+//       cmd="error";
+//       return unpack("b","\x00");
   return unpack(format,data_buf);
 }
 
