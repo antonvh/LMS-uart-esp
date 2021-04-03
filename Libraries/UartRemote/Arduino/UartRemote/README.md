@@ -1,6 +1,6 @@
 # UartRemote library for Arduino
 
-This library is fully compatible with the MicroPython UartRemote library. It can be used in any Arduino project.
+This library is fully compatible with the MicroPython UartRemote library. It can be used in any Arduino project by adding this whole directory to the Arduino ibrary directory. After importing the `UartRemote` library, an example can be selected form the examples in the Arduino IDE.
 
 ## Differences compared to MicroPython implementation
 
