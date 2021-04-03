@@ -183,7 +183,8 @@ class UartRemote:
         try:
             delim=self.uart.read(1)
             if delim!=b'<':
-                result=("err","nok")
+                self.flush()
+                return ("err","nok")
             ls=self.uart.read(1)
             l=struct.unpack('B',ls)[0]
             s=ls
@@ -195,7 +196,8 @@ class UartRemote:
                 s+=r
             delim=self.uart.read(1)
             if delim!=b'>':
-                result=("err","nok")
+                self.flush()
+                return ("err","nok")
             else:
                 result=self.decode(s)
             
@@ -208,7 +210,6 @@ class UartRemote:
     def send(self,command,*argv):
         try:
             s=self.encode(command,*argv)
-            print('encoded=',s)
             self.uart.write(b'<'+s+b'>')
             return 1
         except:
@@ -240,8 +241,8 @@ class UartRemote:
                     resp=self.commands[command]()
                 if resp!=None:
                     t=resp[0]
-                    data=resp[1]
-                    self.send(command_ack,t,data)
+                    data=resp[1:]
+                    self.send(command_ack,t,*data)
                 else:
                     self.send(command_ack,'s','ok')
             else:
