@@ -9,9 +9,8 @@ This is a uniform library that works on standard MicroPython platforms, the EV3 
 ## Arduino
 
 The same UartRemote library is also implemented for Arduino.
-ontains `error`.
 
-# packet format
+# Packet format
 When a command with its accompanying values is transmitted over the Uart, the following packet format is used:
 
 |delimiter|total len|command len|command|format len| format| data|delimiter|
