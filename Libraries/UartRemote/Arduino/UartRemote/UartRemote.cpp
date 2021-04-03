@@ -285,6 +285,12 @@ int UartRemote::available()
    }
 }
 
+void UartRemote::flush() {
+    while (available()) {
+        UART.read();
+    }
+}
+
 void UartRemote::send(const char* cmd, const char* format, ... ) {
 
   va_list list;
@@ -308,11 +314,13 @@ void UartRemote::send(const char* cmd, const char* format, ... ) {
 }
 
 unpackresult UartRemote::receive(char* cmd) {
-  unsigned char delim=readserial1();
-//   if (delim!=60) 
-//       cmd="error";
-//       return unpack("b","\x00");
-  printf("left delim %d   %d!=60: %d\n",delim,delim!=60);
+  char delim=readserial1();
+  if (delim!=60) 
+    //  cmd="error";
+    //  flush();
+    //  return unpack("b","\x00");
+     printf("error no < delim\n");
+  //printf("left delim %d   %d!=60: %d\n",delim,delim,delim!=60);
   unsigned char l =readserial1();
   unsigned char lc = readserial1();
 
@@ -330,10 +338,12 @@ unpackresult UartRemote::receive(char* cmd) {
     data_buf[i]=readserial1();
   }
   delim=readserial1();
-  printf("right delim %c\n",delim);
-//   if (delim!='>') 
-//       cmd="error";
-//       return unpack("b","\x00");
+  //printf("right delim %c\n",delim);
+  if (delim!=62) 
+    //   cmd="error";
+    //   flush();
+    //   return unpack("b","\x00");
+      printf("error no > delim\n");
   return unpack(format,data_buf);
 }
 

@@ -66,6 +66,7 @@ class UartRemote
     packresult pack(const char* format, ...);
     int available();
     unsigned char readserial1();
+    void flush();
     void command(char cmd[],unpackresult& rcvunpack);
     void send(const char* cmd, const char* format, ... );
     unpackresult receive(char* cmd);
