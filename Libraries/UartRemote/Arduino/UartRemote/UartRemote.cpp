@@ -286,6 +286,7 @@ int UartRemote::available()
 }
 
 void UartRemote::flush() {
+    delay(100);
     while (available()) {
         UART.read();
     }
@@ -315,11 +316,12 @@ void UartRemote::send(const char* cmd, const char* format, ... ) {
 
 unpackresult UartRemote::receive(char* cmd) {
   char delim=readserial1();
-  if (delim!=60) 
-    //  cmd="error";
-    //  flush();
-    //  return unpack("b","\x00");
-     printf("error no < delim\n");
+  if (delim!='<') {
+    strcpy(cmd,"error");
+    flush();
+    send("error","b",'!');
+    return unpack("b","!");
+  }
   //printf("left delim %d   %d!=60: %d\n",delim,delim,delim!=60);
   unsigned char l =readserial1();
   unsigned char lc = readserial1();
@@ -339,11 +341,12 @@ unpackresult UartRemote::receive(char* cmd) {
   }
   delim=readserial1();
   //printf("right delim %c\n",delim);
-  if (delim!=62) 
-    //   cmd="error";
-    //   flush();
-    //   return unpack("b","\x00");
-      printf("error no > delim\n");
+  if (delim!='>') {
+      strcpy(cmd,"error");
+      flush();
+      send("error","b",'!');
+      return unpack("b","!"); 
+  }
   return unpack(format,data_buf);
 }
 
