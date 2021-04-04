@@ -6,7 +6,7 @@ This is a uniform library that works on standard MicroPython platforms, the EV3 
 
 ## Disable repl on UART
 
-For this library to work properly, the repl prompt duplication on the UART needs to be disabled. therefore, in the make the following change in `boot.py`
+For this library to work properly, the repl prompt duplication on the UART needs to be disabled. Therefore, make the following change in `boot.py`
 
 ```
 ...
@@ -47,14 +47,15 @@ The `send_receive` method allows the Master to send a command to the Slave. When
 
 | Format character | type | number of bytes |
 |---------------------|-------|--------------|
+| `b` | byte | 1 |
 | `B` | unsigned byte | 1 |
-| `H` | unsigned short | 2 |
+| `i` | int | 4 |
 | `I` | unsigned int | 4 |
 | `f` | float | 4 |
 | `d` | double | 8 |
 | `s` | char[] | 
 
-The Slave acknowledges a command by sending back an acknowledge command, where the string `ack` is appended to the command, and return values of the function being called are are send back. When an error occurs, the `<cmd>` that is sent back, contains `error`.
+The Slave acknowledges a command by sending back an acknowledge command, where the string `ack` is appended to the command, and return values of the function being called are sent back. When an error occurs, the `<cmd>` that is sent back, contains `error`.
 
 When the Format string `f` is a single character, and the data is a list, each element of the list will be encoded using the specified Format character. The format field can also consist of multiple Format characters, for example 
 
