@@ -15,7 +15,7 @@ When a command with its accompanying values is transmitted over the Uart, the fo
 
 |delimiter|total len|command len|command|format len| format| data|delimiter|
 |---------|---------|-----------|-------|----------|-------|-----|---------|
-| `\<`      |  `ln`   | `lc`    | `cmd` | `lf`    | `f` | binary data | `\>`|
+| `<`      |  `ln`   | `lc`    | `cmd` | `lf`    | `f` | binary data | `>`|
 
 with
 - `ln` the length of the total packet encoded as a single byte,
@@ -29,7 +29,7 @@ When the command
 `send_receive('test','B',[1,2,3,4,5]`
 is used, the following packet will be transmitted over the line:
 
-```b'\x0e\x04test\x03a5B\x01\x02\x03\x04\x05'```
+```b'<\x0e\x04test\x03a5B\x01\x02\x03\x04\x05'```
 
 or in hex:
 
