@@ -59,7 +59,6 @@ void measure(unpackresult& args) {
 
   //packresult rcvpack;
   unsigned char b[50];
-  printf("iterante %d times\n",n);
   for (int i=0; i<50; i++) b[i]=i;
   debugV("* Before pack/unpack");
   for (int i=0; i<n; i++) {
@@ -68,7 +67,7 @@ void measure(unpackresult& args) {
   }
   debugV("* after pack/unpack");
   //Serial.println("Ready");
-  uartremote.send("ledack","b",0);
+  uartremote.send("measureack","b",0);
 }
 
 void tstarr(unpackresult& args) {
@@ -314,11 +313,11 @@ void initializeOTA() {
 	});
 	ArduinoOTA.onError([](ota_error_t error) {
 		Serial1.printf("*OTA: Error[%u]: ", error);
-		if (error == OTA_AUTH_ERROR) Serial.println("Auth Failed");
-		else if (error == OTA_BEGIN_ERROR) Serial.println("Begin Failed");
-		else if (error == OTA_CONNECT_ERROR) Serial.println("Connect Failed");
-		else if (error == OTA_RECEIVE_ERROR) Serial.println("Receive Failed");
-		else if (error == OTA_END_ERROR) Serial.println("End Failed");
+		if (error == OTA_AUTH_ERROR) Serial1.println("Auth Failed");
+		else if (error == OTA_BEGIN_ERROR) Serial1.println("Begin Failed");
+		else if (error == OTA_CONNECT_ERROR) Serial1.println("Connect Failed");
+		else if (error == OTA_RECEIVE_ERROR) Serial1.println("Receive Failed");
+		else if (error == OTA_END_ERROR) Serial1.println("End Failed");
 	});
 
 	ArduinoOTA.begin();

@@ -12,8 +12,11 @@
 #define RXD1 18
 #define TXD1 19
 
-
-#define UART Serial1
+#if defined ESP8266
+  #define UART Serial
+#elif defined ESP32
+  #define UART Serial1
+#endif
 
 enum datatype { t_int, t_byte, t_float }; // t_char_array,
 
