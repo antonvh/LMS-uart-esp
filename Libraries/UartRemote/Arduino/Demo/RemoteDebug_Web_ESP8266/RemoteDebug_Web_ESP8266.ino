@@ -1,4 +1,6 @@
 
+#include <ext/pb_ds/assoc_container.hpp>
+
 #define HOST_NAME "remotedebug"
 
 // Board especific libraries
