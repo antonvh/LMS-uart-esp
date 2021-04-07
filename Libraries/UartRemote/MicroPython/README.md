@@ -52,9 +52,9 @@ On the slave (ESP8266):
 ```python
 from uartremote import *
 u=UartRemote(0)
-u.add_command('imu',imu)
-u.add_command('led',led)
-u.add_command('grid',grideye)
+u.add_command('imu','f',imu)
+u.add_command('led','',led)
+u.add_command('grid','f',grideye)
 u.loop()
 ```
 
@@ -99,24 +99,22 @@ def led(v):
         print(i)
     
 def imu():
-    return('f',[12.3,11.1,180.0])
+    return([12.3,11.1,180.0])
 
 def grideye(v):
-    addr=v[0]
+    addr=v
     a=[20,21,22,23,24,25,26,27,28]
-    return('B',a[addr%9])
+    return(a[addr%9])
 
 from uartremote import *
 u=UartRemote(0)
-u.add_command("led",led)
-u.add_command("imu",imu)
-u.add_command("grid",grideye)
+u.add_command("led",'',led)
+u.add_command("imu",'f',imu)
+u.add_command("grid",'B',grideye)
 u.loop()
 ```
 Here three different example functions are used: `led` which takes a value, but does not return a value, `imu` which returns a value, but does not take a value, and `grideye` wich takes a values and returns a value.
-The functions that return a value, need to return a tuple
-`<type>, <data>`
-with `<type>` the Format character, and where `<value>` can be a string, a single value, or a list of values.
+In the `add_command` method, the second argument is the `formatstring`, defining the format of the return argument9s).
 
 ## Master code
 On the Master the following code is used:
@@ -133,7 +131,7 @@ In repl the following examples result in:
 >>> u.send_receive('grid','B',1)
 ('gridack', [21])
 >>> u.send_receive('unknown')
-('error', [b'n', b'o', b'k'])
+('error', [b'nok'])
 ```
 
 # Simultaneous sending and receiving
@@ -146,10 +144,10 @@ import time
 from uartremote import *
     
 def imu():
-    return('f',[12.3,11.1,180.0])
+    return([12.3,11.1,180.0])
 
 u=UartRemote(Port.S1)
-u.add_command("imu",imu)
+u.add_command("imu",'f',imu)
 
 t_old=time.ticks_ms()+2000                      # wait 2 seconds before starting
 q=u.flush()                                     # flush uart rx buffer
@@ -173,7 +171,7 @@ def led(v):
     for i in v:
         print(i)
 
-u.add_command("led",led)
+u.add_command("led",'',led)
 
 
 t_old=time.ticks_ms()+2000                      # wait 2 seconds before starting
@@ -222,6 +220,6 @@ Waits for the reception of a command and returns the received command as a dict 
 
 Loops the `UartRemote.wait-for_command()` command.
 
-#### `UartRemote.add_command(command,command_function)`
+#### `UartRemote.add_command(command,format_string,command_function)`
 
-Adds a command `command` to the dictionary of `UartRemote.commands` together with a fucntion name `command_function`. The dictionary with commands is used by the `UartRemote.wait_for_command()` method to call the function as defined upon receiving a specific command. As an argument the `data` that is received is used.
+Adds a command `command` to the dictionary of `UartRemote.commands` together with a function name `command_function`. The dictionary with commands is used by the `UartRemote.wait_for_command()` method to call the function as defined upon receiving a specific command. As an argument the `data` that is received is used.
