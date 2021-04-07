@@ -4,7 +4,7 @@ This is a library for robust communication between lego EV3/Spike and other Micr
 
 This is a uniform library that works on standard MicroPython platforms, the EV3 and the Spike. 
 
-## Disable repl on UART
+## ESP8266: Disable repl on UART
 
 For this library to work properly, the repl prompt duplication on the UART needs to be disabled. Therefore, make the following change in `boot.py`
 
@@ -14,7 +14,35 @@ import uos, machine
 uos.dupterm(None, 1) # disable REPL on UART(0)
 ...
 ```
+## Spike prime: uploading the library
+In order to upload the UartRemote library to the Spike Prime hub, it is convenient to install the `rshell` Python extension by:
 
+```
+pip3 install rshell
+```
+
+Hook up the Spike prime Hub and identyfy the Serial port on the PC to which the hub is connected. On Windoew,e.g. COMxx on Mac OSX, /dev/tty.xxxxxx, and on Linux, /dev/ttyACMx.
+
+Start the rshell, and connect to the hub, where `<serial port>` is the port as identified above:
+
+```
+rshell
+connect serial <serial port>
+```
+
+You can now copy the library to the hub by issueing the following `rshell` command:
+
+```
+cp <path_to_library>/uartremote.py /pyboard/.
+```
+
+Note: On Windows use backslashes (`\`) in the `<path_to_library>`.
+
+Now you can either use the Spike programming environment, or start a repl prompt from the `rshell`:
+
+```
+repl
+```
 ## Initialize
 
 Below is an example of how to use this library.
