@@ -21,10 +21,21 @@ except:
 
 import struct
 import time
+import sys
+
+interrupt_pressed=0
+
+def esp_interrupt(p):
+    global interrupt_pressed
+    print("Interrupt Pressed")
+    sys.exit(1)
+    interrupt_pressed=1
 
 if PLATFORM=="ESP8266" or PLATFORM=="ESP32":
     from machine import UART
     from machine import Pin,I2C
+    gpio0=Pin(0,Pin.IN)  # define pin0 as input = BOOT button on board
+    gpio0.irq(trigger=Pin.IRQ_FALLING, handler=esp_interrupt)
     #from compas import *
     import uos
 elif PLATFORM=="EV3":
@@ -40,7 +51,7 @@ class UartRemote:
     """UartRemote class"""
     commands={}
     command_formats={}
-
+    
     def digitformat(self,f):
         nn='0'
         i=0
@@ -51,18 +62,13 @@ class UartRemote:
 
 
     def __init__(self,*port_lego,baudrate=230400,timeout=1000,debug=False):
-        """Constructs a Uart communication class .
-           ::port:: On Lego hubs specifies port
-           ::baudrate:: Default baudrate 230400
-           ::timeout:: timeout in ms, default 1000
-           ::debug:: for future use"""
         if PLATFORM=="EV3":
             port=port_lego[0]
             self.uart = UARTDevice(port,baudrate=baudrate,timeout=timeout)
         elif PLATFORM=="H7":
             self.uart = UART(3, baudrate, timeout_char=timeout)
         elif PLATFORM=="ESP8266":
-            self.uart = UART(0,baudrate=baudrate,timeout=timeout,rxbuf=100)
+            self.uart = UART(0,baudrate=baudrate,timeout=timeout,timeout_char=timeout,rxbuf=100)
         elif PLATFORM=="ESP32":
             self.uart = UART(1,rx=18,tx=19,baudrate=baudrate,timeout=timeout)
         elif PLATFORM=="SPIKE":
@@ -81,10 +87,6 @@ class UartRemote:
         self.command_formats[command]=format
 
     def encode(self,cmd,*argv):
-        """Method for encoding a command
-        ::cmd:: specifies the command string
-        ::argv:: when ommited, an empty format string is send
-        ::formatstring,param1[,param2...]:: a formatstrign with one or more parameters."""
         if len(argv)>0:
             f=argv[0]
             i=0
@@ -126,10 +128,6 @@ class UartRemote:
         return s
 
     def decode(self,s):
-        """Method to decode a command packet
-        ::s:: binary string containing encoded command
-
-        ::return:: a tuple (cmd,[(]param1[param2..][)]) with the decoded command and parameters. A tuple is used for more than 1 parameter.""" 
         sizes={'b':1,'B':1,'i':4,'I':4,'f':4,'s':1}
         nl=struct.unpack('B',s[:1])[0]
         p=1
@@ -168,10 +166,6 @@ class UartRemote:
             return cmd,data
 
     def available(self):
-        """method for checking whether bytes are available on the uart.
-        Note, on the spike, the first character that is received is stored in the objects
-        `last_char`. 
-        ::return:: the number of bytes in the RX buffer"""
         if PLATFORM=="SPIKE":
             self.last_char=self.uart.read(1)
             if self.last_char==b'':
@@ -184,7 +178,6 @@ class UartRemote:
             return self.uart.any()
 
     def flush(self):
-        """Method to flush the uart receive buffer. Any bytes still in the receive buffer are removed"""
         # empty receive buffer
         if PLATFORM=="EV3":
             if self.uart.waiting()>0:
@@ -198,10 +191,7 @@ class UartRemote:
                 self.uart.read()
 
     def receive(self):
-        """Method for receiving a command and returns a tuple ::(cmd,data)::.
-          If there is a failure, the `<command>`  will be equal to `'error'`.
-          Note: this is a blokcing method. Execution will stop until a command is received.
-         """
+        global interrupt_pressed 
         delim=b""
         if PLATFORM=="EV3":
             while (self.uart.waiting()==0):
@@ -217,7 +207,7 @@ class UartRemote:
                 self.last_char=b''
         else:
             while (self.uart.any()==0):
-                time.sleep(0.01)
+                #time.sleep(0.01)
                 pass
         try:
             if delim==b'':
@@ -300,7 +290,11 @@ class UartRemote:
                 self.send('err','s','nok')
 
     def loop(self):
+        global interrupt_pressed
         while True:
+            if interrupt_pressed==1:
+                interrupt_pressed=0
+                break
             try:
                 self.wait_for_command()
             except:
