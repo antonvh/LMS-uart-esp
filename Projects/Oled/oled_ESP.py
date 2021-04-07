@@ -1,3 +1,9 @@
+"""
+Example code for driving a ssd1306 i2c OLED screen. 
+"""
+
+
+
 from machine import I2C, Pin
 from uartremote import *
 import ssd1306
@@ -22,15 +28,19 @@ class Oled:
     def pixel(self,x1,y1,color):
         self.oled.line(x1,y1,color)
 
+# initialize UartRemote library
 u=UartRemote(0)
+# initialize Oled instance
 oled=Oled()
-u.add_command('oledi',oled.init)
-u.add_command('oledt',oled.text)
-u.add_command("oleds",oled.show)
-u.add_command("oledf",oled.fill)
-u.add_command("oledl",oled.line)
-u.add_command("oledp",oled.pixel)
+# define different commands
+u.add_command('oledi','',oled.init)
+u.add_command('oledt','',oled.text)
+u.add_command("oleds",'',oled.show)
+u.add_command("oledf",'',oled.fill)
+u.add_command("oledl",'',oled.line)
+u.add_command("oledp",'',oled.pixel)
 
+# wait for a command in an endless loop
 u.loop()
 
 
