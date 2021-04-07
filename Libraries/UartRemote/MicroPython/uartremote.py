@@ -235,7 +235,7 @@ class UartRemote:
 
 
     def send(self,command,*argv):
-        #try:
+        try:
             s=self.encode(command,*argv)
             msg=b'<'+s+b'>'
             if PLATFORM=="SPIKE": # on spike send 32-bytes at a time
@@ -251,9 +251,9 @@ class UartRemote:
                 self.uart.write(msg)
             self.uart.write(msg)
             return 1
-        #except:
-        #    self.flush()
-        #    return 0
+        except:
+            self.flush()
+            return 0
 
 
     def send_receive(self,command,*args):
