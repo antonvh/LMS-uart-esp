@@ -165,6 +165,7 @@ class UartRemote:
             return "error","len"
         else:
             return cmd,data
+
     def available(self):
         """method for checking whether bytes are available on the uart. Note, this method does not work on the Spike prime.
         ::return:: the number of bytes in the RX buffer"""
@@ -234,13 +235,25 @@ class UartRemote:
 
 
     def send(self,command,*argv):
-        try:
+        #try:
             s=self.encode(command,*argv)
-            self.uart.write(b'<'+s+b'>')
+            msg=b'<'+s+b'>'
+            if PLATFORM=="SPIKE": # on spike send 32-bytes at a time
+                window=32
+                while len(msg) > window:
+                    print(msg)
+                    self.uart.write(msg[:window])
+                    sleep_ms(4)
+                    msg = msg[window:]
+                print(msg)
+                self.uart.write(msg)
+            else:
+                self.uart.write(msg)
+            self.uart.write(msg)
             return 1
-        except:
-            self.flush()
-            return 0
+        #except:
+        #    self.flush()
+        #    return 0
 
 
     def send_receive(self,command,*args):
@@ -265,9 +278,12 @@ class UartRemote:
                         resp=self.commands[command](value)
                 else:
                     resp=self.commands[command]()
+                print("resp=",resp)
                 if resp!=None:
-                    f=format[command]
-                    self.send(command_ack,format,*resp)
+                    f=self.command_formats[command]
+                    if type(resp)!=tuple:
+                        resp=(resp,) # make a tuple
+                    self.send(command_ack,f,*resp)
                 else:
                     self.send(command_ack,'s','ok')
             else:
@@ -279,3 +295,5 @@ class UartRemote:
                 self.wait_for_command()
             except:
                 self.flush()
+
+
