@@ -37,6 +37,7 @@ elif PLATFORM=="SPIKE":
     from utime import sleep_ms
 
 class UartRemote:
+    """UartRemote class"""
     commands={}
     command_formats={}
 
@@ -50,6 +51,11 @@ class UartRemote:
 
 
     def __init__(self,*port_lego,baudrate=230400,timeout=1000,debug=False):
+        """Constructs a Uart communication class .
+           ::port:: On Lego hubs specifies port
+           ::baudrate:: Default baudrate 230400
+           ::timeout:: timeout in ms, default 1000
+           ::debug:: for future use"""
         if PLATFORM=="EV3":
             port=port_lego[0]
             self.uart = UARTDevice(port,baudrate=baudrate,timeout=timeout)
@@ -74,6 +80,10 @@ class UartRemote:
         self.command_formats[command]=format
 
     def encode(self,cmd,*argv):
+        """Method for encoding a command
+        ::cmd:: specifies the command string
+        ::argv:: when ommited, an empty format string is send
+        ::formatstring,param1[,param2...]:: a formatstrign with one or more parameters."""
         if len(argv)>0:
             f=argv[0]
             i=0
@@ -115,6 +125,10 @@ class UartRemote:
         return s
 
     def decode(self,s):
+        """Method to decode a command packet
+        ::s:: binary string containing encoded command
+
+        ::return:: a tuple (cmd,[(]param1[param2..][)]) with the decoded command and parameters. A tuple is used for more than 1 parameter.""" 
         sizes={'b':1,'B':1,'i':4,'I':4,'f':4,'s':1}
         nl=struct.unpack('B',s[:1])[0]
         p=1
@@ -152,12 +166,15 @@ class UartRemote:
         else:
             return cmd,data
     def available(self):
+        """method for checking whether bytes are available on the uart. Note, this method does not work on the Spike prime.
+        ::return:: the number of bytes in the RX buffer"""
         if PLATFORM=="EV3":
             return self.uart.waiting()
         else:
             return self.uart.any()
 
     def flush(self):
+        """Method to flush the uart receive buffer. Any bytes still in the receive buffer are removed"""
         # empty receive buffer
         if PLATFORM=="EV3":
             if self.uart.waiting()>0:
@@ -171,6 +188,10 @@ class UartRemote:
                 self.uart.read()
 
     def receive(self):
+        """Method for receiving a command and returns a tuple ::(cmd,data)::.
+          If there is a failure, the `<command>`  will be equal to `'error'`.
+          Note: this is a blokcing method. Execution will stop until a command is received.
+         """
         delim=b""
         if PLATFORM=="EV3":
             while (self.uart.waiting()==0):
