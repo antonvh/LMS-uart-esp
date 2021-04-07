@@ -71,6 +71,7 @@ class UartRemote:
             self.uart.mode(1)
             sleep_ms(1000)# wait for all duplex methods to appear
             self.uart.baud(baudrate) # set baud rate
+            self.last_char=b''
         else:
             raise RuntimeError('MicroPython Platform not defined')
         self.DEBUG=debug
@@ -167,8 +168,16 @@ class UartRemote:
             return cmd,data
 
     def available(self):
-        """method for checking whether bytes are available on the uart. Note, this method does not work on the Spike prime.
+        """method for checking whether bytes are available on the uart.
+        Note, on the spike, the first character that is received is stored in the objects
+        `last_char`. 
         ::return:: the number of bytes in the RX buffer"""
+        if PLATFORM=="SPIKE":
+            self.last_char=self.uart.read(1)
+            if self.last_char==b'':
+                return 0
+            else:
+                return 1
         if PLATFORM=="EV3":
             return self.uart.waiting()
         else:
@@ -198,10 +207,14 @@ class UartRemote:
             while (self.uart.waiting()==0):
                 pass
         elif PLATFORM=="SPIKE":
-            c=b''
-            while c==b'':
-                c=self.uart.read(1)
-            delim=c
+            if self.last_char==b'':
+                c=b''
+                while c==b'':
+                    c=self.uart.read(1)
+                delim=c
+            else:
+                delim=self.last_char # in self.available() the first non zero character is stored in self.last_char
+                self.last_char=b''
         else:
             while (self.uart.any()==0):
                 time.sleep(0.01)
@@ -241,11 +254,9 @@ class UartRemote:
             if PLATFORM=="SPIKE": # on spike send 32-bytes at a time
                 window=32
                 while len(msg) > window:
-                    print(msg)
                     self.uart.write(msg[:window])
                     sleep_ms(4)
                     msg = msg[window:]
-                print(msg)
                 self.uart.write(msg)
             else:
                 self.uart.write(msg)
@@ -278,7 +289,6 @@ class UartRemote:
                         resp=self.commands[command](value)
                 else:
                     resp=self.commands[command]()
-                print("resp=",resp)
                 if resp!=None:
                     f=self.command_formats[command]
                     if type(resp)!=tuple:
