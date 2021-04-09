@@ -1,9 +1,3 @@
-# library https://github.com/tuupola/micropython-mpu9250
-# single change for different WHOAMI value for MPU-892/65board
-# line 97 of mpu6500.py, 0x73 added
-#     if self.whoami not in [0x73,0x71, 0x70]:
-    
-
 
 import utime
 from machine import I2C, Pin
@@ -16,13 +10,14 @@ sensor = MPU9250(i2c, mpu6500=mpu6500)
 
 print("MPU9250 id: " + hex(sensor.whoami))
 
-def acc():
+def imu(dummy):
     val=sensor.acceleration
-    return ('f',[val[0],val[1],val[2]])
+    print("acc",val)
+    return ('3f',val[0],val[1],val[2])
 
 
 from uartremote import *
 
 u=UartRemote(0)
-u.add_command('acc',acc)
+u.add_command('imu',imu)
 u.loop()

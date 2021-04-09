@@ -1,4 +1,4 @@
-from uartfast import *
+from uartremote import *
 u=UartFast(Port.S1)
 
 while True:

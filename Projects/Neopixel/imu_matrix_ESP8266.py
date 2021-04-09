@@ -5,7 +5,7 @@ from mpu9250 import MPU9250
 from mpu6500 import MPU6500, SF_G, SF_DEG_S
 
 
-from uartfast import *
+from uartremote import *
 
 class Neo:
     def neo_init(self,number_pixels,pin=machine.Pin(13)):

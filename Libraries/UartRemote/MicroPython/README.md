@@ -1,8 +1,19 @@
-﻿# LMS-uart-lib-fast
+# Remote UART library: uartremote.py
 
 This is a library for robust communication between lego EV3/Spike and other MicroPython modules using the UART.
 
 This is a uniform library that works on standard MicroPython platforms, the EV3 and the Spike. 
+
+## Disable repl on UART
+
+For this library to work properly, the repl prompt duplication on the UART needs to be disabled. Therefore, make the following change in `boot.py`
+
+```
+...
+import uos, machine
+uos.dupterm(None, 1) # disable REPL on UART(0)
+...
+```
 
 ## Initialize
 
@@ -11,7 +22,7 @@ Below is an example of how to use this library.
 On the slave (ESP8266):
 
 ```python
-from uartfast import *
+from uartremote import *
 u=UartRemote(0)
 u.add_command('imu',imu)
 u.add_command('led',led)
@@ -25,7 +36,7 @@ In this example two functions are defined `imu`, `led` and `grideye`. These func
 
 On the master (EV3):
 ```python
-from uartfast import *
+from uartremote import *
 u=UartRemote(Port.S1)
 u.send_receive('imu')
 u.send_receive('grid','B',10)
@@ -36,42 +47,19 @@ The `send_receive` method allows the Master to send a command to the Slave. When
 
 | Format character | type | number of bytes |
 |---------------------|-------|--------------|
+| `b` | byte | 1 |
 | `B` | unsigned byte | 1 |
-| `H` | unsigned short | 2 |
+| `i` | int | 4 |
 | `I` | unsigned int | 4 |
 | `f` | float | 4 |
 | `d` | double | 8 |
 | `s` | char[] | 
 
-The Slave acknowledges a command by sending back an acknowledge command, where the string `ack` is appended to the command, and return values of the function being called are are send back. When an error occurs, the `<cmd>` that is sent back, contains `error`.
-
-## packet format
-When a command with its accompanying values is transmitted over the Uart, the following packet format is used:
-
-```<l><cl><cmd><fl><f><data>```
-
-with
-`l` the length of the total packet encoded as a single byte,
-`cl` the length of the command string `<cmd>` as a single byte,
-`cmd` the command specified as a string,
-`fl` the length of the format string
-`f` the Format character used for `struct.pack` to pack the values; when data is a list, the character `a` is prepended to `f`.
-`n` the number of `<data>`
-`data` a number of values packed using `struct.pack`
-
-When the command
-`send_receive('test','B',[1,2,3,4,5]`
-is used, the following packet will be transmitted over the line:
-
-```b'\x0e\x04test\x03a5B\x01\x02\x03\x04\x05'```
-
-or in hex:
-
-```0e0474657374036135420102030405```
+The Slave acknowledges a command by sending back an acknowledge command, where the string `ack` is appended to the command, and return values of the function being called are sent back. When an error occurs, the `<cmd>` that is sent back, contains `error`.
 
 When the Format string `f` is a single character, and the data is a list, each element of the list will be encoded using the specified Format character. The format field can also consist of multiple Format characters, for example 
 
-```send_receive('special','3b2s1f',1,2,3,"aap",1.3)```.
+```send_receive('special','3b3s1f',1,2,3,"aap",1.3)```.
 
 # Example application
 ## Slave code
@@ -90,7 +78,7 @@ def grideye(v):
     a=[20,21,22,23,24,25,26,27,28]
     return('B',a[addr%9])
 
-from uartfast import *
+from uartremote import *
 u=UartRemote(0)
 u.add_command("led",led)
 u.add_command("imu",imu)
@@ -105,8 +93,8 @@ with `<type>` the Format character, and where `<value>` can be a string, a singl
 ## Master code
 On the Master the following code is used:
 ```python
-from uartfast import *
-u=UartFast(Port.S1)
+from uartremote import *
+u=Uartremote(Port.S1)
 ```
 In repl the following examples result in:
 ```
@@ -127,7 +115,7 @@ The library allows for simultaneously sending and receiving commands from both s
 ### EV3
 ```python
 import time
-from uartfast import *
+from uartremote import *
     
 def imu():
     return('f',[12.3,11.1,180.0])
@@ -149,7 +137,7 @@ while True:
 ### ESP8266
 ```python
 import time
-from uartfast import *
+from uartremote import *
 u=UartRemote(0)
 
 def led(v):

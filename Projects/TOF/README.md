@@ -11,10 +11,10 @@ The library as compikled using the following command:
 pip3 install mpy-cross
 ```
 
-## example ESP8266, using uartfast
+## example ESP8266, using uartremote
 
 ```python
-from uartfast import *
+from uartremote import *
 from vl53 import *
 
 u=UartRemote(0)
@@ -33,11 +33,11 @@ u.add_command('vl53',vl53)
 u.loop()
 ```
 
-## example EV3, using uartfast
+## example EV3, using uartremote
 
 ```python
 import time
-from uartfast import *
+from uartremote import *
 u=UartRemote(Port.S1)
 
 while True:

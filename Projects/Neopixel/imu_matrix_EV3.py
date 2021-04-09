@@ -1,5 +1,5 @@
 
-from uartfast import *
+from uartremote import *
 
 u=UartRemote(Port.S1)
 
