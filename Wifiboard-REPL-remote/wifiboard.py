@@ -7,7 +7,8 @@ class WifiBoardError(Exception):
 
 class WifiBoard():
     def __init__(self, port_string):
-        # Initialize serial port
+        # Initialize serial port. SPIKE And RI hubs only.
+        # TODO: make this compatible with EV3/Pybricks
         self.board = eval("port."+port_string)
         self.board.mode(1)
         sleep_ms(60)
