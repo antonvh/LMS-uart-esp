@@ -5,7 +5,7 @@ This is a library for robust communication between lego EV3/Spike and other Micr
 ## Micropython
 
 This is a uniform library that works on standard MicroPython platforms, the EV3 and the Spike. 
-See for a tutorial: (https://www.youtube.com/watch?v=3U67RWEsXiU)
+Here is a tutorial of the [MicroPython version of the UartRemote library](https://www.youtube.com/watch?v=3U67RWEsXiU)
 
 ## Arduino
 
