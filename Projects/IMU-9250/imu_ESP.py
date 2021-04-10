@@ -18,11 +18,11 @@ print("MPU9250 id: " + hex(sensor.whoami))
 
 def acc():
     val=sensor.acceleration
-    return ('f',[val[0],val[1],val[2]])
+    return ([val[0],val[1],val[2]])
 
 
 from uartremote import *
 
 u=UartRemote(0)
-u.add_command('acc',acc)
+u.add_command('acc','f',acc)
 u.loop()

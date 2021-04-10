@@ -21,10 +21,21 @@ except:
 
 import struct
 import time
+import sys
+
+interrupt_pressed=0
+
+def esp_interrupt(p):
+    global interrupt_pressed
+    print("Interrupt Pressed")
+    sys.exit(1)
+    interrupt_pressed=1
 
 if PLATFORM=="ESP8266" or PLATFORM=="ESP32":
     from machine import UART
     from machine import Pin,I2C
+    gpio0=Pin(0,Pin.IN)  # define pin0 as input = BOOT button on board
+    gpio0.irq(trigger=Pin.IRQ_FALLING, handler=esp_interrupt)
     #from compas import *
     import uos
 elif PLATFORM=="EV3":
@@ -37,8 +48,10 @@ elif PLATFORM=="SPIKE":
     from utime import sleep_ms
 
 class UartRemote:
+    """UartRemote class"""
     commands={}
-
+    command_formats={}
+    
     def digitformat(self,f):
         nn='0'
         i=0
@@ -55,7 +68,7 @@ class UartRemote:
         elif PLATFORM=="H7":
             self.uart = UART(3, baudrate, timeout_char=timeout)
         elif PLATFORM=="ESP8266":
-            self.uart = UART(0,baudrate=baudrate,timeout=timeout,rxbuf=100)
+            self.uart = UART(0,baudrate=baudrate,timeout=timeout,timeout_char=timeout,rxbuf=100)
         elif PLATFORM=="ESP32":
             self.uart = UART(1,rx=18,tx=19,baudrate=baudrate,timeout=timeout)
         elif PLATFORM=="SPIKE":
@@ -64,12 +77,14 @@ class UartRemote:
             self.uart.mode(1)
             sleep_ms(1000)# wait for all duplex methods to appear
             self.uart.baud(baudrate) # set baud rate
+            self.last_char=b''
         else:
             raise RuntimeError('MicroPython Platform not defined')
         self.DEBUG=debug
 
-    def add_command(self,command,command_function):
+    def add_command(self,command,format,command_function):
         self.commands[command]=command_function
+        self.command_formats[command]=format
 
     def encode(self,cmd,*argv):
         if len(argv)>0:
@@ -150,6 +165,12 @@ class UartRemote:
         else:
             return cmd,data
     def available(self):
+        if PLATFORM=="SPIKE":
+            self.last_char=self.uart.read(1)
+            if self.last_char==b'':
+                return 0
+            else:
+                return 1
         if PLATFORM=="EV3":
             return self.uart.waiting()
         else:
@@ -169,18 +190,23 @@ class UartRemote:
                 self.uart.read()
 
     def receive(self):
+        global interrupt_pressed 
         delim=b""
         if PLATFORM=="EV3":
             while (self.uart.waiting()==0):
                 pass
         elif PLATFORM=="SPIKE":
-            c=b''
-            while c==b'':
-                c=self.uart.read(1)
-            delim=c
+            if self.last_char==b'':
+                c=b''
+                while c==b'':
+                    c=self.uart.read(1)
+                delim=c
+            else:
+                delim=self.last_char # in self.available() the first non zero character is stored in self.last_char
+                self.last_char=b''
         else:
             while (self.uart.any()==0):
-                time.sleep(0.01)
+                #time.sleep(0.01)
                 pass
         try:
             if delim==b'':
@@ -213,7 +239,17 @@ class UartRemote:
     def send(self,command,*argv):
         try:
             s=self.encode(command,*argv)
-            self.uart.write(b'<'+s+b'>')
+            msg=b'<'+s+b'>'
+            if PLATFORM=="SPIKE": # on spike send 32-bytes at a time
+                window=32
+                while len(msg) > window:
+                    self.uart.write(msg[:window])
+                    sleep_ms(4)
+                    msg = msg[window:]
+                self.uart.write(msg)
+            else:
+                self.uart.write(msg)
+            self.uart.write(msg)
             return 1
         except:
             self.flush()
@@ -243,17 +279,24 @@ class UartRemote:
                 else:
                     resp=self.commands[command]()
                 if resp!=None:
-                    t=resp[0]
-                    data=resp[1:]
-                    self.send(command_ack,t,*data)
+                    f=self.command_formats[command]
+                    if type(resp)!=tuple:
+                        resp=(resp,) # make a tuple
+                    self.send(command_ack,f,*resp)
                 else:
                     self.send(command_ack,'s','ok')
             else:
                 self.send('err','s','nok')
 
     def loop(self):
+        global interrupt_pressed
         while True:
+            if interrupt_pressed==1:
+                interrupt_pressed=0
+                break
             try:
                 self.wait_for_command()
             except:
                 self.flush()
+
+
