@@ -26,10 +26,10 @@ class Oled:
         self.oled.line(x1,y1,x2,y2,color)
 
     def pixel(self,x1,y1,color):
-        self.oled.line(x1,y1,color)
+        self.oled.pixel(x1,y1,color)
 
 # initialize UartRemote library
-u=UartRemote(0)
+u=UartRemote()
 # initialize Oled instance
 oled=Oled()
 # define different commands
