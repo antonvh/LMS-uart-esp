@@ -249,8 +249,7 @@ class UartRemote:
                 self.uart.write(msg)
             else:
                 self.uart.write(msg)
-            self.uart.write(msg)
-            return 1
+                return 1
         except:
             self.flush()
             return 0
