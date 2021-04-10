@@ -12,7 +12,7 @@ class Neo:
         n=pix[0]
         (r,g,b)=pix[1:]
         self.np[n]=(r,g,b)
-        #self.np.write()
+        self.np.write()
     #return 'ok'
 
     def setpixelarray(self,pix):
