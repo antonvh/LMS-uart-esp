@@ -33,12 +33,12 @@ u=UartRemote(0)
 # initialize Oled instance
 oled=Oled()
 # define different commands
-u.add_command('oledi','',oled.init)
-u.add_command('oledt','',oled.text)
-u.add_command("oleds",'',oled.show)
-u.add_command("oledf",'',oled.fill)
-u.add_command("oledl",'',oled.line)
-u.add_command("oledp",'',oled.pixel)
+u.add_command('oledi',oled.init)
+u.add_command('oledt',oled.text)
+u.add_command("oleds",oled.show)
+u.add_command("oledf",oled.fill)
+u.add_command("oledl",oled.line)
+u.add_command("oledp",oled.pixel)
 
 # wait for a command in an endless loop
 u.loop()

@@ -28,7 +28,6 @@ interrupt_pressed=0
 def esp_interrupt(p):
     global interrupt_pressed
     print("Interrupt Pressed")
-    sys.exit(1)
     interrupt_pressed=1
 
 if PLATFORM=="ESP8266" or PLATFORM=="ESP32":
@@ -82,9 +81,12 @@ class UartRemote:
             raise RuntimeError('MicroPython Platform not defined')
         self.DEBUG=debug
 
-    def add_command(self,command,format,command_function):
-        self.commands[command]=command_function
-        self.command_formats[command]=format
+    def add_command(self,command,*argv):
+        if len(argv)==1: # no formatstring
+            self.command_formats[command]=""
+        else: 
+            self.command_formats[command]=argv[1]
+        self.commands[command]=argv[0]
 
     def encode(self,cmd,*argv):
         if len(argv)>0:
@@ -204,9 +206,19 @@ class UartRemote:
             else:
                 delim=self.last_char # in self.available() the first non zero character is stored in self.last_char
                 self.last_char=b''
+        elif PLATFORM=="ESP8266":
+            while (self.uart.any()==0):
+                if interrupt_pressed==1:
+                    interrupt_pressed=0
+                    break
+                else:
+                    pass
+        elif PLATFORM=="H7":
+            while (self.uart.any()==0):
+                time.sleep(0.01)
+                pass
         else:
             while (self.uart.any()==0):
-                #time.sleep(0.01)
                 pass
         try:
             if delim==b'':

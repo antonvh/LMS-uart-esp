@@ -52,9 +52,9 @@ On the slave (ESP8266):
 ```python
 from uartremote import *
 u=UartRemote(0)
-u.add_command('imu','f',imu)
-u.add_command('led','',led)
-u.add_command('grid','f',grideye)
+u.add_command('imu',imu,'f')
+u.add_command('led',led)
+u.add_command('grid',grideye,'f')
 u.loop()
 ```
 
@@ -108,9 +108,9 @@ def grideye(v):
 
 from uartremote import *
 u=UartRemote(0)
-u.add_command("led",'',led)
-u.add_command("imu",'f',imu)
-u.add_command("grid",'B',grideye)
+u.add_command("led",led)
+u.add_command("imu",imu,'f')
+u.add_command("grid",grideye,'B')
 u.loop()
 ```
 Here three different example functions are used: `led` which takes a value, but does not return a value, `imu` which returns a value, but does not take a value, and `grideye` wich takes a values and returns a value.
@@ -147,7 +147,7 @@ def imu():
     return([12.3,11.1,180.0])
 
 u=UartRemote(Port.S1)
-u.add_command("imu",'f',imu)
+u.add_command("imu",imu,'f')
 
 t_old=time.ticks_ms()+2000                      # wait 2 seconds before starting
 q=u.flush()                                     # flush uart rx buffer
@@ -171,7 +171,7 @@ def led(v):
     for i in v:
         print(i)
 
-u.add_command("led",'',led)
+u.add_command("led",led)
 
 
 t_old=time.ticks_ms()+2000                      # wait 2 seconds before starting
@@ -220,6 +220,6 @@ Waits for the reception of a command and returns the received command as a dict 
 
 Loops the `UartRemote.wait-for_command()` command.
 
-#### `UartRemote.add_command(command,format_string,command_function)`
+#### `UartRemote.add_command(command,command_function[,format_string])`
 
-Adds a command `command` to the dictionary of `UartRemote.commands` together with a function name `command_function`. The dictionary with commands is used by the `UartRemote.wait_for_command()` method to call the function as defined upon receiving a specific command. As an argument the `data` that is received is used.
+Adds a command `command` to the dictionary of `UartRemote.commands` together with a function name `command_function`. Optionally, if the `command_function` returns parameters, the `format_string` describes the type of the returned parameters. If the `command_function` does not return a value, the `format_string` is omirted. The dictionary with commands is used by the `UartRemote.wait_for_command()` method to call the function as defined upon receiving a specific command. As an argument the `data` that is received is used.

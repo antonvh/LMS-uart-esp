@@ -10,8 +10,8 @@ tof.start()
 
 def vl53():
   d=tof.read()
-  return ('i',d) # return integer
+  return d 
   
-u.add_command('vl53',vl53)
+u.add_command('vl53',vl53,'i')
  
 u.loop()

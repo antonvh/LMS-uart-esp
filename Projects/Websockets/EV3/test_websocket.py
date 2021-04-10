@@ -10,7 +10,7 @@ for i in range(1000):
     if u.available():
         cmd,value=u.receive()
         u.send('ack','s','ok')
-    q=u.send_receive('cmd','s','hierpdepiep %i'%i)
+    q=u.send_receive('cmd','s','check %i'%i)
     time.sleep(0.1)
 
 #t_delta=time.time()-t_start

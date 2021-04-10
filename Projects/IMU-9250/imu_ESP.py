@@ -24,5 +24,5 @@ def acc():
 from uartremote import *
 
 u=UartRemote(0)
-u.add_command('acc','f',acc)
+u.add_command('acc',acc,'f')
 u.loop()

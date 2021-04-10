@@ -11,8 +11,7 @@ class Oled:
         self.uartremote.send_receive("oledf","B",color)
     
     def text(self,txt,x,y):
-        f="%dsBB"%len(txt)    # format string for string and 2 unsigned bytes
-        self.uartremote.send_receive("oledt",f,txt,x,y)
+        self.uartremote.send_receive("oledt","sBB",txt,x,y)
 
     def show(self):
         self.uartremote.send_receive("oleds")

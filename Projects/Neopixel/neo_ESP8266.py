@@ -28,10 +28,10 @@ class Neo:
 
 u=UartRemote(0)
 neo=Neo()
-u.add_command('neoinit','',neo.init)
-u.add_command('neos','',neo.setpixel)
-u.add_command('neosa','',neo.setpixelarray)
-u.add_command('neow','',neo.write)
+u.add_command('neoinit',neo.init)
+u.add_command('neos',neo.setpixel)
+u.add_command('neosa',neo.setpixelarray)
+u.add_command('neow',neo.write)
 
 u.loop()
 
