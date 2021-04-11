@@ -60,7 +60,7 @@ class UartRemote:
         return (int(nn),f[i:])
 
 
-    def __init__(self,*port_lego,baudrate=230400,timeout=1000,debug=False):
+    def __init__(self,*port_lego,baudrate=230400,timeout=1000,debug=False,rx=18,tx=19):
         if PLATFORM=="EV3":
             port=port_lego[0]
             self.uart = UARTDevice(port,baudrate=baudrate,timeout=timeout)
@@ -69,7 +69,7 @@ class UartRemote:
         elif PLATFORM=="ESP8266":
             self.uart = UART(0,baudrate=baudrate,timeout=timeout,timeout_char=timeout,rxbuf=100)
         elif PLATFORM=="ESP32":
-            self.uart = UART(1,rx=18,tx=19,baudrate=baudrate,timeout=timeout)
+            self.uart = UART(1,rx=rx,tx=tx,baudrate=baudrate,timeout=timeout)
         elif PLATFORM=="SPIKE":
             port=port_lego[0]
             self.uart = port
