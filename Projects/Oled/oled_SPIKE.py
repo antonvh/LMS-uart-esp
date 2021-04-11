@@ -13,6 +13,12 @@ class Oled:
     def text(self,txt,x,y):
         self.uartremote.send_receive("oledt","sBB",txt,x,y)
 
+    def line(self,x1,y1,x2,y2,color):
+        self.uartremote.send_receive("oledl","5B",x1,y1,x2,y2,color)
+
+    def pixel(self,x1,y1,color):
+        self.uartremote.send_receive("oledp","3B",x1,y1,color)
+
     def show(self):
         self.uartremote.send_receive("oleds")
 
