@@ -6,7 +6,7 @@ The code in this drectory is a proof of concept showing that the simplistic micr
 
 ## run test
 
-Upload `lpf2_esp.py` and `lpf2_esp_ex.py` on the ESP8266. Execute `lpf2_SPIKE.py` on the SPIKE prime. In this example the 'sensor' counts repeatedly from 0 to 9. The SPIKE receives this number and displays it on the screen.
+Upload `lpf2.py` and `lpf2_demo.py` on the ESP8266. Execute `lpf2_SPIKE.py` on the SPIKE prime. In this example the 'sensor' counts repeatedly from 0 to 9. The SPIKE receives this number and displays it on the screen.
 The ESP8266 emulates a UltraSonic sensor (type 62=0x3e).
 
 ## Extensive LPF2 class (in LPF2 folder)
