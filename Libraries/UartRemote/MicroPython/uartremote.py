@@ -315,7 +315,8 @@ class UartRemote:
                 self.wait_for_command()
             except KeyboardInterrupt:
                 break
-            except Exception as e
-                flush()
-                if self.debug: print(e)
+            except Exception as e:
+                self.flush()
+                if self.debug:
+                    print(e)
 
