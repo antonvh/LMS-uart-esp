@@ -6,20 +6,20 @@ micropython.alloc_emergency_exception_buf(200)
 
 modes = [
 LPF2.mode('int8',type = LPF2.DATA8),
-LPF2.mode('int16', type = LPF2.DATA16),
-LPF2.mode('int32', type = LPF2.DATA32),
-LPF2.mode('float', format = '2.1', type = LPF2.DATAF),
-LPF2.mode('int8_array',size = 4, type = LPF2.DATA8),
-LPF2.mode('int16_array',size = 4, type = LPF2.DATA16),
-LPF2.mode('int32_array',size = 4, type = LPF2.DATA32),
-LPF2.mode('float_array',size = 4, format = '2.1', type = LPF2.DATAF)
+# LPF2.mode('int16', type = LPF2.DATA16),
+# LPF2.mode('int32', type = LPF2.DATA32),
+# LPF2.mode('float', format = '2.1', type = LPF2.DATAF),
+# LPF2.mode('int8_array',size = 4, type = LPF2.DATA8),
+# LPF2.mode('int16_array',size = 4, type = LPF2.DATA16),
+# LPF2.mode('int32_array',size = 4, type = LPF2.DATA32),
+# LPF2.mode('float_array',size = 4, format = '2.1', type = LPF2.DATAF)
 ]
 
 led = Pin(2, mode=Pin.OUT)
 led.on()
 txpin=1
 rxpin=3
-lpf2 = LPF2.ESP_LPF2(0, txpin,rxpin, modes, LPF2.SPIKE_Ultrasonic, timer = 3, freq = 5)    # ESP
+lpf2 = LPF2.ESP_LPF2(0, txpin,rxpin, modes, LPF2.SPIKE_Ultrasonic, timer = -1, freq = 5)    # ESP
 #lpf2 = LPF2.Prime_LPF2(1, 'Y1', 'Y2', modes, LPF2.SPIKE_Ultrasonic, timer = 4, freq = 5)    # PyBoard
 # use EV3_LPF2 or Prime_LPF2 - also make sure to select the port type on the EV3 to be ev3-uart
 

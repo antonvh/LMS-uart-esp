@@ -10,6 +10,7 @@ Updated on: 01/06/2020
 import machine, utime, gc
 import math, struct
 import utime
+import binascii
 
 from machine import Timer
 BYTE_NACK = 0x02
@@ -42,7 +43,7 @@ mode2 = ['LPF2-CAL',[3,DATA16,3,0],[0,1023],[0,100],[0,1023],'RAW',[ABSOLUTE,0],
 defaultModes = [mode0,mode1,mode2]     
 
 def log2(x):
-    return int(math.log(x)/math.log(2))
+    return math.log(x)/math.log(2)
 
 
 def mode(name,size = 1, type=DATA8, format = '3.0',  raw = [0,100], percent = [0,100],  SI = [0,100], symbol = '', functionmap = [ABSOLUTE,0], view = True):
@@ -83,52 +84,58 @@ class LPF2(object):
           
 #----- comm stuff
 
+     def readchar(self):
+          c=self.uart.read(1)
+          cbyte=ord(c) if c else -1 
+          return cbyte
+
      def hubCallback(self, timerInfo):
           if self.connected:
-               chr = self.uart.read(1)     # read in any heartbeat bytes
-               while chr >=0:
+               chr =self.readchar()     # read in any heartbeat bytes
+               print("cb",chr)
+               while chr>=0:
                     if chr == 0:   # port has nto been setup yet
                          pass
                     elif chr == BYTE_NACK:     # regular heartbeat pulse
                          pass   
                     elif chr == CMD_Select:    # reset the mode
-                         mode = self.uart.read(1)
-                         cksm = self.uart.read(1)
+                         mode = self.readchar()
+                         cksm = self.readchar()
                          if cksm == 0xff ^ CMD_Select ^ mode:
                               self.current_mode = mode
                               # print(mode)
                     elif chr == 0x46:     # sending over a string
-                         zero = self.uart.read(1)
-                         b9 = self.uart.read(1)
+                         zero = self.readchar()
+                         b9 = self.readchar()
                          ck = 0xff ^ zero ^ b9
                          if ((zero == 0) & (b9 == 0xb9)):   # intro bytes for the string
-                              char = self.uart.read(1)    # size and mode
+                              char = self.readchar()    # size and mode
                               size = 2**((char & 0b111000)>>3)
                               mode = char & 0b111
                               ck = ck ^ char
                               for i in range(len(self.textBuffer)):
                                    self.textBuffer[i] = ord(b' ')
                               for i in range(size):
-                                   self.textBuffer[i] = self.uart.read(1)
+                                   self.textBuffer[i] = self.readchar()
                                    ck = ck ^ self.textBuffer[i]
-                              print (self.textBuffer)
-                              cksm = self.uart.read(1)
+                              print(self.textBuffer)
+                              cksm = self.readchar()
                               if cksm == ck:
                                    pass
                     elif chr == 0x4C:     # no idea what it is - but it sends a 0x20
-                         thing = self.uart.read(1)
-                         cksm = self.uart.read(1)
+                         thing = self.readchar()
+                         cksm = self.readchar()
                          if cksm == 0xff ^ 0x4C ^ thing:
                               pass
                     else:
-                         print(chr)
-                    chr = self.uart.read(1)
+                         print("else cb",chr)
+                    chr = self.readchar()
                     
                size = self.writeIt(self.payload)    # send out the latest payload
                if not size: self.connected = False
 
      def writeIt(self,array):
-          #print(binascii.hexlify(array))
+          print(binascii.hexlify(array))
           return self.uart.write(array)
 
      def waitFor (self, char, timeout = 2):
@@ -140,7 +147,8 @@ class LPF2(object):
                currenttime = utime.time()
                if self.uart.any() > 0:
                     data = self.uart.read(1)
-                    if  data == ord(char):
+                    print("received",data)
+                    if  data == char:
                          status = True
                          break
           return status
@@ -161,7 +169,7 @@ class LPF2(object):
           self.tx.value(0)
           utime.sleep_ms(500)
           self.tx.value(1)
-          self.uart.init(baudrate=2400, bits=8, parity=None, stop=1)
+          self.uart.init(baudrate=115200, bits=8, parity=None, stop=1)
           self.writeIt(b'\x00')
 
      def close(self):
@@ -236,8 +244,8 @@ class LPF2(object):
 
      def initialize(self):
           self.connected = False
-          self.sendTimer = Timer(3)  # default is 200 ms
-          self.period=1000/self.freq
+          self.sendTimer = Timer(-1)  # default is 200 ms
+          self.period=int(1000/self.freq)
           self.init()
           self.writeIt(self.setType(self.type))  # set type to 35 (WeDo Ultrasonic) 61 (Spike color), 62 (Spike ultrasonic)
           self.writeIt(self.defineModes(self.modes))  # tell how many modes 
