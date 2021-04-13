@@ -107,7 +107,7 @@ class UartRemote:
                         n=len(data)
                         ff+="a%d"%n+fo
                         for d in data:
-                            s+=struct.pack(fo,d) # encode each element in list for format character fo
+                            s+=struct.pack(fo,d) # encode each element in list with format character fo
                     elif td==str:
                         n=len(data)
                         ff+="%d"%n+fo
@@ -115,7 +115,6 @@ class UartRemote:
                     else:
                         ff+=fo
                         s+=struct.pack(fo,data)
-
                 else:
                     fo="%d"%nf+f[0]
                     data=argv[1+i:1+i+nf]
@@ -159,7 +158,10 @@ class UartRemote:
                 ff=fo if nf==0 else "%d"%nf+fo
                 if nf==0: nf=1
                 nr_bytes=nf*sizes[fo]
-                data=data+(struct.unpack(ff,s[p:p+nr_bytes]))
+                decoded=struct.unpack(ff,s[p:p+nr_bytes])
+                if type(decoded)==bytes:
+                    decoded=decoded.decode('utf-8') # transform bytes in string
+                data=data+(decoded)
             p+=nr_bytes
             f=f[1:]
         if len(data)==1: # convert from tuple size 1 to single value
@@ -221,13 +223,13 @@ class UartRemote:
             while (self.uart.any()==0):
                 time.sleep(0.01)
                 pass
-        else:
+        else: # generic micropython
             while (self.uart.any()==0):
                 pass
         try:
             if delim==b'':
                 delim=self.uart.read(1)
-            if delim!=b'<':
+            if delim!=b'<': #starting delimiter not found
                 self.flush()
                 return ("err","nok")
             ls=self.uart.read(1)
@@ -240,7 +242,7 @@ class UartRemote:
                     r=self.uart.read(1)
                 s+=r
             delim=self.uart.read(1)
-            if delim!=b'>':
+            if delim!=b'>': # ending delimiter not found
                 self.flush()
                 return ("err","nok")
             else:
