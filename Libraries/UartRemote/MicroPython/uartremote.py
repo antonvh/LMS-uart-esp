@@ -51,18 +51,19 @@ class UartRemote:
     commands={}
     command_formats={}
     
-    def digitformat(self,f):
+    def digitformat(self,f): 
+        """Split digits and format character"""
         nn='0'
         i=0
-        while f[i]>='0' and f[i]<='9':
-                nn+=f[i]
+        while f[i]>='0' and f[i]<='9': # while a digit
+                nn+=f[i]               # add digit  
                 i+=1
-        return (int(nn),f[i:])
+        return (int(nn),f[i:])   # parse digit string to int
 
 
-    def __init__(self,*port_lego,baudrate=230400,timeout=1000,debug=False,rx=18,tx=19):
+    def __init__(self,port=None,baudrate=230400,timeout=1000,debug=False,rx=18,tx=19):
+        """ Initialize UART for different platforms """
         if PLATFORM=="EV3":
-            port=port_lego[0]
             self.uart = UARTDevice(port,baudrate=baudrate,timeout=timeout)
         elif PLATFORM=="H7":
             self.uart = UART(3, baudrate, timeout_char=timeout)
@@ -71,17 +72,17 @@ class UartRemote:
         elif PLATFORM=="ESP32":
             self.uart = UART(1,rx=rx,tx=tx,baudrate=baudrate,timeout=timeout)
         elif PLATFORM=="SPIKE":
-            port=port_lego[0]
             self.uart = port
-            self.uart.mode(1)
+            self.uart.mode(1) # UART mode
             sleep_ms(1000)# wait for all duplex methods to appear
             self.uart.baud(baudrate) # set baud rate
             self.last_char=b''
         else:
             raise RuntimeError('MicroPython Platform not defined')
-        self.DEBUG=debug
+        self.debug=debug
 
     def add_command(self,command,*argv):
+        """ Add command with pointer to function and formatstring of return arguments """
         if len(argv)==1: # no formatstring
             self.command_formats[command]=""
         else: 
@@ -89,24 +90,24 @@ class UartRemote:
         self.commands[command]=argv[0]
 
     def encode(self,cmd,*argv):
+        """ Encode command with parameters formatted according to formatstring """
         if len(argv)>0:
-            f=argv[0]
+            f=argv[0] # formatstring
             i=0
             ff=''
             s=b''
-            f=argv[0]
-            while (len(f)>0):
-                nf,f=self.digitformat(f)
+            while (len(f)>0):  # keep parsing formatstring
+                nf,f=self.digitformat(f) # split preceding digits and format character
                 if nf==0:
                     nf=1
                     fo=f[0]
-                    data=argv[1+i]
-                    td=type(data)
-                    if td==list:
+                    data=argv[1+i]  # get data data that needs to be encoded
+                    td=type(data) # check type of data
+                    if td==list: # for lists, use a special 'a' format character preceding the normal formatcharacter
                         n=len(data)
                         ff+="a%d"%n+fo
                         for d in data:
-                            s+=struct.pack(fo,d)
+                            s+=struct.pack(fo,d) # encode each element in list for format character fo
                     elif td==str:
                         n=len(data)
                         ff+="%d"%n+fo
@@ -121,23 +122,24 @@ class UartRemote:
                     ff+=fo
                     s+=struct.pack(fo,*data)
                 i+=nf
-                f=f[1:]
-            s=struct.pack('B',len(ff))+ff.encode('utf-8')+s
-        else:
+                f=f[1:] # continue parsing with remainder of f
+            s=struct.pack('B',len(ff))+ff.encode('utf-8')+s 
+        else: # no formatstring
             s=b'\x01z'# dummy format 'z' for no arguments
         s=struct.pack("B",len(cmd))+cmd.encode('utf-8')+s
         s=struct.pack("B",len(s))+s
         return s
 
     def decode(self,s):
+        """ Decodes encoded bytes according to containing formatstring and return command and parameters"""
         sizes={'b':1,'B':1,'i':4,'I':4,'f':4,'s':1}
-        nl=struct.unpack('B',s[:1])[0]
-        p=1
-        nc=struct.unpack('B',s[p:p+1])[0]
+        nl=s[0] # 
+        p=1 # p is position in encoded message
+        nc=s[p]
         p+=1
         cmd=s[p:p+nc].decode('utf-8')
         p+=nc
-        nf=struct.unpack('B',s[p:p+1])[0]
+        nf=s[p]
         p+=1
         f=s[p:p+nf].decode('utf-8')
         p+=nf
@@ -152,7 +154,7 @@ class UartRemote:
                 nf,f=self.digitformat(f)
                 fo=f[0]
                 nr_bytes=nf*sizes[fo]
-                data=data+(list(struct.unpack("%d"%nf+fo,s[p:p+nr_bytes])),)
+                data=data+(list(struct.unpack("%d"%nf+fo,s[p:p+nr_bytes])),) # make list from tuple returnd by unpack
             else:
                 ff=fo if nf==0 else "%d"%nf+fo
                 if nf==0: nf=1
@@ -166,20 +168,22 @@ class UartRemote:
             return "error","len"
         else:
             return cmd,data
+
     def available(self):
+        """ Platform independent check for available characters in receive queue of UART """
         if PLATFORM=="SPIKE":
-            self.last_char=self.uart.read(1)
-            if self.last_char==b'':
-                return 0
-            else:
+            self.last_char=self.uart.read(1) # only way for SPIKE to determine availability; store the read character for later use
+            if self.last_char:
                 return 1
+            else:
+                return 0
         if PLATFORM=="EV3":
             return self.uart.waiting()
         else:
             return self.uart.any()
 
     def flush(self):
-        # empty receive buffer
+        """ Platform independent flushing of receive buffer """
         if PLATFORM=="EV3":
             if self.uart.waiting()>0:
                 self.uart.read_all()
@@ -198,14 +202,14 @@ class UartRemote:
             while (self.uart.waiting()==0):
                 pass
         elif PLATFORM=="SPIKE":
-            if self.last_char==b'':
-                c=b''
-                while c==b'':
-                    c=self.uart.read(1)
-                delim=c
-            else:
+            if self.last_char:
                 delim=self.last_char # in self.available() the first non zero character is stored in self.last_char
                 self.last_char=b''
+            else:
+                c=b''
+                while not c:
+                    c=self.uart.read(1)
+                delim=c
         elif PLATFORM=="ESP8266":
             while (self.uart.any()==0):
                 if interrupt_pressed==1:
@@ -267,7 +271,8 @@ class UartRemote:
             return 0
 
 
-    def send_receive(self,command,*args):
+    def send_command(self,command,*args):
+        """ Send command and wait for received ack with possible return  arguments """
         self.flush()
         try:
             self.send(command,*args)
@@ -300,6 +305,7 @@ class UartRemote:
                 self.send('err','s','nok')
 
     def loop(self):
+        """ Loop wait_for_command """
         global interrupt_pressed
         while True:
             if interrupt_pressed==1:
@@ -307,7 +313,9 @@ class UartRemote:
                 break
             try:
                 self.wait_for_command()
-            except:
-                self.flush()
-
+            except KeyboardInterrupt:
+                break
+            except Exception as e
+                flush()
+                if self.debug: print(e)
 
