@@ -15,11 +15,11 @@ import binascii
 from machine import Timer
 BYTE_NACK = 0x02
 BYTE_ACK = 0x04
-CMD_Type = 0x40   # set sensor type command
-CMD_Select = 0x43   #sets modes on the fly
-CMD_Mode = 0x49   # set mode type command
-CMD_Baud = 0x52   # set the transmission baud rate
-CMD_Vers = 0x5F   # set the version number
+CMD_Type = 0x40   # @, set sensor type command
+CMD_Select = 0x43   #  C, sets modes on the fly
+CMD_Mode = 0x49   # I, set mode type command
+CMD_Baud = 0x52   # R, set the transmission baud rate
+CMD_Vers = 0x5F   # _,  set the version number
 CMD_ModeInfo = 0x80  # name command
 CMD_Data  = 0xC0  # data command
 
@@ -45,6 +45,14 @@ defaultModes = [mode0,mode1,mode2]
 def log2(x):
     return math.log(x)/math.log(2)
 
+
+log2val={1:0,2:1,4:2,8:3,16:4,32:5}
+
+def log2lookup(val):
+  if val in log2val:
+       return log2val[val]
+  else:
+       return 0
 
 def mode(name,size = 1, type=DATA8, format = '3.0',  raw = [0,100], percent = [0,100],  SI = [0,100], symbol = '', functionmap = [ABSOLUTE,0], view = True):
           fig,dec = format.split('.')
@@ -79,6 +87,7 @@ class LPF2(object):
           else:
                bit = int(log2(length[type]))
                value = struct.pack(format[type], array)
+               print("load_payload",bit,value)
           payload = bytearray([CMD_Data | (bit << CMD_LLL_SHIFT) | self.current_mode])+value
           self.payload = self.addChksm(payload)
           
@@ -103,8 +112,9 @@ class LPF2(object):
                          cksm = self.readchar()
                          if cksm == 0xff ^ CMD_Select ^ mode:
                               self.current_mode = mode
-                              # print(mode)
+                              print("change mode=",mode)
                     elif chr == 0x46:     # sending over a string
+                         print("string")
                          zero = self.readchar()
                          b9 = self.readchar()
                          ck = 0xff ^ zero ^ b9
@@ -122,12 +132,20 @@ class LPF2(object):
                               cksm = self.readchar()
                               if cksm == ck:
                                    pass
-                    elif chr == 0x4C:     # no idea what it is - but it sends a 0x20
-                         thing = self.readchar()
-                         cksm = self.readchar()
-                         if cksm == 0xff ^ 0x4C ^ thing:
-                              pass
+                    # elif chr<=0x7c and (chr & 0x44) == 0x44:     # write command?
+                    #      l=(chr& 0b111000)>>3
+                    #      print('write chr,l',chr,l)
+                    #      chk=0
+                    #      s=""
+                    #      for i in range(l):
+                    #           thing = self.readchar()
+                    #           s+=chr(thing)
+                    #           chk=chk^thing
+                    #      cksm = self.readchar()
+                    #      if cksm == 0xff ^ 0x4C ^ chk:
+                    #           pass
                     else:
+                         pass
                          print("else cb",chr)
                     chr = self.readchar()
                     
@@ -135,7 +153,7 @@ class LPF2(object):
                if not size: self.connected = False
 
      def writeIt(self,array):
-          print(binascii.hexlify(array))
+          #print(binascii.hexlify(array))
           return self.uart.write(array)
 
      def waitFor (self, char, timeout = 2):
@@ -147,7 +165,7 @@ class LPF2(object):
                currenttime = utime.time()
                if self.uart.any() > 0:
                     data = self.uart.read(1)
-                    print("received",data)
+                    #print("received",data)
                     if  data == char:
                          status = True
                          break
