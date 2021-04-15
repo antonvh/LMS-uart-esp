@@ -102,7 +102,19 @@ class UartRemote:
             self.uart = serial.Serial(port, baudrate, timeout=timeout)
         self.DEBUG=debug
         self.unprocessed_data=b'' 
+        self.baudrate = baudrate
+        self.add_command('enable repl', self.enable_repl_locally)
+        self.add_command('disable repl', self.disable_repl_locally)
     
+    
+    def enable_repl_locally(self):
+        if platform in [ESP32, ESP8266]:
+            uos.dupterm(machine.UART(0, self.baudrate), 1)
+
+    def disable_repl_locally(self):
+        if platform in [ESP32, ESP8266]:
+            uos.dupterm(None, 1)
+
     def add_command(self,command,command_function, format=""):
         self.commands[command]=command_function
         self.command_formats[command]=format
@@ -212,11 +224,11 @@ class UartRemote:
                 self.uart.read_all()
         elif platform==SPIKE:
             r=b'1'
-            while r!=b'':
-                r=self.uart.read(1)
+            while r:
+                r=self.uart.read(32)
         else:
-            if self.uart.any()!=0:
-                self.uart.read()
+            if self.uart.any():
+                self.uart.read_all()
 
     def receive_command(self,wait=True):
         global interrupt_pressed
@@ -317,7 +329,7 @@ class UartRemote:
                 interrupt_pressed=0
                 break
             try:
-                self.wait_and_execute()
+                self.execute_command(wait=True)
             except KeyboardInterrupt:
                 raise
             except:
@@ -337,9 +349,11 @@ class UartRemote:
 
     def enter_raw_repl(self):
         self.flush()
+        self.send_command('enable repl')
+        sleep_ms(300)
         self.uart.write(b"r\x03\x03\x01") # Ctrl-c, Ctrl-c, Ctrl-a
         result = self.read_all()
-        print("readall=",result)
+        if self.DEBUG: print("readall=",result)
         if not result[-14:] == b'L-B to exit\r\n>': 
             raise UartRemoteError("Raw REPL failed")
 
