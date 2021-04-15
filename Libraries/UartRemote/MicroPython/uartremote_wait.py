@@ -73,7 +73,7 @@ class UartRemote:
         return (int(nn),f[i:])
 
 
-    def __init__(self,port=0,baudrate=230400,timeout=1000,debug=False):
+    def __init__(self,port=0,baudrate=115200,timeout=1000,debug=False):
         # Baud rates of up to 230400 work. 115200 is the default for REPL.
         # TODO Disable REPL on the uart port in an elegant way for slaves, without breaking raw repl remote execute.
         if platform==EV3:
@@ -84,7 +84,7 @@ class UartRemote:
             self.uart = UART(port, baudrate, timeout_char=timeout)
         elif platform==ESP8266:
             self.baudrate=baudrate # store baudrate for repl init
-            uos.dupterm(None, 1) # disable repl
+            # uos.dupterm(None, 1) # disable repl
             self.uart = UART(port,baudrate=baudrate,timeout=timeout,timeout_char=timeout,rxbuf=100)
         elif platform==ESP32:
             if not port: port = 1
