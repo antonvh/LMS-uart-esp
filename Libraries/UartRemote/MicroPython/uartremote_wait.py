@@ -126,33 +126,38 @@ class UartRemote:
         """ Encodes command with parameters formatted according to formatstring """
         if len(argv)>0:
             f=argv[0] # formatstring
+            i=0
+            ff=''
+            s=b''
             if f=='r':
                 # No encoding, raw bytes
                 # s=struct.pack('B',len(argv[1])) + argv[1]
                 s=b'\x01r'+argv[1]
-            else:
-                i=0
-                ff=''
-                s=b''
-                while (len(f)>0):  # keep parsing formatstring
-                    nf,f=self.digitformat(f) # split preceding digits and format character
-                    if nf==0:
-                        nf=1
-                        fo=f[0]
-                        data=argv[1+i]  # get data data that needs to be encoded
-                        td=type(data) # check type of data
-                        if td==list: # for lists, use a special 'a' format character preceding the normal formatcharacter
-                            n=len(data)
-                            ff+="a%d"%n+fo
-                            for d in data:
-                                s+=struct.pack(fo,d) # encode each element in list with format character fo
-                        elif td==str:
-                            n=len(data)
-                            ff+="%d"%n+fo
-                            s+=data.encode('utf-8')
-                        else:
-                            ff+=fo
-                            s+=struct.pack(fo,data)
+            while (len(f)>0):  # keep parsing formatstring
+                nf,f=self.digitformat(f) # split preceding digits and format character
+                if nf==0:
+                    nf=1
+                    fo=f[0]
+                    data=argv[1+i]  # get data data that needs to be encoded
+                    td=type(data) # check type of data
+                    if td==list: # for lists, use a special 'a' format character preceding the normal formatcharacter
+                        n=len(data)
+                        ff+="a%d"%n+fo # 'a' for list
+                        for d in data:
+                            s+=struct.pack(fo,d) # encode each element in list with format character fo
+                    elif td==tuple: # for lists, use a special 'a' format character preceding the normal formatcharacter
+                        n=len(data)
+                        ff+="t%d"%n+fo # 'a' for list
+                        for d in data:
+                            s+=struct.pack(fo,d) # encode each element in list with format character fo
+                    elif td==str: 
+                        n=len(data)
+                        ff+="%d"%n+fo
+                        s+=data.encode('utf-8')
+                    elif td==bytes:
+                        n=len(data)
+                        ff+="%d"%n+fo
+                        s+=data
                     else:
                         fo="%d"%nf+f[0]
                         data=argv[1+i:1+i+nf]
@@ -169,7 +174,7 @@ class UartRemote:
 
     def decode(self,s):
         """ Decodes encoded bytes according to containing formatstring and return command and parameters"""
-        sizes={'b':1,'B':1,'i':4,'I':4,'f':4,'s':1}
+        sizes={'b':1,'B':1,'i':4,'I':4,'f':4,'s':1,'r':1}
         nl=s[0] # 
         p=1 # p is position in encoded message
         nc=s[p]
@@ -188,19 +193,24 @@ class UartRemote:
         while (len(f)>0):
             nf,f=self.digitformat(f)
             fo=f[0]
-            if f[0]=='a': # array
+            if f[0]=='a' or f[0]=='t': # array
+                extra=f[0]
                 f=f[1:]
                 nf,f=self.digitformat(f)
                 fo=f[0]
                 nr_bytes=nf*sizes[fo]
-                data=data+(list(struct.unpack("%d"%nf+fo,s[p:p+nr_bytes])),) # make list from tuple returnd by unpack
+                if extra=='a':
+                    data=data+(list(struct.unpack("%d"%nf+fo,s[p:p+nr_bytes])),) # make list from tuple returnd by unpack
+                else:
+                    data=data+(tuple(struct.unpack("%d"%nf+fo,s[p:p+nr_bytes])),) # make list from tuple returnd by unpack
             else:
                 ff=fo if nf==0 else "%d"%nf+fo
                 if nf==0: nf=1
                 nr_bytes=nf*sizes[fo]
+                if ff[-1]=='r': ff=ff[:-1]+'s'
                 decoded=struct.unpack(ff,s[p:p+nr_bytes])
-                if type(decoded)==bytes:
-                    decoded=decoded.decode('utf-8') # transform bytes in string
+                if fo=='s':
+                    decoded=(decoded[0].decode('utf-8'),) # transform bytes in string
                 data=data+(decoded)
             p+=nr_bytes
             f=f[1:]
