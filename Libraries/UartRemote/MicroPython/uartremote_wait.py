@@ -148,7 +148,7 @@ class UartRemote:
                                 s+=struct.pack(fo,d) # encode each element in list with format character fo
                         elif td==tuple: # for lists, use a special 'a' format character preceding the normal formatcharacter
                             n=len(data)
-                            ff+="t%d"%n+fo # 'a' for list
+                            ff+="t%d"%n+fo # 't' for tuple
                             for d in data:
                                 s+=struct.pack(fo,d) # encode each element in list with format character fo
                         elif td==str: 
