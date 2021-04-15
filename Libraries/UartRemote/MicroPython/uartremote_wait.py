@@ -230,9 +230,7 @@ class UartRemote:
             r=b'1'
             while r:
                 r=self.uart.read(32)
-        else:
-            if self.uart.any():
-                self.uart.read_all()
+        self.uart.read(self.uart.any())
 
     def receive_command(self,wait=True):
         global interrupt_pressed
@@ -328,6 +326,7 @@ class UartRemote:
 
     def loop(self):
         global interrupt_pressed
+        self.disable_repl_locally()
         while True:
             if interrupt_pressed==1:
                 interrupt_pressed=0
@@ -335,6 +334,7 @@ class UartRemote:
             try:
                 self.execute_command(wait=True)
             except KeyboardInterrupt:
+                self.enable_repl_locally()
                 raise
             except:
                 self.flush()
@@ -355,13 +355,16 @@ class UartRemote:
         self.flush()
         self.send_command('enable repl')
         sleep_ms(300)
+        self.uart.write(b"r\x03\x03\x01")
+        sleep_ms(300)
+        self.flush()
         self.uart.write(b"r\x03\x03\x01") # Ctrl-c, Ctrl-c, Ctrl-a
         result = self.read_all()
         if self.DEBUG: print("readall=",result)
-        if not result[-14:] == b'L-B to exit\r\n>': 
+        if not result[-14:] == b'L-B to exit\r\n>':
             raise UartRemoteError("Raw REPL failed")
 
-    def execute_repl(self, command, debug=True):
+    def execute_repl(self, command, reply=True):
         self.uart.write(b"\x05A\x01") # Enter raw paste
         sleep_ms(5)
         result = self.uart.read(6) # Should be b'R\x01\x80\x00\x01' where \x80 is the window size and the first \x01 says paste mode works
@@ -376,17 +379,18 @@ class UartRemote:
             result = self.uart.read(1)
             command_bytes_left = command_bytes_left[window:]
         self.uart.write(command_bytes_left+b'\x04')
-        result = ""
-        while not len(result) >= 3: # We need at least 3x'\x04'
-            result = self.read_all()
-        try:
-            _ , value, error, _ = result.decode("utf-8").split("\x04") # The last 5 bytes are b'\r\n\x04\x04>' Between the \x04's there can be an exception.
-        except:
-            raise UartRemoteError("Unexpected answer from repl: {}".format(result))
-        if error:
-            if debug: print(error)
-            return error.strip() # using strip() to remove \r\n at the end.
-        elif value:
-            return value.strip()
-        else:
-            return
+        if reply:
+            result = ""
+            while not len(result) >= 3: # We need at least 3x'\x04'
+                result = self.read_all()
+            try:
+                _ , value, error, _ = result.decode("utf-8").split("\x04") # The last 5 bytes are b'\r\n\x04\x04>' Between the \x04's there can be an exception.
+            except:
+                raise UartRemoteError("Unexpected answer from repl: {}".format(result))
+            if error:
+                if self.DEBUG: print(error)
+                return error.strip() # using strip() to remove \r\n at the end.
+            elif value:
+                return value.strip()
+            else:
+                return
