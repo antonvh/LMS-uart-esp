@@ -142,6 +142,11 @@ class UartRemote:
                         ff+="a%d"%n+fo # 'a' for list
                         for d in data:
                             s+=struct.pack(fo,d) # encode each element in list with format character fo
+                    elif td==tuple: # for lists, use a special 'a' format character preceding the normal formatcharacter
+                        n=len(data)
+                        ff+="t%d"%n+fo # 'a' for list
+                        for d in data:
+                            s+=struct.pack(fo,d) # encode each element in list with format character fo
                     elif td==str: 
                         n=len(data)
                         ff+="%d"%n+fo
@@ -186,12 +191,16 @@ class UartRemote:
         while (len(f)>0):
             nf,f=self.digitformat(f)
             fo=f[0]
-            if f[0]=='a': # array
+            if f[0]=='a' or f[0]=='t': # array
+                extra=f[0]
                 f=f[1:]
                 nf,f=self.digitformat(f)
                 fo=f[0]
                 nr_bytes=nf*sizes[fo]
-                data=data+(list(struct.unpack("%d"%nf+fo,s[p:p+nr_bytes])),) # make list from tuple returnd by unpack
+                if extra=='a':
+                    data=data+(list(struct.unpack("%d"%nf+fo,s[p:p+nr_bytes])),) # make list from tuple returnd by unpack
+                else:
+                    data=data+(tuple(struct.unpack("%d"%nf+fo,s[p:p+nr_bytes])),) # make list from tuple returnd by unpack
             else:
                 ff=fo if nf==0 else "%d"%nf+fo
                 if nf==0: nf=1
