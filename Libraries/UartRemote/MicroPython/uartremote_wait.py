@@ -128,7 +128,8 @@ class UartRemote:
             f=argv[0] # formatstring
             if f=='r':
                 # No encoding, raw bytes
-                s=struct.pack('B',len(argv[1])) + argv[1]
+                # s=struct.pack('B',len(argv[1])) + argv[1]
+                s=b'\x01r'+argv[1]
             else:
                 i=0
                 ff=''
