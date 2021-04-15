@@ -139,13 +139,17 @@ class UartRemote:
                     td=type(data) # check type of data
                     if td==list: # for lists, use a special 'a' format character preceding the normal formatcharacter
                         n=len(data)
-                        ff+="a%d"%n+fo
+                        ff+="a%d"%n+fo # 'a' for list
                         for d in data:
                             s+=struct.pack(fo,d) # encode each element in list with format character fo
-                    elif td==str:
+                    elif td==str: 
                         n=len(data)
                         ff+="%d"%n+fo
                         s+=data.encode('utf-8')
+                    elif td==bytes:
+                        n=len(data)
+                        ff+="%d"%n+fo
+                        s+=data
                     else:
                         ff+=fo
                         s+=struct.pack(fo,data)
@@ -165,7 +169,7 @@ class UartRemote:
 
     def decode(self,s):
         """ Decodes encoded bytes according to containing formatstring and return command and parameters"""
-        sizes={'b':1,'B':1,'i':4,'I':4,'f':4,'s':1}
+        sizes={'b':1,'B':1,'i':4,'I':4,'f':4,'s':1,'r':1}
         nl=s[0] # 
         p=1 # p is position in encoded message
         nc=s[p]
@@ -192,9 +196,10 @@ class UartRemote:
                 ff=fo if nf==0 else "%d"%nf+fo
                 if nf==0: nf=1
                 nr_bytes=nf*sizes[fo]
+                if ff[-1]=='r': ff=ff[:-1]+'s'
                 decoded=struct.unpack(ff,s[p:p+nr_bytes])
-                if type(decoded)==bytes:
-                    decoded=decoded.decode('utf-8') # transform bytes in string
+                if fo=='s':
+                    decoded=(decoded[0].decode('utf-8'),) # transform bytes in string
                 data=data+(decoded)
             p+=nr_bytes
             f=f[1:]
