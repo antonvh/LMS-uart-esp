@@ -105,8 +105,12 @@ class UartRemote:
         self.baudrate = baudrate
         self.add_command('enable repl', self.enable_repl_locally)
         self.add_command('disable repl', self.disable_repl_locally)
+        self.add_command('echo', self.echo, 's')
     
-    
+    @staticmethod
+    def echo(s):
+        return s
+
     def enable_repl_locally(self):
         if platform in [ESP32, ESP8266]:
             uos.dupterm(machine.UART(0, self.baudrate), 1)
