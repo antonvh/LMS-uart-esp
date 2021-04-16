@@ -174,7 +174,7 @@ class UartRemote:
 
     def decode(self,s):
         """ Decodes encoded bytes according to containing formatstring and return command and parameters"""
-        sizes={'b':1,'B':1,'i':4,'I':4,'f':4,'s':1,'r':1}
+        sizes={'b':1,'B':1,'h':2,'H':2,'i':4,'I':4,'f':4,'s':1,'r':1}
         nl=s[0] # 
         p=1 # p is position in encoded message
         nc=s[p]
@@ -191,7 +191,7 @@ class UartRemote:
         while (len(f)>0):
             nf,f=self.digitformat(f)
             fo=f[0]
-            if f[0]=='a' or f[0]=='t': # array
+            if f[0]=='a' or f[0]=='t': # 'a' for list, 't' for tuple
                 extra=f[0]
                 f=f[1:]
                 nf,f=self.digitformat(f)
