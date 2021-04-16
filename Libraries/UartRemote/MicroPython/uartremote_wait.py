@@ -75,7 +75,6 @@ class UartRemote:
 
     def __init__(self,port=0,baudrate=115200,timeout=1000,debug=False):
         # Baud rates of up to 230400 work. 115200 is the default for REPL.
-        # TODO Disable REPL on the uart port in an elegant way for slaves, without breaking raw repl remote execute.
         if platform==EV3:
             if not port: port=Port.S1
             self.uart = UARTDevice(port,baudrate=baudrate,timeout=timeout)
@@ -130,42 +129,44 @@ class UartRemote:
             i=0
             ff=''
             s=b''
-            while (len(f)>0):  # keep parsing formatstring
-                nf,f=self.digitformat(f) # split preceding digits and format character
-                if nf==0:
-                    nf=1
-                    fo=f[0]
-                    data=argv[1+i]  # get data data that needs to be encoded
-                    td=type(data) # check type of data
-                    if td==list: # for lists, use a special 'a' format character preceding the normal formatcharacter
-                        n=len(data)
-                        ff+="a%d"%n+fo # 'a' for list
-                        for d in data:
-                            s+=struct.pack(fo,d) # encode each element in list with format character fo
-                    elif td==tuple: # for lists, use a special 'a' format character preceding the normal formatcharacter
-                        n=len(data)
-                        ff+="t%d"%n+fo # 'a' for list
-                        for d in data:
-                            s+=struct.pack(fo,d) # encode each element in list with format character fo
-                    elif td==str: 
-                        n=len(data)
-                        ff+="%d"%n+fo
-                        s+=data.encode('utf-8')
-                    elif td==bytes:
-                        n=len(data)
-                        ff+="%d"%n+fo
-                        s+=data
-                    else:
-                        ff+=fo
-                        s+=struct.pack(fo,data)
-                else:
-                    fo="%d"%nf+f[0]
-                    data=argv[1+i:1+i+nf]
-                    ff+=fo
-                    s+=struct.pack(fo,*data)
-                i+=nf
-                f=f[1:] # continue parsing with remainder of f
-            s=struct.pack('B',len(ff))+ff.encode('utf-8')+s 
+            if f=='r':
+                # No encoding, raw bytes
+                # s=struct.pack('B',len(argv[1])) + argv[1]
+                s=b'\x01r'+argv[1]
+            else:
+                while (len(f)>0):  # keep parsing formatstring
+                    nf,f=self.digitformat(f) # split preceding digits and format character
+                    if nf==0:
+                        nf=1
+                        fo=f[0]
+                        data=argv[1+i]  # get data data that needs to be encoded
+                        td=type(data) # check type of data
+                        if td==list: # for lists, use a special 'a' format character preceding the normal formatcharacter
+                            n=len(data)
+                            ff+="a%d"%n+fo # 'a' for list
+                            for d in data:
+                                s+=struct.pack(fo,d) # encode each element in list with format character fo
+                        elif td==tuple: # for lists, use a special 'a' format character preceding the normal formatcharacter
+                            n=len(data)
+                            ff+="t%d"%n+fo # 't' for tuple
+                            for d in data:
+                                s+=struct.pack(fo,d) # encode each element in list with format character fo
+                        elif td==str: 
+                            n=len(data)
+                            ff+="%d"%n+fo
+                            s+=data.encode('utf-8')
+                        elif td==bytes:
+                            n=len(data)
+                            ff+="%d"%n+fo
+                            s+=data
+                        else:
+                            fo="%d"%nf+f[0]
+                            data=argv[1+i:1+i+nf]
+                            ff+=fo
+                            s+=struct.pack(fo,*data)
+                        i+=nf
+                        f=f[1:] # continue parsing with remainder of f
+                    s=struct.pack('B',len(ff))+ff.encode('utf-8')+s 
         else: # no formatstring
             s=b'\x01z'# dummy format 'z' for no arguments
         s=struct.pack("B",len(cmd))+cmd.encode('utf-8')+s
@@ -187,7 +188,9 @@ class UartRemote:
         p+=nf
         data=()
         if f=="z":# dummy format 'z' for empty data
-            return cmd,None
+            return cmd, None
+        if f=="r": # Raw bytes, no decoding needed
+            return cmd, s[p:]
         while (len(f)>0):
             nf,f=self.digitformat(f)
             fo=f[0]
@@ -243,8 +246,9 @@ class UartRemote:
         elif platform==SPIKE:
             r=b'1'
             while r:
-                r=self.uart.read(32)
-        self.uart.read(self.uart.any())
+                r=self.uart.read(1)
+        else:
+            self.uart.read(self.uart.any())
 
     def receive_command(self,wait=True):
         global interrupt_pressed
@@ -320,14 +324,14 @@ class UartRemote:
         # name should reflect that it send back respons of exeuted command
         if command in self.commands:
             command_ack=command+"ack"
-            if value!=None:
+            if value:
                 if type(value)==tuple:
                     resp=self.commands[command](*value)
                 else:
                     resp=self.commands[command](value)
             else:
                 resp=self.commands[command]()
-            if resp!=None:
+            if resp:
                 f=self.command_formats[command]
                 if type(resp)!=tuple:
                     resp=(resp,) # make a tuple
