@@ -307,7 +307,10 @@ class UartRemote:
                 break
             try:
                 self.wait_for_command()
+            except KeyboardInterrupt:
+            #    self.enable_repl_locally()
+                raise
             except:
                 self.flush()
-
+            
 
