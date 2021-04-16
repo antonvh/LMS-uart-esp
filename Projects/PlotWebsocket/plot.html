@@ -1,0 +1,199 @@
+<html>
+<head>
+<title>Temperature & Humidity Chart</title>
+
+<link rel="stylesheet" href="https://code.jquery.com/ui/1.11.4/themes/smoothness/jquery-ui.css">
+<script src="https://code.jquery.com/jquery-1.10.2.js"></script>
+<script src="https://code.jquery.com/ui/1.11.4/jquery-ui.js"></script>
+
+<script src="https://code.highcharts.com/stock/highstock.js"></script>
+<script src="https://code.highcharts.com/stock/modules/exporting.js"></script>
+<script src="https://code.highcharts.com/stock/modules/export-data.js"></script>
+<style>
+    body {
+      font-size: 16px;
+      font-family: verdana,helvetica,arial,sans-serif;
+    }
+  </style>
+</head>
+<body>
+<div id="container" style="min-width: 310px; height: 600px; margin: 0 auto"></div>
+<script>
+		var ws;
+     
+	  $(function() { 
+			$("#close").click(function(evt){
+				if( typeof ws != "undefined"){
+					if(ws.readyState != 3 && ws.readyState != 4 ){
+						ws.send("Close");
+						ws.close();
+					}
+				}						
+			});
+	  	
+	  	//Open websocket
+		  $("#open").click(function(evt){
+		  	var host = $("#host").val();
+	      var port = $("#port").val();
+	      var uri = $("#uri").val();
+				//start highstock
+	      var mainChart = new Highcharts.stockChart(chartOptions);
+	              
+	      // create websocket instance
+	      ws = new WebSocket("ws://" + host + ":" + port + uri);
+	       
+	      // Close callback
+	      ws.onclose = function(evt) {
+	        //change color of labels to red
+	        $("#host").css("background", "#ff0000"); 
+	        $("#port").css("background", "#ff0000"); 
+	        $("#uri").css("background",  "#ff0000");
+	        $("div#message_details").hide();
+	
+	        };
+	
+	      // Open Websocket callback
+	      ws.onopen = function(evt) { 
+	        //change color of labels to green
+	        $("#host").css("background", "#00ff00"); 
+	        $("#port").css("background", "#00ff00"); 
+	        $("#uri").css("background", "#00ff00");
+					ws.send("Open");
+	      };
+	      //receive message callback
+  			ws.onmessage = function(evt) {
+    			var dataStr = [];
+    			dataStr = evt.data.split(",");
+    			// Series idx 0=Temp idx 1=Hum 
+    			var seriesT = mainChart.series[0];
+    			var seriesH = mainChart.series[1];
+    			var temp = parseFloat(dataStr[0]);
+    			var hum = parseFloat(dataStr[1]);
+					var myEpoch = new Date().getTime(); //get current epoch time    			 				          
+		        
+					seriesT.addPoint([myEpoch, temp]);
+					seriesH.addPoint([myEpoch, hum]);
+ 	      };
+    	});
+  });
+	  
+  
+	</script>
+<script>
+		Highcharts.setOptions({
+  		global: 
+  		{
+      	useUTC: false
+  		}
+		});
+    
+    var tempdata;
+    var humData;
+		var chartOptions = {  
+		chart: {
+		  renderTo: 'container',
+		  type: 'spline',
+		  animation: false,
+	  },
+ 		
+ 		title: {
+        text: 'Temperature & Humidity vs Time'
+    },
+		xAxis: 	{
+		  type: 'datetime',
+		  tickPixelInterval:150,
+		  labels: {
+				format: '{value:%H:%M:%S}',
+				rotation: 45,
+				align: 'left'
+			}
+		},
+    yAxis: [{
+      title: {
+        text: 'Temperature(°C)',
+				style: {
+        	color: Highcharts.getOptions().colors[1]
+        }        
+      },
+		  tickInterval:1,
+			labels: {
+    		format: '{value}°',
+    		style: {
+        	color: Highcharts.getOptions().colors[1]
+        }
+      },
+      opposite:false,
+    },{
+      title: {
+	    text: 'Humidity',
+			style: {
+      	color: Highcharts.getOptions().colors[0]
+        }
+		  },
+		  tickInterval:5,
+			max:100,
+			labels: {
+    		format: '{value}\%',
+    		style: {
+        	color: Highcharts.getOptions().colors[0]
+        }
+      },
+    	opposite:true
+    }],
+
+    rangeSelector: {
+    	enabled: true,
+    	inputEnabled: false,
+      buttons: [{
+          count: 6,
+          type: 'hour',
+          text: '6h'
+      }, {
+          count: 12,
+          type: 'hour',
+          text: '12h'
+      }, {
+          type: 'all',
+          text: 'All'
+      }],
+    },
+		legend: {
+		    enabled: false
+		},
+		exporting:{
+		        enabled: false
+		},
+		plotOptions: {
+	  	series: {
+        animation: false
+    	}
+  	},
+  	
+		series: [{
+			name: 'Temp',
+		  data: tempdata,
+			color: Highcharts.getOptions().colors[1],
+		},
+	  {
+			name: 'Hum',
+		  data: humData,
+			color: Highcharts.getOptions().colors[0],
+		  yAxis:1 
+	  }				  			
+	]		
+	}
+		
+		
+	</script>
+<div id="connection_details">
+<label for="host">host:</label>
+<input type="text" id="host" value="192.168.1.110" style="background:#ff0000;" />
+<label for="port">port:</label>
+<input type="text" id="port" value="80" style="background:#ff0000;" />
+<label for="uri">uri: </label>
+<input type="text" id="uri" value="/ws" style="background:#ff0000;" />
+<input type="submit" id="open" value="Open" />
+<input type="button" id="close" value="Close" />
+</div>
+</body>
+</html>
