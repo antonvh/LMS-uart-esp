@@ -31,16 +31,6 @@ ur.add_command('paint_buffer', paint_buffer)
 ur.add_command('add2',add2,'B')
 """
 
-
-# this library support the following micropython based platforms
-# - pybricks on EV3
-# - micropython on ESP8266
-# - micropython on ESP32
-# - micropython on OpenMV H7 plus
-# - SPIKE hub
-# python3 on any other platform. pyserial is required in that case.
-
-
 import struct
 import sys
 
@@ -97,7 +87,8 @@ class UartRemote:
     commands={}
     command_formats={}
 
-    def digitformat(self,f):
+    @staticmethod
+    def digitformat(f):
         nn='0'
         i=0
         while f[i]>='0' and f[i]<='9':
@@ -155,78 +146,66 @@ class UartRemote:
         self.commands[command]=command_function
         self.command_formats[command]=format
 
-    def encode(self,cmd,*argv):
-        """ Encodes command with parameters formatted according to formatstring """
-        if len(argv)>0:
-            f=argv[0] # formatstring
-            i=0
-            ff=''
-            s=b''
-            if f=='raw':
-                # No encoding, raw bytes
-                # s=struct.pack('B',len(argv[1])) + argv[1]
-                s=b'\x03raw'+argv[1]
-            else:
-                while (len(f)>0):# keep parsing formatstring
-                    nf,f=self.digitformat(f) # split preceding digits and format character
-                    if nf==0:
-                        nf=1
-                        fo=f[0]
-                        data=argv[1+i]# get data data that needs to be encoded
-                        td=type(data) # check type of data
-                        if td==list: # for lists, use a special 'a' format character preceding the normal formatcharacter
-                            n=len(data)
-                            ff+="a%d"%n+fo # 'a' for list
-                            for d in data:
-                                s+=struct.pack(fo,d) # encode each element in list with format character fo
-                        elif td==tuple: # for lists, use a special 'a' format character preceding the normal formatcharacter
-                            n=len(data)
-                            ff+="t%d"%n+fo # 'a' for list
-                            for d in data:
-                                s+=struct.pack(fo,d) # encode each element in list with format character fo
-                        elif td==str:
-                            n=len(data)
-                            ff+="%d"%n+fo
-                            s+=data.encode('utf-8')
-                        elif td==bytes:
-                            n=len(data)
-                            ff+="%d"%n+fo
-                            s+=data
-                        else:
-                            ff+=fo
-                            s+=struct.pack(fo,data)
+    def pack(self,*argv):
+        f=argv[0] # formatstring
+        i=0
+        ff=''
+        s=b''
+        if f=='raw':
+            # No encoding, raw bytes
+            # s=struct.pack('B',len(argv[1])) + argv[1]
+            s=b'\x03raw'+argv[1]
+        else:
+            while (len(f)>0):# keep parsing formatstring
+                nf,f=self.digitformat(f) # split preceding digits and format character
+                if nf==0:
+                    nf=1
+                    fo=f[0]
+                    data=argv[1+i]# get data data that needs to be encoded
+                    td=type(data) # check type of data
+                    if td==list: # for lists, use a special 'a' format character preceding the normal formatcharacter
+                        n=len(data)
+                        ff+="a%d"%n+fo # 'a' for list
+                        for d in data:
+                            s+=struct.pack(fo,d) # encode each element in list with format character fo
+                    elif td==tuple: # for lists, use a special 'a' format character preceding the normal formatcharacter
+                        n=len(data)
+                        ff+="t%d"%n+fo # 'a' for list
+                        for d in data:
+                            s+=struct.pack(fo,d) # encode each element in list with format character fo
+                    elif td==str:
+                        n=len(data)
+                        ff+="%d"%n+fo
+                        s+=data.encode('utf-8')
+                    elif td==bytes:
+                        n=len(data)
+                        ff+="%d"%n+fo
+                        s+=data
                     else:
-                        fo="%d"%nf+f[0]
-                        data=argv[1+i:1+i+nf]
                         ff+=fo
-                        s+=struct.pack(fo,*data)
-                    i+=nf
-                    f=f[1:] # continue parsing with remainder of f
-                s=struct.pack('B',len(ff))+ff.encode('utf-8')+s
-        else: # no formatstring
-            s=b'\x01z'# dummy format 'z' for no arguments
-        s=struct.pack("B",len(cmd))+cmd.encode('utf-8')+s
-        s=struct.pack("B",len(s))+s
+                        s+=struct.pack(fo,data)
+                else:
+                    fo="%d"%nf+f[0]
+                    data=argv[1+i:1+i+nf]
+                    ff+=fo
+                    s+=struct.pack(fo,*data)
+                i+=nf
+                f=f[1:] # continue parsing with remainder of f
+            s=struct.pack('B',len(ff))+ff.encode('utf-8')+s
         return s
 
-    def decode(self,s):
-        """ Decodes encoded bytes according to containing formatstring and return command and parameters"""
+    def unpack(self,s):
         sizes={'b':1,'B':1,'i':4,'I':4,'f':4,'s':1,'r':1}
-        nl=s[0] #
-        p=1 # p is position in encoded message
-        nc=s[p]
-        p+=1
-        cmd=s[p:p+nc].decode('utf-8')
-        p+=nc
+        p=0
         nf=s[p]
         p+=1
         f=s[p:p+nf].decode('utf-8')
         p+=nf
         data=()
         if f=="z":# dummy format 'z' for empty data
-            return cmd, None
+            return None
         if f=="raw": # Raw bytes, no decoding needed
-            return cmd, s[p:]
+            return s[p:]
         while (len(f)>0):
             nf,f=self.digitformat(f)
             fo=f[0]
@@ -253,10 +232,37 @@ class UartRemote:
             f=f[1:]
         if len(data)==1: # convert from tuple size 1 to single value
             data=data[0]
-        if nl!=p-1:
-            return "error","len"
+        return data
+
+    def encode(self,cmd,*argv,encoder=-1):
+        """ Encodes command with specified encoder """
+        if len(argv)>0:
+            if encoder:
+                if encoder==-1:
+                    encoder=self.pack
+                s=encoder(*argv)
+            else:
+                s=argv[0]
+        else: # no formatstring
+            s=b'\x01z'# dummy format 'z' for no arguments
+        s=struct.pack("B",len(cmd))+cmd.encode('utf-8')+s
+        s=struct.pack("B",len(s))+s
+        return s
+
+    def decode(self,s,decoder=-1):
+        """ Decodes command + encoded bytes with specified decoder"""
+
+        nl=s[0] #number bytes in total length of message
+        nc=s[1] #number of bytes in command
+        cmd=s[2:2+nc].decode('utf-8')
+        data=s[2+nc:]
+        if decoder:
+            if decoder==-1:
+                decoder=self.unpack
+            data=decoder(data)
         else:
-            return cmd,data
+            if data==b'\x01z': data=None
+        return cmd,data
 
 
     def available(self):
@@ -286,7 +292,7 @@ class UartRemote:
         else:
             self.uart.read(self.uart.any())
 
-    def receive_command(self,wait=True):
+    def receive_command(self,wait=True,**kwargs):
         global interrupt_pressed
         if wait:
             while not self.available():
@@ -310,9 +316,6 @@ class UartRemote:
             self.flush()
             return ("err","< delim not found")
 
-        # if len(self.unprocessed_data) > 1:
-        #    ls = self.unprocessed_data[1]
-        # else:
         ls=self.uart.read(1)
         l=struct.unpack('B',ls)[0]
         payload = ls
@@ -328,12 +331,12 @@ class UartRemote:
             self.flush()
             return ("err","> delim not found")
         else:
-            result=self.decode(payload)
+            result=self.decode(payload,**kwargs)
 
         return result
 
-    def send_command(self,command,*argv):
-        s=self.encode(command,*argv)
+    def send_command(self,command,*argv,**kwargs):
+        s=self.encode(command,*argv,**kwargs)
         msg=b'<'+s+b'>'
         if platform==SPIKE: # on spike send 32-bytes at a time
             window=32
@@ -345,11 +348,10 @@ class UartRemote:
         else:
             self.uart.write(msg)
 
-
-    def send_receive_command(self,command,*args):
+    def call(self,command,*args,**kwargs):
         self.flush()
-        self.send_command(command,*args)
-        return self.receive_command(wait=True)
+        self.send_command(command,*args,**kwargs)
+        return self.receive_command(wait=True,**kwargs)
 
     def execute_command(self, wait=True, check=True):
         command,value=self.receive_command(wait=wait)
@@ -405,7 +407,7 @@ class UartRemote:
             result=self.uart.read_all()
         return result
 
-    def enter_raw_repl(self):
+    def repl_activate(self):
         self.flush()
         self.send_command('enable repl')
         sleep_ms(300)
@@ -418,7 +420,7 @@ class UartRemote:
         if not result[-14:] == b'L-B to exit\r\n>':
             raise UartRemoteError("Raw REPL failed")
 
-    def execute_repl(self, command, reply=True):
+    def repl_run(self, command, reply=True):
         self.uart.write(b"\x05A\x01") # Enter raw paste
         sleep_ms(5)
         result = self.uart.read(6) # Should be b'R\x01\x80\x00\x01' where \x80 is the window size and the first \x01 says paste mode works
@@ -450,25 +452,28 @@ class UartRemote:
                 return value.strip()
             else:
                 return
+
     def repl_exit(self):
         self.uart.write(b"\x02") # Ctrl-B
 
 ur = UartRemote('F', debug=True)
-# print(ur.decode(ur.encode('echo','Bir',12,13,b'hello')))
+print(ur.encode('echo',encoder=None))
+print(ur.decode(ur.encode('echo',encoder=None),decoder=None))
+
 
 print("Uart initialized")
 
-ur.enter_raw_repl()
-print(ur.execute_repl("print(123)"))
-print(ur.execute_repl(MAINPY))
+ur.repl_activate()
+print(ur.repl_run("print(123)"))
+print(ur.repl_run(MAINPY))
 print("loaded script")
-ur.execute_repl("ur.loop()", reply=False)
+ur.repl_run("ur.loop()", reply=False)
 print("entered loop")
 ur.flush()
 print("Flushed")
 # sleep_ms(2000)
-print(ur.send_receive_command('add','2B',12,20))
-print(ur.send_receive_command('init_pixels','B',12))
-print(ur.send_receive_command('echo','s','hoort u mij?'))
-print(ur.send_receive_command('paint_pixel','BB',1,[255,0,255]))
+print(ur.call('add','2B',12,20))
+print(ur.call('init_pixels','B',12))
+print(ur.call('echo','s','hoort u mij?'))
+print(ur.call('paint_pixel','BB',1,[255,0,255]))
 raise SystemExit
