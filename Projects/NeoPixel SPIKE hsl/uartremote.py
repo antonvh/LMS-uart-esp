@@ -6,7 +6,6 @@
 # - SPIKE hub
 # python3 on any other platform. pyserial is required in that case.
 
-
 import struct
 import sys
 
@@ -227,7 +226,6 @@ class UartRemote:
 
     def decode(self,s,decoder=-1):
         """ Decodes command + encoded bytes with specified decoder"""
-        
         nl=s[0] #number bytes in total length of message
         nc=s[1] #number of bytes in command
         cmd=s[2:2+nc].decode('utf-8')
@@ -268,7 +266,7 @@ class UartRemote:
         else:
             self.uart.read(self.uart.any())
 
-    def receive_command(self,wait=True):
+    def receive_command(self,wait=True,**kwargs):
         global interrupt_pressed
         if wait:
             while not self.available():
@@ -292,9 +290,6 @@ class UartRemote:
             self.flush()
             return ("err","< delim not found")
 
-        # if len(self.unprocessed_data) > 1:
-        #    ls = self.unprocessed_data[1]
-        # else:
         ls=self.uart.read(1)
         l=struct.unpack('B',ls)[0]
         payload = ls
@@ -310,12 +305,12 @@ class UartRemote:
             self.flush()
             return ("err","> delim not found")
         else:
-            result=self.decode(payload)
+            result=self.decode(payload,**kwargs)
 
         return result
 
-    def send_command(self,command,*argv):
-        s=self.encode(command,*argv)
+    def send_command(self,command,*argv,**kwargs):
+        s=self.encode(command,*argv,**kwargs)
         msg=b'<'+s+b'>'
         if platform==SPIKE: # on spike send 32-bytes at a time
             window=32
@@ -327,10 +322,10 @@ class UartRemote:
         else:
             self.uart.write(msg)
 
-    def call(self,command,*args):
+    def call(self,command,*args,**kwargs):
         self.flush()
-        self.send_command(command,*args)
-        return self.receive_command(wait=True)
+        self.send_command(command,*args,**kwargs)
+        return self.receive_command(wait=True,**kwargs)
 
     def execute_command(self, wait=True, check=True):
         command,value=self.receive_command(wait=wait)
