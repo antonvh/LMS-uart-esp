@@ -6,7 +6,7 @@ MAINPY="""
 from uartremote import *
 from neopixel import NeoPixel
 
-ur = UartRemote() 
+ur = UartRemote()
 def add2(a,b):
     return a+b
 
@@ -71,7 +71,7 @@ if platform==ESP8266 or platform==ESP32:
     import machine
     from utime import sleep_ms
     import uos
-    gpio0=Pin(0,Pin.IN)  # define pin0 as input = BOOT button on board
+    gpio0=Pin(0,Pin.IN)# define pin0 as input = BOOT button on board
     gpio0.irq(trigger=Pin.IRQ_FALLING, handler=esp_interrupt)
 elif platform==EV3:
     from utime import sleep_ms
@@ -96,7 +96,7 @@ class UartRemote:
     """
     commands={}
     command_formats={}
-    
+
     def digitformat(self,f):
         nn='0'
         i=0
@@ -133,12 +133,12 @@ class UartRemote:
             # Try regular python3 pyserial
             self.uart = serial.Serial(port, baudrate, timeout=timeout)
         self.DEBUG=debug
-        self.unprocessed_data=b'' 
+        self.unprocessed_data=b''
         self.baudrate = baudrate
         self.add_command('enable repl', self.enable_repl_locally)
         self.add_command('disable repl', self.disable_repl_locally)
         self.add_command('echo', self.echo, 's')
-    
+
     @staticmethod
     def echo(s):
         return s
@@ -162,17 +162,17 @@ class UartRemote:
             i=0
             ff=''
             s=b''
-            if f=='r':
+            if f=='raw':
                 # No encoding, raw bytes
                 # s=struct.pack('B',len(argv[1])) + argv[1]
-                s=b'\x01r'+argv[1]
+                s=b'\x03raw'+argv[1]
             else:
-                while (len(f)>0):  # keep parsing formatstring
+                while (len(f)>0):# keep parsing formatstring
                     nf,f=self.digitformat(f) # split preceding digits and format character
                     if nf==0:
                         nf=1
                         fo=f[0]
-                        data=argv[1+i]  # get data data that needs to be encoded
+                        data=argv[1+i]# get data data that needs to be encoded
                         td=type(data) # check type of data
                         if td==list: # for lists, use a special 'a' format character preceding the normal formatcharacter
                             n=len(data)
@@ -184,7 +184,7 @@ class UartRemote:
                             ff+="t%d"%n+fo # 'a' for list
                             for d in data:
                                 s+=struct.pack(fo,d) # encode each element in list with format character fo
-                        elif td==str: 
+                        elif td==str:
                             n=len(data)
                             ff+="%d"%n+fo
                             s+=data.encode('utf-8')
@@ -193,13 +193,16 @@ class UartRemote:
                             ff+="%d"%n+fo
                             s+=data
                         else:
-                            fo="%d"%nf+f[0]
-                            data=argv[1+i:1+i+nf]
                             ff+=fo
-                            s+=struct.pack(fo,*data)
-                        i+=nf
-                        f=f[1:] # continue parsing with remainder of f
-                    s=struct.pack('B',len(ff))+ff.encode('utf-8')+s 
+                            s+=struct.pack(fo,data)
+                    else:
+                        fo="%d"%nf+f[0]
+                        data=argv[1+i:1+i+nf]
+                        ff+=fo
+                        s+=struct.pack(fo,*data)
+                    i+=nf
+                    f=f[1:] # continue parsing with remainder of f
+                s=struct.pack('B',len(ff))+ff.encode('utf-8')+s
         else: # no formatstring
             s=b'\x01z'# dummy format 'z' for no arguments
         s=struct.pack("B",len(cmd))+cmd.encode('utf-8')+s
@@ -209,7 +212,7 @@ class UartRemote:
     def decode(self,s):
         """ Decodes encoded bytes according to containing formatstring and return command and parameters"""
         sizes={'b':1,'B':1,'i':4,'I':4,'f':4,'s':1,'r':1}
-        nl=s[0] # 
+        nl=s[0] #
         p=1 # p is position in encoded message
         nc=s[p]
         p+=1
@@ -222,7 +225,7 @@ class UartRemote:
         data=()
         if f=="z":# dummy format 'z' for empty data
             return cmd, None
-        if f=="r": # Raw bytes, no decoding needed
+        if f=="raw": # Raw bytes, no decoding needed
             return cmd, s[p:]
         while (len(f)>0):
             nf,f=self.digitformat(f)
@@ -289,26 +292,26 @@ class UartRemote:
             while not self.available():
                 if interrupt_pressed:
                     return
-                sleep_ms(1) 
+                sleep_ms(1)
         delim=b''
         if platform==SPIKE:
-            if self.unprocessed_data: 
+            if self.unprocessed_data:
                 delim = self.unprocessed_data
-                self.unprocessed_data=b''  # in case this function gets called without calling available()
-            else: 
+                self.unprocessed_data=b''# in case this function gets called without calling available()
+            else:
                 c=b''
                 while c==b'':
                     c=self.uart.read(1)
                 delim=c
 
         if delim==b'':
-            delim=self.uart.read(1)        
+            delim=self.uart.read(1)
         if delim!=b'<':
             self.flush()
             return ("err","< delim not found")
-            
+
         # if len(self.unprocessed_data) > 1:
-        #     ls = self.unprocessed_data[1]
+        #    ls = self.unprocessed_data[1]
         # else:
         ls=self.uart.read(1)
         l=struct.unpack('B',ls)[0]
@@ -341,8 +344,8 @@ class UartRemote:
             self.uart.write(msg)
         else:
             self.uart.write(msg)
-        
-        
+
+
     def send_receive_command(self,command,*args):
         self.flush()
         self.send_command(command,*args)
@@ -395,7 +398,7 @@ class UartRemote:
             result = bytes()
             while True:
                 sleep_ms(6)
-                data = self.uart.read(1024) # causes timeout on some non-spike platforms
+                data = self.uart.read(32) # causes timeout on some non-spike platforms
                 if not data: break
                 result += data
         else:
@@ -431,11 +434,13 @@ class UartRemote:
             command_bytes_left = command_bytes_left[window:]
         self.uart.write(command_bytes_left+b'\x04')
         if reply:
-            result = ""
-            while not len(result) >= 3: # We need at least 3x'\x04'
-                result = self.read_all()
+            result = b""
+            decoded = []
+            while not len(decoded) >= 3: # We need at least 3x'\x04'
+                result += self.read_all()
+                decoded = result.decode("utf-8").split("\x04")
             try:
-                _ , value, error, _ = result.decode("utf-8").split("\x04") # The last 5 bytes are b'\r\n\x04\x04>' Between the \x04's there can be an exception.
+                _ , value, error, _ = decoded # The last 5 bytes are b'\r\n\x04\x04>' Between the \x04's there can be an exception.
             except:
                 raise UartRemoteError("Unexpected answer from repl: {}".format(result))
             if error:
@@ -445,9 +450,12 @@ class UartRemote:
                 return value.strip()
             else:
                 return
-
+    def repl_exit(self):
+        self.uart.write(b"\x02") # Ctrl-B
 
 ur = UartRemote('F', debug=True)
+# print(ur.decode(ur.encode('echo','Bir',12,13,b'hello')))
+
 print("Uart initialized")
 
 ur.enter_raw_repl()
@@ -459,7 +467,7 @@ print("entered loop")
 ur.flush()
 print("Flushed")
 # sleep_ms(2000)
-print(ur.send_receive_command('add2','2B',12,20)[1])
+print(ur.send_receive_command('add','2B',12,20))
 print(ur.send_receive_command('init_pixels','B',12))
 print(ur.send_receive_command('echo','s','hoort u mij?'))
 print(ur.send_receive_command('paint_pixel','BB',1,[255,0,255]))
