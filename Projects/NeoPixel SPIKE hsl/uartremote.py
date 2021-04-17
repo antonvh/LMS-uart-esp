@@ -159,6 +159,9 @@ class UartRemote:
                             n=len(data)
                             ff+="%d"%n+fo
                             s+=data
+                        else:
+                            ff+=fo
+                            s+=struct.pack(fo,data)
                     else:
                         fo="%d"%nf+f[0]
                         data=argv[1+i:1+i+nf]
