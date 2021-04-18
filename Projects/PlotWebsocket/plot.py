@@ -19,6 +19,7 @@ class TestClient(WebSocketClient):
             try:
                 self.connection.write("%d,%d,%d"%(value[0],value[1],value[2]))
             except:
+                # should be u.flush(), but that does not seem to work????
                 u.uart.read()
             time.sleep(0.2)
             if not msg:
