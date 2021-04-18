@@ -1,19 +1,25 @@
 # Copy this script in a new Python project in the SPIKE Prima app to run it
-# TODO!! Upload crosscompiled uartremote.mpy to the esp breakout board using the webrepl.
-# TODO uncomment uartremote import and control rotation hue via SPIKE motors
-# TODO connect animation paramters to ticks_ms instead of framerate
-# TODO replace gauss by sine bell shape to make this easier to read.
+# Upload uartremote.mpy to the esp breakout board using the webrepl.
 # No need for a main.py. It is executed via the raw repl over serial.
 
 MAINPY="""
-# from uartremote import *
+from uartremote import *
 from neopixel import NeoPixel
 from utime import ticks_ms
 from math import sin
 
 N_LEDS=12
+offset = 0
 
-# ur = UartRemote()
+ur = UartRemote()
+
+def set_rotation(r):
+    global offset
+    offset = -r/360*150
+
+ur.add_command(set_rotation)
+
+
 def add2(a,b):
     return a+b
 
@@ -63,10 +69,11 @@ def gauss1(x):
     return normal * 1.25
 
 def swirl(r_speed=-0.1, h_speed = 0.01):
-    global np
+    global np, offset
+    ur.disable_repl_locally()
     init_pixels(N_LEDS)
     
-    offset = 0
+    # offset = 0
     pix_rotation = 0
     led_indexes = list(range(N_LEDS))
     hue = 0.5
@@ -90,11 +97,12 @@ def swirl(r_speed=-0.1, h_speed = 0.01):
         next_paint = ticks_ms()+10
 
         # increase rotation of image
-        offset += r_speed
+        # offset += r_speed
         pix_rotation += 0.05
         # shift hue of 'image'
         hue += h_speed
         if hue > 360: hue = 0
+        ur.execute_command(wait=False)
 
         
 
@@ -543,10 +551,17 @@ print(ur.repl_run(MAINPY))
 print("loaded script")
 ur.repl_run("swirl()", reply=False)
 print("entered loop")
-# ur.flush()
-# print("Flushed")
-# print(ur.call('add','2B',12,20))
-# print(ur.call('init_pixels','B',12))
-# print(ur.call('echo','s','hoort u mij?'))
-# print(ur.call('paint_pixel','BB',1,[255,0,255]))
+
+ur.flush()
+print("Flushed")
+
+
+
+
+while True:
+    r = hub.port.E.motor.get()[2]+130
+    ur.call('set_rotation', 'i', r)
+    sleep_ms(100)
+
+
 raise SystemExit
