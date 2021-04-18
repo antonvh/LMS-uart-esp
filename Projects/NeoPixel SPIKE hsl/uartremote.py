@@ -30,7 +30,7 @@ def esp_interrupt(p):
     uos.dupterm(machine.UART(0, 115200), 1) # repl with 115200baud
     interrupt_pressed=1
 
-if platform==ESP8266 or platform==ESP32:
+if platform==ESP8266:
     from machine import UART
     from machine import Pin
     import machine
@@ -38,6 +38,14 @@ if platform==ESP8266 or platform==ESP32:
     import uos
     gpio0=Pin(0,Pin.IN)# define pin0 as input = BOOT button on board
     gpio0.irq(trigger=Pin.IRQ_FALLING, handler=esp_interrupt)
+if platform==ESP32:
+    from machine import UART
+    from machine import Pin
+    import machine
+    from utime import sleep_ms
+    import uos
+    #gpio0=Pin(0,Pin.IN)# define pin0 as input = BOOT button on board
+    #gpio0.irq(trigger=Pin.IRQ_FALLING, handler=esp_interrupt)
 elif platform==EV3:
     from utime import sleep_ms
     from pybricks.iodevices import UARTDevice
@@ -72,7 +80,7 @@ class UartRemote:
         return (int(nn),f[i:])
 
 
-    def __init__(self,port=0,baudrate=115200,timeout=1000,debug=False):
+    def __init__(self,port=0,baudrate=115200,timeout=1000,debug=False,esp32_rx=0,esp32_tx=26):
         # Baud rates of up to 230400 work. 115200 is the default for REPL.
         if platform==EV3:
             if not port: port=Port.S1
@@ -86,7 +94,7 @@ class UartRemote:
             self.uart = UART(port,baudrate=baudrate,timeout=timeout,timeout_char=timeout,rxbuf=100)
         elif platform==ESP32:
             if not port: port = 1
-            self.uart = UART(port,rx=18,tx=19,baudrate=baudrate,timeout=timeout)
+            self.uart = UART(port,rx=esp32_rx,tx=esp32_tx,baudrate=baudrate,timeout=timeout)
         elif platform==SPIKE:
             if type(port) == str:
                 self.uart = eval("hub.port."+port)
@@ -110,11 +118,11 @@ class UartRemote:
         return s
 
     def enable_repl_locally(self):
-        if platform in [ESP32, ESP8266]:
+        if platform==ESP8266:
             uos.dupterm(machine.UART(0, self.baudrate), 1)
 
     def disable_repl_locally(self):
-        if platform in [ESP32, ESP8266]:
+        if platform==ESP8266:
             uos.dupterm(None, 1)
 
     def add_command(self,command,command_function, format=""):
