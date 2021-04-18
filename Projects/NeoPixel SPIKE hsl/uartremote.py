@@ -38,7 +38,7 @@ if platform==ESP8266:
     import uos
     gpio0=Pin(0,Pin.IN)# define pin0 as input = BOOT button on board
     gpio0.irq(trigger=Pin.IRQ_FALLING, handler=esp_interrupt)
-if platform==ESP32:
+elif platform==ESP32:
     from machine import UART
     from machine import Pin
     import machine
