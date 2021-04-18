@@ -69,12 +69,12 @@ On the master (e.g. EV3):
 ```python
 from uartremote import *
 u=UartRemote(Port.S1)
-u.send_receive('imu')
-u.send_receive('grid','B',10)
-u.send_receive('led','B',[2,100,100,100])
+u.send_command('imu')
+u.send_command('grid','B',10)
+u.send_command('led','B',[2,100,100,100])
 ```
-### `send_receive(<cmd>,[<type>,<data>]`
-The `send_receive` method allows the Master to send a command to the Slave. When no values need to be passed with the command, the `<type>` and `<data>` can be omitted.  The `<data>` can be a single value, a string or a list of values. The type of `<data>` is given according to the struct Format characters, of which the most commonly used are shown below:
+### `send_command(<cmd>,[<type>,<data>])`
+The `send_command` method allows the Master to send a command to the Slave. When no values need to be passed with the command, the `<type>` and `<data>` can be omitted.  The `<data>` can be a single value, a string or a list of values. The type of `<data>` is given according to the struct Format characters, of which the most commonly used are shown below:
 
 | Format character | type | number of bytes |
 |---------------------|-------|--------------|
@@ -157,11 +157,11 @@ t_old=time.ticks_ms()+2000                      # wait 2 seconds before starting
 q=u.flush()                                     # flush uart rx buffer
 while True:
     if u.available():                           # check if a command is available
-        u.wait_for_command()
+        u.execute_command(wait=False)
     if time.ticks_ms()-t_old>1000:              # send a command every second
         t_old=time.ticks_ms()
         print("send led")                       # send 'led' command with data
-        print("recv=",u.send_receive('led','b',[1,2,3,4]))
+        print("recv=",u.send_receive_command('led','b',[1,2,3,4]))
 ```
 
 ### ESP8266
@@ -182,11 +182,11 @@ t_old=time.ticks_ms()+2000                      # wait 2 seconds before starting
 q=u.flush()                                     # flush uart rx buffer
 while True:
     if u.available():                           # check if a command is available
-        u.wait_for_command()
+        u.execute_command(wait=False)
     if time.ticks_ms()-t_old>1000:              # send a command every second
         t_old=time.ticks_ms()
         print("send imu")
-        print("recv=",u.send_receive('imu'))    # send 'imu' command & receive result
+        print("recv=",u.send_receive_command('imu'))    # send 'imu' command & receive result
 ```
 
 # Library description
@@ -204,21 +204,21 @@ Flushes the read buffer, by reading all remaining bytes from the Uart.
 
 Return a non zero value if there is a received command available.
 
-#### `UartRemote.send(command,[ t, data])`
+#### `UartRemote.send_command(command,[ t, data])`
 
 Sends a command `command`. When `t` and `data` are omitted, the cooresponding function on the Slave is called with no arguments. Otherwise,`data` is encoded as type `t`, where `command` is a string and `data` is a string or a list of values, or multiple values.
 
-#### `UartRemote.receive()`
+#### `UartRemote.receive_command(wait=True)`
 
-Receives a command and returns a tuple `(<command>, <data>)`.  If there is a failure, the `<command>`  will be equal to `'error'`.
+Receives a command and returns a tuple `(<command>, <data>)`.  If there is a failure, the `<command>`  will be equal to `'err'`. If `wait` is True, the methods waits until it receives a command. 
 
-#### `UartRemote.send_receive(command)`
-#### `UartRemote.send_receive(command,t, data)`
+#### `UartRemote.send_receive_command(command)`
+#### `UartRemote.send_receive_command(command,t, data)`
 Combines the send and receive functions as defined above. When `t` and `data` are omitted, a dummy value `[]` of type `B` will be send. The parameter `data` can be a string, a single value or a list of values. 
 
-#### `UartRemote.wait_for_command()`
+#### `UartRemote.execute_command(wait=True,check=True)`
 
-Waits for the reception of a command and returns the received command as a dict `{<command>,<value>}`.
+If `wait` is True, this medthods Waits for the reception of a command, otherwise, it immediately starts receiving a command. Is the flasg `check` is True, it checks for errors or for an `ack` of onother command. It then calls the function corresponding with the received command (prior set by `add_command`) and sends back the result of the executed function.
 
 #### `UartRemote.loop()`
 
