@@ -2,6 +2,7 @@
 # TODO!! Upload crosscompiled uartremote.mpy to the esp breakout board using the webrepl.
 # TODO uncomment uartremote import and control rotation hue via SPIKE motors
 # TODO connect animation paramters to ticks_ms instead of framerate
+# TODO replace gauss by sine bell shape to make this easier to read.
 # No need for a main.py. It is executed via the raw repl over serial.
 
 MAINPY="""
