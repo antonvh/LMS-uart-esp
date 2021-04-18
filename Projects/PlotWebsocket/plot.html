@@ -65,14 +65,16 @@
     			var dataStr = [];
     			dataStr = evt.data.split(",");
     			// Series idx 0=Temp idx 1=Hum 
-    			var seriesT = mainChart.series[0];
-    			var seriesH = mainChart.series[1];
-    			var temp = parseFloat(dataStr[0]);
-    			var hum = parseFloat(dataStr[1]);
-					var myEpoch = new Date().getTime(); //get current epoch time    			 				          
-		        
-					seriesT.addPoint([myEpoch, temp]);
-					seriesH.addPoint([myEpoch, hum]);
+    			var seriesax = mainChart.series[0];
+    			var seriesay = mainChart.series[1];
+    			var seriesaz = mainChart.series[2];
+    			var ax = parseFloat(dataStr[0]);
+    			var ay = parseFloat(dataStr[1]);
+				var az = parseFloat(dataStr[2]);
+				var myEpoch = new Date().getTime(); //get current epoch time    			 				          
+		        seriesax.addPoint([myEpoch, ax]);
+				seriesay.addPoint([myEpoch, ay]);
+				seriesaz.addPoint([myEpoch, az]);
  	      };
     	});
   });
@@ -87,8 +89,9 @@
   		}
 		});
     
-    var tempdata;
-    var humData;
+    var axData;
+    var ayData;
+	var azData;
 		var chartOptions = {  
 		chart: {
 		  renderTo: 'container',
@@ -97,7 +100,7 @@
 	  },
  		
  		title: {
-        text: 'Temperature & Humidity vs Time'
+        text: 'acceleration vs Time'
     },
 		xAxis: 	{
 		  type: 'datetime',
@@ -108,9 +111,9 @@
 				align: 'left'
 			}
 		},
-    yAxis: [{
+		yAxis: [{
       title: {
-        text: 'Temperature(°C)',
+        text: 'acceleration (ms-2)',
 				style: {
         	color: Highcharts.getOptions().colors[1]
         }        
@@ -125,7 +128,7 @@
       opposite:false,
     },{
       title: {
-	    text: 'Humidity',
+	    text: 'blabla',
 			style: {
       	color: Highcharts.getOptions().colors[0]
         }
@@ -170,16 +173,20 @@
   	},
   	
 		series: [{
-			name: 'Temp',
-		  data: tempdata,
+			name: 'ax',
+		  data: axData,
 			color: Highcharts.getOptions().colors[1],
 		},
 	  {
-			name: 'Hum',
-		  data: humData,
-			color: Highcharts.getOptions().colors[0],
-		  yAxis:1 
-	  }				  			
+			name: 'ay',
+		  data: ayData,
+			color: Highcharts.getOptions().colors[0]
+	  }	,
+	  {
+			name: 'az',
+		  data: azData,
+			color: Highcharts.getOptions().colors[0]
+	  }				  				  			
 	]		
 	}
 		
@@ -187,7 +194,7 @@
 	</script>
 <div id="connection_details">
 <label for="host">host:</label>
-<input type="text" id="host" value="192.168.1.110" style="background:#ff0000;" />
+<input type="text" id="host" value="192.168.2.200" style="background:#ff0000;" />
 <label for="port">port:</label>
 <input type="text" id="port" value="80" style="background:#ff0000;" />
 <label for="uri">uri: </label>
