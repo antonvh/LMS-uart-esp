@@ -4,18 +4,13 @@ This is a library for robust communication between lego EV3/Spike and other Micr
 
 This is a uniform library that works on standard MicroPython platforms, the EV3 and the Spike. 
 
-## ESP8266: Disable repl on UART
+## Installation
 
-For this library to work properly, the repl prompt duplication on the UART needs to be disabled. Therefore, make the following change in `boot.py`
+### LMS-esp-wifi board
+Upload the uartremote.py or the compiled uartremote.mpy through the WebREPL.
 
-```
-...
-import uos, machine
-uos.dupterm(None, 1) # disable REPL on UART(0)
-...
-```
-## Spike prime: uploading the library
-In order to upload the UartRemote library to the Spike Prime hub, it is convenient to install the `rshell` Python extension by:
+### SPIKE Prime and Robot Inventor 51515
+You have two options: upload the library via rshell, or just copy the whole script on top of your program. In order to upload the UartRemote library to the Spike Prime hub, it is convenient to install the `rshell` Python extension by:
 
 ```
 pip3 install rshell
@@ -43,6 +38,14 @@ Now you can either use the Spike programming environment, or start a repl prompt
 ```
 repl
 ```
+
+### MINDSTORMS EV3
+Use the MINDSTORMS VSCode extension to create your project. 
+1. Make a new project using the extension icon in the left toolbaar.
+2. Copy uartremote.py into your project directory
+3. Run your program. The extension will automatically upload all files in the project directory.
+
+
 ## Initialize
 
 Below is an example of how to use this library.
@@ -62,7 +65,7 @@ In this example two functions are defined `imu`, `led` and `grideye`. These func
 
 ## Sending commands
 
-On the master (EV3):
+On the master (e.g. EV3):
 ```python
 from uartremote import *
 u=UartRemote(Port.S1)
@@ -81,13 +84,14 @@ The `send_command` method allows the Master to send a command to the Slave. When
 | `I` | unsigned int | 4 |
 | `f` | float | 4 |
 | `d` | double | 8 |
-| `s` | char[] | 
+| `s` | string[] | one per char
+| `r` | raw bytes | one per byte
 
 The Slave acknowledges a command by sending back an acknowledge command, where the string `ack` is appended to the command, and return values of the function being called are sent back. When an error occurs, the `<cmd>` that is sent back, contains `error`.
 
 When the Format string `f` is a single character, and the data is a list, each element of the list will be encoded using the specified Format character. The format field can also consist of multiple Format characters, for example 
 
-```send_command('special','3b3s1f',1,2,3,"aap",1.3)```.
+```send_receive('special','3bs1fr',1,2,3,"aap",1.3,b'raw bytes here')```.
 
 # Example application
 ## Slave code
@@ -124,13 +128,13 @@ u=Uartremote(Port.S1)
 ```
 In repl the following examples result in:
 ```
->>> u.send_receive_command('led','B',[1,2,3,4])
+>>> u.call('led','B',[1,2,3,4])
 ('ledack', [])
->>> u.send_receive_command('imu')
+>>> u.call('imu')
 ('imuack', [12.29999923706055, 11.09999847412109, 180.0])
->>> u.execute_command('grid','B',1)
+>>> u.call('grid','B',1)
 ('gridack', [21])
->>> u.send_receive_command('unknown')
+>>> u.call('unknown')
 ('error', [b'nok'])
 ```
 
@@ -223,3 +227,4 @@ Loops the `UartRemote.wait-for_command()` command.
 #### `UartRemote.add_command(command,command_function[,format_string])`
 
 Adds a command `command` to the dictionary of `UartRemote.commands` together with a function name `command_function`. Optionally, if the `command_function` returns parameters, the `format_string` describes the type of the returned parameters. If the `command_function` does not return a value, the `format_string` is omirted. The dictionary with commands is used by the `UartRemote.wait_for_command()` method to call the function as defined upon receiving a specific command. As an argument the `data` that is received is used.
+
