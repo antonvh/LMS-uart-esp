@@ -120,28 +120,12 @@
       },
 		  tickInterval:1,
 			labels: {
-    		format: '{value}°',
+    		format: '{value}',
     		style: {
         	color: Highcharts.getOptions().colors[1]
         }
       },
       opposite:false,
-    },{
-      title: {
-	    text: 'blabla',
-			style: {
-      	color: Highcharts.getOptions().colors[0]
-        }
-		  },
-		  tickInterval:5,
-			max:100,
-			labels: {
-    		format: '{value}\%',
-    		style: {
-        	color: Highcharts.getOptions().colors[0]
-        }
-      },
-    	opposite:true
     }],
 
     rangeSelector: {
@@ -175,17 +159,17 @@
 		series: [{
 			name: 'ax',
 		  data: axData,
-			color: Highcharts.getOptions().colors[1],
+			color: Highcharts.getOptions().colors[0],
 		},
 	  {
 			name: 'ay',
 		  data: ayData,
-			color: Highcharts.getOptions().colors[0]
+			color: Highcharts.getOptions().colors[1]
 	  }	,
 	  {
 			name: 'az',
 		  data: azData,
-			color: Highcharts.getOptions().colors[0]
+			color: Highcharts.getOptions().colors[2]
 	  }				  				  			
 	]		
 	}

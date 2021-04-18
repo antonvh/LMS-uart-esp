@@ -41,7 +41,7 @@ class TestServer(WebSocketServer):
     def _make_client(self, conn):
         return TestClient(conn)
 
-u=UartRemote(baudrate=230400)
+u=UartRemote()
 u.disable_repl_locally()
 u.flush()
 server = TestServer()
