@@ -1,3 +1,28 @@
+
+"""
+Master:
+
+from uartremote import *
+u=UartRemote(esp32_rx=12, esp32_tx=13)
+
+u.call('add_series','s',"een")
+u.call('add_series','s','twee')
+u.call('title','s','Dit is de nieuwe titel')
+u.call('yaxis','s','Motor Posision (degrees)')
+
+u.call('data','f',[3,1,2])
+u.call('data','f',[3,1,2])
+u.call('data','f',[1,2,3])
+u.call('data','f',[1,2,3])
+u.call('series_name','is',0,"Motor A")
+u.call('series_name','is',1,"Motor B target")
+u.call('series_name','is',2,"Motor C")
+
+
+"""
+
+
+
 from ws_connection import ClientClosedError
 from ws_server import WebSocketServer, WebSocketClient
 import time
@@ -17,11 +42,20 @@ class TestClient(WebSocketClient):
                 (cmd,value)=u.receive_command()
                 u.send_command(cmd+"ack",'s','ok')
                 print(value)
-                #vals=[int(i) for i in value]
-                try:
-                    self.connection.write("%d,%d,%d"%(value[0],value[1],value[2]))
-                except:
-                    pass
+                if cmd=="data":
+                    #try:
+                    s="data "+",".join(["%f"%i for i in value])
+                    self.connection.write(s)
+                    #except:
+                    #    pass
+                elif cmd=="title":
+                    self.connection.write("title %s"%value)
+                elif cmd=="yaxis":
+                    self.connection.write("yaxis %s"%value)
+                elif cmd=="add_series":
+                    self.connection.write("add_series %s"%value)
+                elif cmd=="series_name":
+                    self.connection.write("series_name %d,%s"%(value[0],value[1]))
             if not msg:
                 return
             msg = msg.decode("utf-8")
@@ -36,7 +70,7 @@ class TestClient(WebSocketClient):
 
 class TestServer(WebSocketServer):
     def __init__(self):
-        super().__init__("plot.html", 2)
+        super().__init__("plot_dyn.html", 2)
 
     def _make_client(self, conn):
         return TestClient(conn)

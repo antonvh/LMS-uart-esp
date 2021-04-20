@@ -38,7 +38,7 @@
 	      var uri = $("#uri").val();
 				//start highstock
 	      var mainChart = new Highcharts.stockChart(chartOptions);
-	              
+	      var nrSeries=1;        
 	      // create websocket instance
 	      ws = new WebSocket("ws://" + host + ":" + port + uri);
 	       
@@ -65,23 +65,45 @@
     			var dataStr = [];
 				var msg=evt.data
 				var cmd_value=msg.split(" ");
-				if (cmd_value[0]=="data") {
+                var cmd=cmd_value[0];
+				if (cmd=="data") {
 					dataStr = cmd_value[1].split(",");
 					// Series idx 0=Temp idx 1=Hum 
-					var seriesax = mainChart.series[0];
-					var seriesay = mainChart.series[1];
-					var seriesaz = mainChart.series[2];
-					var ax = parseFloat(dataStr[0]);
-					var ay = parseFloat(dataStr[1]);
-					var az = parseFloat(dataStr[2]);
-					var myEpoch = new Date().getTime(); //get current epoch time    			 				          
-					seriesax.addPoint([myEpoch, ax]);
-					seriesay.addPoint([myEpoch, ay]);
-					seriesaz.addPoint([myEpoch, az]);
+                    nrvalues=dataStr.length;
+                    var myEpoch = new Date().getTime(); //get current epoch time    			 				          
+					for (var nr=0; nr<nrvalues; nr++) {
+                        var pt = parseFloat(dataStr[nr]);
+                        var series = mainChart.series[nr];
+                        series.addPoint([myEpoch, pt]);
+                    }
 				} else
-				if (cmd_value[0]=="title") {
+				if (cmd=="title") {
 					mainChart.setTitle({ text: msg.substring(6) });
-				}
+				} else
+                if (cmd=="yaxis") {
+                    mainChart.yAxis[0].update({
+                        title:{
+                            text:msg.substring(6)
+                        }
+                    });
+                } else
+                if (cmd=="add_series") {
+                    id=cmd_value[1];
+                    nrSeries++;
+                    console.log("nrseries="+nrSeries+"  id="+id);
+                    SeriesArray.push([]);
+                    mainChart.addSeries({
+                        id: id,
+                        data: SeriesArray[nrSeries]
+                    });
+                } else 
+                if (cmd=="series_name") {
+                    dataStr = msg.substring(12).split(",");
+                    var ser_nr=parseInt(dataStr[0]);
+                    var name=dataStr[1];
+                    mainChart.series[ser_nr].update({name:name}, false);
+                    mainChart.redraw();
+                }
  	      };
     	});
   });
@@ -96,9 +118,9 @@
   		}
 		});
     
-    var axData;
-    var ayData;
-	var azData;
+    var SeriesArray=[];
+    SeriesArray.push([])
+	
 		var chartOptions = {  
 		chart: {
 		  renderTo: 'container',
@@ -165,19 +187,9 @@
   	
 		series: [{
 			name: 'ax',
-		  data: axData,
+		  data: SeriesArray[0],
 			color: Highcharts.getOptions().colors[0],
-		},
-	  {
-			name: 'ay',
-		  data: ayData,
-			color: Highcharts.getOptions().colors[1]
-	  }	,
-	  {
-			name: 'az',
-		  data: azData,
-			color: Highcharts.getOptions().colors[2]
-	  }				  				  			
+		}		  				  			
 	]		
 	}
 		
