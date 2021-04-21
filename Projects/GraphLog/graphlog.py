@@ -64,6 +64,8 @@ class TestClient(WebSocketClient):
             if cmd == "Open":
                 #self.connection.write(cmd + " World")
                 print("ws connection opened")
+                #u.disable_repl_locally()
+                #u.flush()
                 u.send_command("wsopen",'s','ok')
         except ClientClosedError:
             self.connection.close()
@@ -77,8 +79,7 @@ class TestServer(WebSocketServer):
         return TestClient(conn)
 
 u=UartRemote()
-#u.disable_repl_locally()
-#u.flush()
+u.disable_repl_locally()
 server = TestServer()
 server.start()
 try:

@@ -17,22 +17,18 @@ The python script `plot_svr.py` sends the commands to the webclient (`plot_dyn.h
 
 ## Installation
 
-Note: disable the repl on the UART by uncommenting the line `uos.dupterm(None, 1) # disable REPL on UART(0)` in `boot.py`
-
 ### On the ESP8266
 
 Copy the files `ws_connection.py`, `ws_server.py`, `graphlog.py` and `graphlog.html` to the esp8266.
 
 On the ESP8266 you can choose to configure wifi to connect to Wifi.
 
-Run `from graphlog import *` on the ESP8266. The webserver should start.
-
 ### On the SPIKE
 
-Execute the program `SPIKE_graphlog.py`.
+Paste the program `SPIKE_graphlog.py` in a new project and run.
 
 ## Starting GraphLog.
 
-Start the program on the SPIKE. Start the 
-Connect to the ESP8266 using a webbroser. Set the websocket address to the address that matches the one you see when starting the `graphlog.py` script on the ESP8266. As soon as you start the websocket, a message is sent to the SPIKE which initializes the chart and start logging the acceleration sensor.
+When the prorgam starts on the SPIKE, the client and/or server address of the ESP8266 is shown. Open a browser to one of these networks, depending to which wifi network the system running the webbrowser is connected.
+Set the websocket address to the the same address that matches the one to which your browser points. As soon as you start the websocket, a message is sent to the SPIKE which initializes the chart and starts logging the acceleration sensor.
 
