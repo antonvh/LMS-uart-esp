@@ -1,6 +1,6 @@
 <html>
 <head>
-<title>Temperature & Humidity Chart</title>
+<title>GraphLog Chart</title>
 
 <link rel="stylesheet" href="https://code.jquery.com/ui/1.11.4/themes/smoothness/jquery-ui.css">
 <script src="https://code.jquery.com/jquery-1.10.2.js"></script>
@@ -68,8 +68,7 @@
                 var cmd=cmd_value[0];
 				if (cmd=="data") {
 					dataStr = cmd_value[1].split(",");
-					// Series idx 0=Temp idx 1=Hum 
-                    nrvalues=dataStr.length;
+					nrvalues=dataStr.length;
                     var myEpoch = new Date().getTime(); //get current epoch time    			 				          
 					for (var nr=0; nr<nrvalues; nr++) {
                         var pt = parseFloat(dataStr[nr]);
@@ -129,7 +128,7 @@
 	  },
  		
  		title: {
-        text: 'ESP8266 websocket graph'
+        text: 'ESP8266 GraphLog'
     },
 		xAxis: 	{
 		  type: 'datetime',

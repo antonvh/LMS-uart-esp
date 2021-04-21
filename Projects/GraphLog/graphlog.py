@@ -71,7 +71,7 @@ class TestClient(WebSocketClient):
 
 class TestServer(WebSocketServer):
     def __init__(self):
-        super().__init__("plot_dyn.html", 2)
+        super().__init__("graphlog.html", 2)
 
     def _make_client(self, conn):
         return TestClient(conn)
