@@ -27,6 +27,8 @@ On the ESP8266 you can choose to configure wifi to connect to Wifi.
 
 Run `from graphlog import *` on the ESP8266. The webserver should start.
 
+For automatic start of the webserver, copy the file `graphlog.py` ad `main.py` to the ESP8266. 
+
 ### On the SPIKE
 
 Execute the program `SPIKE_graphlog.py`.
