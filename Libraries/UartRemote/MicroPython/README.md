@@ -10,8 +10,13 @@ This is a uniform library that works on standard MicroPython platforms, the EV3 
 Upload the uartremote.py or the compiled uartremote.mpy through the WebREPL.
 
 ### SPIKE Prime and Robot Inventor 51515
-You have two options: upload the library via rshell, or just copy the whole script on top of your program. In order to upload the UartRemote library to the Spike Prime hub, it is convenient to install the `rshell` Python extension by:
+You have three options: 
+1) just copy the whole script on top of your program.
+2) use the installer in the [SPIKE directory](https://github.com/antonvh/LMS-uart-esp/tree/main/Libraries/UartRemote/MicroPython/SPIKE)
+3) Use rshell.
 
+#### rshell
+Install the `rshell` Python extension by:
 ```
 pip3 install rshell
 ```
