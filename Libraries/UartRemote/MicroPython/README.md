@@ -60,13 +60,13 @@ On the slave (ESP8266):
 ```python
 from uartremote import *
 u=UartRemote(0)
-u.add_command('imu',imu,'f')
-u.add_command('led',led)
-u.add_command('grid',grideye,'f')
+u.add_command(imu,'f')
+u.add_command(led)
+u.add_command(grid,'f')
 u.loop()
 ```
 
-In this example two functions are defined `imu`, `led` and `grideye`. These functions are called each time that `imu`, `led` or `grid` is received as a command.  Parameters for the functions are extracted from the command, and return values, are attached to the respons. In practice, these commands will be added to the `boot.py` file on the slave.
+In this example two functions are defined `imu`, `led` and `grid`. These functions are called each time that `imu`, `led` or `grid` is received as a command.  Parameters for the functions are extracted from the command, and return values, are attached to the respons. In practice, these commands will be added to the `boot.py` file on the slave.
 
 ## Sending commands
 
@@ -74,12 +74,12 @@ On the master (e.g. EV3):
 ```python
 from uartremote import *
 u=UartRemote(Port.S1)
-u.send_command('imu')
-u.send_command('grid','B',10)
-u.send_command('led','B',[2,100,100,100])
+u.call('imu')
+u.call('grid','B',10)
+u.call('led','B',[2,100,100,100])
 ```
-### `send_command(<cmd>,[<type>,<data>])`
-The `send_command` method allows the Master to send a command to the Slave. When no values need to be passed with the command, the `<type>` and `<data>` can be omitted.  The `<data>` can be a single value, a string or a list of values. The type of `<data>` is given according to the struct Format characters, of which the most commonly used are shown below:
+### `call(<cmd>,[<type>,<data>])`
+The `call` method allows the Master to send a command to the Slave. When no values need to be passed with the command, the `<type>` and `<data>` can be omitted.  The `<data>` can be a single value, a string or a list of values. The type of `<data>` is given according to the struct Format characters, of which the most commonly used are shown below:
 
 | Format character | type | number of bytes |
 |---------------------|-------|--------------|
@@ -96,7 +96,7 @@ The Slave acknowledges a command by sending back an acknowledge command, where t
 
 When the Format string `f` is a single character, and the data is a list, each element of the list will be encoded using the specified Format character. The format field can also consist of multiple Format characters, for example 
 
-```send_receive('special','3bs1fr',1,2,3,"aap",1.3,b'raw bytes here')```.
+```call('special','3bs1fr',1,2,3,"text",1.3,b'raw bytes here')```.
 
 # Example application
 ## Slave code
@@ -110,19 +110,19 @@ def led(v):
 def imu():
     return([12.3,11.1,180.0])
 
-def grideye(v):
+def grid(v):
     addr=v
     a=[20,21,22,23,24,25,26,27,28]
     return(a[addr%9])
 
 from uartremote import *
-u=UartRemote(0)
-u.add_command("led",led)
-u.add_command("imu",imu,'f')
-u.add_command("grid",grideye,'B')
+u=UartRemote()
+u.add_command(led)
+u.add_command(imu,'f')
+u.add_command(grid,'B')
 u.loop()
 ```
-Here three different example functions are used: `led` which takes a value, but does not return a value, `imu` which returns a value, but does not take a value, and `grideye` wich takes a values and returns a value.
+Here three different example functions are used: `led` which takes a value, but does not return a value, `imu` which returns a value, but does not take a value, and `grid` wich takes a values and returns a value.
 In the `add_command` method, the second argument is the `formatstring`, defining the format of the return argument9s).
 
 ## Master code
@@ -156,7 +156,7 @@ def imu():
     return([12.3,11.1,180.0])
 
 u=UartRemote(Port.S1)
-u.add_command("imu",imu,'f')
+u.add_command(imu,'f')
 
 t_old=time.ticks_ms()+2000                      # wait 2 seconds before starting
 q=u.flush()                                     # flush uart rx buffer
@@ -166,7 +166,7 @@ while True:
     if time.ticks_ms()-t_old>1000:              # send a command every second
         t_old=time.ticks_ms()
         print("send led")                       # send 'led' command with data
-        print("recv=",u.send_receive_command('led','b',[1,2,3,4]))
+        print("recv=",u.call('led','b',[1,2,3,4]))
 ```
 
 ### ESP8266
@@ -180,7 +180,7 @@ def led(v):
     for i in v:
         print(i)
 
-u.add_command("led",led)
+u.add_command(led)
 
 
 t_old=time.ticks_ms()+2000                      # wait 2 seconds before starting
@@ -191,14 +191,13 @@ while True:
     if time.ticks_ms()-t_old>1000:              # send a command every second
         t_old=time.ticks_ms()
         print("send imu")
-        print("recv=",u.send_receive_command('imu'))    # send 'imu' command & receive result
+        print("recv=",u.call('imu'))    # send 'imu' command & receive result
 ```
 
 # Library description
-### `class UartRemote(port,baudrate=115200,timeout=1000,debug=False)`
+### `class UartRemote(port,baudrate=115200,timeout=1000,debug=False,esp32+rx,esp32_tx)`
 
-Constructs a Uart communication class for Uart port `port`. Baudrate and timeout definitions for the Uart port can be changed.  The boolean `debug` allows for debugging this class.
-
+Constructs a Uart communication class for Uart port `port`. Baudrate and timeout definitions for the Uart port can be changed.  The boolean `debug` allows for debugging this class. For the SPIKE prime the port can be abbreviated as a single character string `"A"`.
 ### UartRemote Methods
 
 #### `UartRemote.flush()`
@@ -207,7 +206,7 @@ Flushes the read buffer, by reading all remaining bytes from the Uart.
 
 #### `UartRemote.available()`
 
-Return a non zero value if there is a received command available.
+Return a non zero value if there is a received command available. Note: on the SPIKE prime, you should use the `receive_command` or the `execute_command`, always with the parameter `reply=False`, after using the `available()` method.
 
 #### `UartRemote.send_command(command,[ t, data])`
 
@@ -229,7 +228,7 @@ If `wait` is True, this medthods Waits for the reception of a command, otherwise
 
 Loops the `UartRemote.wait-for_command()` command.
 
-#### `UartRemote.add_command(command,command_function[,format_string])`
+#### `UartRemote.add_command(command_function[,format_string],[name=<name>])`
 
 Adds a command `command` to the dictionary of `UartRemote.commands` together with a function name `command_function`. Optionally, if the `command_function` returns parameters, the `format_string` describes the type of the returned parameters. If the `command_function` does not return a value, the `format_string` is omirted. The dictionary with commands is used by the `UartRemote.wait_for_command()` method to call the function as defined upon receiving a specific command. As an argument the `data` that is received is used.
 
