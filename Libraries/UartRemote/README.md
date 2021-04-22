@@ -26,8 +26,9 @@ with
 - `f` the Format character used for `struct.pack` to pack the values; when data is a list, the character `a` is prepended to `f`.
 - `data` a number of values packed using `struct.pack`
 
-When the command
-`send_receive('test','B',[1,2,3,4,5]`
+When the method
+
+`ur.send_command('test','B',[1,2,3,4,5])`
 is used, the following packet will be transmitted over the line:
 
 ```b'<\x0e\x04test\x03a5B\x01\x02\x03\x04\x05'```
@@ -38,5 +39,5 @@ or in hex:
 
 When the Format string `f` is a single character, and the data is a list, each element of the list will be encoded using the specified Format character. The format field can also consist of multiple Format characters, for example 
 
-```send_receive('special','3b3s1f',1,2,3,"aap",1.3)```.
+```send_command('special','3b3s1f',1,2,3,"aap",1.3)```.
 
