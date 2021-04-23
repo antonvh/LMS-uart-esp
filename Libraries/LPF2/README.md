@@ -4,7 +4,7 @@
 
 The code in this drectory is a proof of concept showing that the OpenMV MicroPython code can be adopted to work with the ESP8266. The library can be foud in the file `LPF2_esp.py`.
 
-The original Lego Sensors, such as the color sensor and the distance sensor of the SPIKE Prime, use a Lego proprietary protocol, called LPF2. This protocol deploys hte UART to communicate with the sensor. The communication starts at 2400 baud and is further invreased to typically 115200 baud. Furthermore, the sensor can advertise its capabilities to the Lego Hub. These capabilities are advertised in so-called modes of operation. Per mode, the unit, the range in this unit, the range of the raw sensor and the range in percentage is communicated. Also the capability of the sensor to receive data from the hub is laid down in the advertisement message of that mode. The EV3 hub supports a subset of the LPF2 protocol as supported bu the SPIKE prime platform.
+The original Lego Sensors, such as the color sensor and the distance sensor of the SPIKE Prime, use a Lego proprietary protocol, called LPF2. This protocol deploys the UART to communicate with the sensor. The communication initates at 2400 baud and is further increased to typically 115200 baud. Furthermore, the sensor can advertise its capabilities to the Lego Hub. These capabilities are advertised in so-called modes of operation. Per mode, the unit, the range in this unit, the range of the raw sensor and the range in percentage is communicated. Also the capability of the sensor to receive data from the hub is laid down in the advertisement message of that mode. The EV3 hub supports a subset of the LPF2 protocol as supported bu the SPIKE prime platform.
 
 ## Further information
 
