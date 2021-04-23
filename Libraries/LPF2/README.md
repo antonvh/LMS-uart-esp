@@ -16,6 +16,12 @@ The LPF2 protocol for the EV3 is very similar to that for the SPIKE. A descripti
 
 ## counting test
 
+To prevent interference of the repl prompt that can be active on the UART and the usage of the UART for the LP2 protocols, the repl prompt should be disabled on the ESP8266 board by uncommenting the flolowing line in the `boot.py` file:
+
+```
+uos.dupterm(None, 1)
+```
+
 Upload `LPF2_esp.py` and `LPF2_test.py` on the ESP8266. Execute `lpf2_SPIKE.py` on the SPIKE prime. In this example the 'sensor' counts repeatedly from 0 to 9. The SPIKE receives this number and displays it on the screen.
 The ESP8266 emulates a UltraSonic sensor (type 62=0x3e).
 
