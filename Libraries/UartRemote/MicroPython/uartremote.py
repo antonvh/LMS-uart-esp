@@ -11,6 +11,7 @@ import sys
 
 EV3='linux' # This might not be precise enough for python3 running on Linux laptops
 ESP32='esp32'
+ESP32_S2='Espressif ESP32-S2'
 ESP8266='esp8266'
 H7='OpenMV4P-H7'
 SPIKE='LEGO Learning System Hub'
@@ -46,6 +47,13 @@ elif platform==ESP32:
     import uos
     #gpio0=Pin(0,Pin.IN)# define pin0 as input = BOOT button on board
     #gpio0.irq(trigger=Pin.IRQ_FALLING, handler=esp_interrupt)
+elif platform==ESP32_S2: # circuipython
+    from busio import UART
+    import board
+    from time import sleep
+    def sleep_ms(ms):
+        sleep(ms/1000)
+    
 elif platform==EV3:
     from utime import sleep_ms
     from pybricks.iodevices import UARTDevice
@@ -95,6 +103,8 @@ class UartRemote:
         elif platform==ESP32:
             if not port: port = 1
             self.uart = UART(port,rx=esp32_rx,tx=esp32_tx,baudrate=baudrate,timeout=timeout)
+        elif platform==ESP32_S2:
+            self.uart = UART(board.TX,board.RX,baudrate=baudrate,timeout=0.5)
         elif platform==SPIKE:
             if type(port) == str:
                 self.uart = eval("hub.port."+port)
@@ -280,6 +290,8 @@ class UartRemote:
             return self.uart.waiting()
         if platform==ESP32 or platform==ESP8266:
             return self.uart.any()
+        if platform==ESP32_S2:
+            return self.uart.in_waiting
         else:
             #pyserial
             return self.uart.in_waiting()
@@ -295,8 +307,8 @@ class UartRemote:
             r=b'1'
             while r:
                 r=self.uart.read(1)
-        else:
-            self.uart.read(self.uart.any())
+        elif platform==ESP32_S2:
+            self.uart.read(self.uart.in_waiting)
 
     def receive_command(self,wait=True,**kwargs):
         global interrupt_pressed
