@@ -18,7 +18,7 @@ There are some good introductions on how to convert images to fir on the small 1
 - (https://youtu.be/H174EUG2kL0)
 - [Online image to bytearray converter](http://javl.github.io/image2cpp/)
 
-The images used in this projects come from [this tutorial](https://electropeak.com/learn/the-beginners-guide-to-display-text-image-animation-on-oled-display-by-arduino/). The C-style images were converted to python and are written consequently in a binary file with each image of 1024 bytes. Code for writing the binary file can be found [here](./CreateImages/create_images.py)
+The images used in this projects come from [this tutorial](https://electropeak.com/learn/the-beginners-guide-to-display-text-image-animation-on-oled-display-by-arduino/). The C-style images were converted to python and are written consequently in a binary file with each image of 1024 bytes. Code for writing the binary file can be found here: (./CreateImages/write_images.py)
 
 The code below shows how the images are displayd on de Oled screen. By using `seek` we skip to the correct image. The image is read in a temporary `bytearray f`. From that array a `FrameBuffer` object is generated, which is displayed on the screen by the `blit` method.
 
