@@ -4,7 +4,7 @@ This projects implements a graphical speedometer on a SSD1306 0.96" Oled screen.
 
 ![plot](./images/text-image-anikation-oled.gif)
 
-Note: the display shown above is a PI display. This project uses an I2C based display.
+Note: the display shown above is an SPI display. This project uses an I2C based display.
 
 ## Starting the project
 
