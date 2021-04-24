@@ -4,8 +4,11 @@ This projects implements a graphical speedometer on a SSD1306 0.96" Oled screen.
 
 ![plot](./images/text-image-anikation-oled.gif)
 
+Note: the display shown above is a PI display. This project uses an I2C based display.
 
 ## Starting the project
+
+- Purchase a display [like this one](https://www.bitsandparts.nl/Display-OLED-128x64-0-96-inch-I2C-SPI-Blauw-p1067281).
 
 - UpLoad the files `oled_speed.py` and `images.bin` to the ESP8266
 - Copy the content of the file `OledSpeed_SPIKE.py` to a new project in the Lego Education SPIKE Prime IDE
