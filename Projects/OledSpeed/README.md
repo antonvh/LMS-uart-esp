@@ -12,7 +12,7 @@ This projects implements a graphical speedometer on a SSD1306 0.96" Oled screen.
 - check correct ports for Moror and ESP8266 module
 - start project on the SPIKE prime
 
-## 3D print mount
+## 3D printable Lego mount
 
 In the folder `OledMount` you can find a 3d printable design.
  ![plot](./OledMount/OledLego.png)
