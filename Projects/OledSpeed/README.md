@@ -15,7 +15,7 @@ This projects implements a graphical speedometer on a SSD1306 0.96" Oled screen.
 ## 3D print mount
 
 In the folder `OledMount` you can find a 3d printable design.
- ![plot](./OledMount/oledLego.png)
+ ![plot](./OledMount/OledLego.png)
 
 ## Background
 
