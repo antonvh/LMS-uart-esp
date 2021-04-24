@@ -1,0 +1,226 @@
+<html>
+<head>
+<title>GraphLog Chart</title>
+
+<link rel="stylesheet" href="jquery-ui.min.css">
+<!-- <script src="https://code.jquery.com/jquery-1.10.2.js"></script>
+<script src="https://code.jquery.com/ui/1.11.4/jquery-ui.js"></script>
+
+<script src="https://code.highcharts.com/stock/highstock.js"></script>
+<script src="https://code.highcharts.com/stock/modules/exporting.js"></script>
+<script src="https://code.highcharts.com/stock/modules/export-data.js"></script> -->
+<!-- <script src="scripts.js"></script> -->
+<script src="jquery-3.6.0.min.js"></script>
+<script src="jquery-ui.min.js"></script>
+<script src="highchart.min.js"></script>
+
+<style>
+    body {
+      font-size: 16px;
+      font-family: verdana,helvetica,arial,sans-serif;
+    }
+  </style>
+</head>
+<body>
+<div id="container" style="min-width: 310px; height: 600px; margin: 0 auto"></div>
+<script>
+		var ws;
+     
+	  $(function() { 
+			$("#close").click(function(evt){
+				if( typeof ws != "undefined"){
+					if(ws.readyState != 3 && ws.readyState != 4 ){
+						ws.send("Close");
+						ws.close();
+					}
+				}						
+			});
+	  	
+	  	//Open websocket
+		  $("#open").click(function(evt){
+		  	var host = $("#host").val();
+	      var port = $("#port").val();
+	      var uri = $("#uri").val();
+				//start highstock
+	      var mainChart = new Highcharts.stockChart(chartOptions);
+	      var nrSeries=1;        
+	      // create websocket instance
+	      ws = new WebSocket("ws://" + host + ":" + port + uri);
+	       
+	      // Close callback
+	      ws.onclose = function(evt) {
+	        //change color of labels to red
+	        $("#host").css("background", "#ff0000"); 
+	        $("#port").css("background", "#ff0000"); 
+	        $("#uri").css("background",  "#ff0000");
+	        $("div#message_details").hide();
+	
+	        };
+	
+	      // Open Websocket callback
+	      ws.onopen = function(evt) { 
+	        //change color of labels to green
+	        $("#host").css("background", "#00ff00"); 
+	        $("#port").css("background", "#00ff00"); 
+	        $("#uri").css("background", "#00ff00");
+					ws.send("Open");
+	      };
+	      //receive message callback
+  			ws.onmessage = function(evt) {
+    			var dataStr = [];
+				var msg=evt.data
+				var cmd_value=msg.split(" ");
+                var cmd=cmd_value[0];
+				if (cmd=="data") {
+					dataStr = cmd_value[1].split(",");
+					nrvalues=dataStr.length;
+                    var myEpoch = new Date().getTime(); //get current epoch time    			 				          
+					for (var nr=0; nr<nrvalues; nr++) {
+                        var pt = parseFloat(dataStr[nr]);
+                        var series = mainChart.series[nr];
+                        series.addPoint([myEpoch, pt]);
+                    }
+				} else
+				if (cmd=="title") {
+					mainChart.setTitle({ text: msg.substring(6) });
+				} else
+                if (cmd=="yaxis") {
+                    mainChart.yAxis[0].update({
+                        title:{
+                            text:msg.substring(6)
+                        }
+                    });
+                } else
+                if (cmd=="add_series") {
+                    id=cmd_value[1];
+                    nrSeries++;
+                    console.log("nrseries="+nrSeries+"  id="+id);
+                    SeriesArray.push([]);
+                    mainChart.addSeries({
+                        id: id,
+                        data: SeriesArray[nrSeries]
+                    });
+                } else 
+                if (cmd=="series_name") {
+                    dataStr = msg.substring(12).split(",");
+                    var ser_nr=parseInt(dataStr[0]);
+                    var name=dataStr[1];
+					var col=Highcharts.getOptions().colors;
+                    mainChart.series[ser_nr].update({name:name,color:col[ser_nr]}, false);
+                    mainChart.redraw();
+                }
+ 	      };
+    	});
+  });
+	  
+  
+	</script>
+<script>
+		Highcharts.setOptions({
+  		global: 
+  		{
+      	useUTC: false
+  		}
+		});
+    
+    var SeriesArray=[];
+    SeriesArray.push([])
+	
+		var chartOptions = {  
+		chart: {
+		  renderTo: 'container',
+		  type: 'spline',
+		  animation: false,
+	  },
+ 		
+ 		title: {
+        text: 'ESP8266 GraphLog'
+    },
+		xAxis: 	{
+		  type: 'datetime',
+		  tickPixelInterval:150,
+		  labels: {
+				format: '{value:%H:%M:%S}',
+				rotation: 45,
+				align: 'left'
+			}
+		},
+		yAxis: [{
+      title: {
+        text: 'y-axis',
+				style: {
+        	color: Highcharts.getOptions().colors[1]
+        }        
+      },
+		  tickInterval:1,
+			labels: {
+    		format: '{value}',
+    		style: {
+        	color: Highcharts.getOptions().colors[1]
+        }
+      },
+      opposite:false,
+    }],
+
+    rangeSelector: {
+    	enabled: true,
+    	inputEnabled: false,
+      buttons: [{
+          count: 6,
+          type: 'hour',
+          text: '6h'
+      }, {
+          count: 12,
+          type: 'hour',
+          text: '12h'
+      }, {
+          type: 'all',
+          text: 'All'
+      },{
+          count: 1,
+          type: 'min',
+          text: '1m'
+      },{
+          count: 5,
+          type: 'minute',
+          text: '5m'
+      },{
+          count: 10,
+          type: 'minute',
+          text: '10m'
+      }],
+    },
+		legend: {
+		    enabled: true
+		},
+		exporting:{
+		        enabled: true
+		},
+		plotOptions: {
+	  	series: {
+        animation: false
+    	}
+  	},
+  	
+		series: [{
+			name: 'ax',
+		  data: SeriesArray[0],
+			color: Highcharts.getOptions().colors[0],
+		}		  				  			
+	]		
+	}
+		
+		
+	</script>
+<div id="connection_details">
+<label for="host">host:</label>
+<input type="text" id="host" value="192.168.4.1" style="background:#ff0000;" />
+<label for="port">port:</label>
+<input type="text" id="port" value="80" style="background:#ff0000;" />
+<label for="uri">uri: </label>
+<input type="text" id="uri" value="/ws" style="background:#ff0000;" />
+<input type="submit" id="open" value="Open" />
+<input type="button" id="close" value="Close" />
+</div>
+</body>
+</html>
