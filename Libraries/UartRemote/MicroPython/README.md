@@ -7,7 +7,7 @@ This is a uniform library that works on standard MicroPython platforms, the EV3 
 ## Installation
 
 ### LMS-esp-wifi board
-Upload the uartremote.py or the compiled uartremote.mpy through the WebREPL.
+Upload the uartremote.py or the compiled `uartremote.mpy` from the [ESP8266](./ESP8266) directory through the WebREPL.
 
 ### SPIKE Prime and Robot Inventor 51515
 You have three options: 
