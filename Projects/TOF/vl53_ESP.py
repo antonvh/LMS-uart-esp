@@ -12,6 +12,6 @@ def vl53():
   d=tof.read()
   return d 
   
-u.add_command('vl53',vl53,'i')
+u.add_command(vl53,'i')
  
 u.loop()

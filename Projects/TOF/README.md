@@ -17,7 +17,7 @@ pip3 install mpy-cross
 from uartremote import *
 from vl53 import *
 
-u=UartRemote(0)
+u=UartRemote()
 
 from machine import I2C,Pin
 i2c=I2C(scl=Pin(5),sda=Pin(4))
@@ -26,22 +26,22 @@ tof.start()
 
 def vl53():
   d=tof.read()
-  return ('i',d) # return integer
+  return d
   
-u.add_command('vl53',vl53)
+u.add_command(vl53,'i')
  
 u.loop()
 ```
 
-## example EV3, using uartremote
+## example SPIKE, using uartremote
 
 ```python
 import time
 from uartremote import *
-u=UartRemote(Port.S1)
+u=UartRemote("A")  # ESP8266 connected to port A
 
 while True:
-    r,value=u.send_receive('vl53') 
+    r,value=u.call('vl53') 
     print(value)
     time.sleep(1)
 ```    
