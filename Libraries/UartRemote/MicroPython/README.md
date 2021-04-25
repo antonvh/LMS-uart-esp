@@ -210,15 +210,15 @@ Return a non zero value if there is a received command available. Note: on the S
 
 #### `UartRemote.send_command(command,[ t, data])`
 
-Sends a command `command`. When `t` and `data` are omitted, the cooresponding function on the Slave is called with no arguments. Otherwise,`data` is encoded as type `t`, where `command` is a string and `data` is a string or a list of values, or multiple values.
+Sends a command `command`. When `t` and `data` are omitted, the corresponding function on the Slave is called with no arguments. Otherwise,`data` is encoded as type `t`, where `command` is a string and `data` is a string or a list of values, or multiple values.
 
 #### `UartRemote.receive_command(wait=True)`
 
 Receives a command and returns a tuple `(<command>, <data>)`.  If there is a failure, the `<command>`  will be equal to `'err'`. If `wait` is True, the methods waits until it receives a command. 
 
-#### `UartRemote.send_receive_command(command)`
-#### `UartRemote.send_receive_command(command,t, data)`
-Combines the send and receive functions as defined above. When `t` and `data` are omitted, a dummy value `[]` of type `B` will be send. The parameter `data` can be a string, a single value or a list of values. 
+#### `UartRemote.call(command)`
+#### `UartRemote.call(command,t, data)`
+Combines the send and receive functions as defined above. When `t` and `data` are omitted, a dummy value `\x00` of type `z` will be send. The parameter `data` can be a string, a single value or a list of values. 
 
 #### `UartRemote.execute_command(wait=True,check=True)`
 
