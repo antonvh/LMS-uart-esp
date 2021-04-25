@@ -380,14 +380,14 @@ class UartRemote:
         # name should reflect that it send back respons of exeuted command
         if command in self.commands:
             command_ack=command+"ack"
-            if value:
+            if value!=None:
                 if type(value)==tuple:
                     resp=self.commands[command](*value)
                 else:
                     resp=self.commands[command](value)
             else:
                 resp=self.commands[command]()
-            if resp:
+            if resp!=None:
                 f=self.command_formats[command]
                 if f: # There is a (smart)pack format
                     if type(resp)!=tuple:
