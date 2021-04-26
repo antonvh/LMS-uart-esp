@@ -21,7 +21,6 @@ class Oled:
         self.oled.show()
 
     def fill(self,f):
-        print("oled fill",f)
         self.oled.fill(f)
     
     def line(self,x1,y1,x2,y2,color):
@@ -44,6 +43,6 @@ u.add_command(oled.line,name="oledl")
 u.add_command(oled.pixel,name="oledp")
 
 # wait for a command in an endless loop
-#u.loop()
+u.loop()
 
 
