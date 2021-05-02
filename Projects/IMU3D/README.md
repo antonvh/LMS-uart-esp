@@ -13,7 +13,7 @@ On your PC, edit the file `imu3d_SPIKE.py` with the correct websocket address. R
 
 ## Websockets
 
-The SPIKE sen
+Websockets are used for the communication between the ESP8266 and the VPython code. Using the `uartremote` library, the SPIKE sends it's measured values of yaw, pitch and rolw angles to the ESP8266.
 
 ## VPython
  On the PC the 3d represenation is created using VPython. this is an easy to use 3d library. VPython uses a browser window as output terminal.
