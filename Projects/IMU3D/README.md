@@ -1,4 +1,4 @@
-# real time 3d view of SPIKE orientation
+# Real time 3d view of SPIKE orientation
 
 This demo uses the angles `yaw`, `pitch`, and `roll` as output by the IMU of the SPIKE hub to plot a real time 3D presenation of the SPIKE on the PC. The movements of the real SPIKE are shown in real time on the model.
 
