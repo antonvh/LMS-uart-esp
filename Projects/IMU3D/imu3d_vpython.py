@@ -73,6 +73,9 @@ while True:
         pitch=-p*toRad # change sign
         roll=-r*toRad # change sign
         # up vector as function of yaw and pitch
+        # see http://planning.cs.uiuc.edu/node102.html for rotation matrices
+        # take 1st column of product of yaw*pitch matrix
+        #
         k=vector(cos(yaw)*cos(pitch),sin(pitch),sin(yaw)*cos(pitch))
         
         y=vector(0,1,0) # helper vector for calculating cross product
