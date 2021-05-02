@@ -7,7 +7,7 @@ This demo uses the angles `yaw`, `pitch`, and `roll` as output by the IMU of the
 
 == Running the demo
 
-First paste the code of `imu3d_SPIKE.py` in an empty python project in the Lego Education SPKE Prime IDE. Connect the ESP8266 module (in this example it is connected to port "A"). Execute the code. The IP address of the websocket is shown in the console of the IDE.
+This project uses websockets. Therefore, the two files: `ws_connection.py` and `ws_server.py` need to be copied to the ESP8266. This can be done by using the WebREPL upload function. Then, paste the code of `imu3d_SPIKE.py` in an empty python project in the Lego Education SPKE Prime IDE. Connect the ESP8266 module (in this example it is connected to port "A"). Execute the code. The IP address of the websocket is shown in the console of the IDE.
 
 On your PC, edit the file `imu3d_SPIKE.py` with the correct websocket address. Run the code. For installation of VPython see below.
 
