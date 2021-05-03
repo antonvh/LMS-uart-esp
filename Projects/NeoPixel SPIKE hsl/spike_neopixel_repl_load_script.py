@@ -27,7 +27,7 @@ def paint():
 
 def paint_buffer(bgr_bytes):
     global np
-    np.buf=bgr_bytes
+    np.buf=bytearray(bgr_bytes)
     np.write()
 
 def paint_colors(*colors):
@@ -82,6 +82,18 @@ for n in range(N_UPDATES):
     ur.call('paint_colors', N_LEDS*'B',*colors)
 duration = utime.ticks_diff(utime.ticks_ms(), start)
 print("Paint with 'B' color array succeeded at {} updates per second.".format(N_UPDATES/duration*1000))
+
+start = utime.ticks_ms()
+for n in range(N_UPDATES):
+    i = n % N_LEDS
+    buf = i*b'\x00\x00\x00' + bytes((255,0,255)) + (N_LEDS-i-1)*b'\x00\x00\x00'
+    ur.repl_run(
+"""
+np.buf=bytearray({})
+np.write()""".format(buf)
+            )
+duration = utime.ticks_diff(utime.ticks_ms(), start)
+print("Direct buffer paint through repl succeeded at {} updates per second.".format(N_UPDATES/duration*1000))
 
 start = utime.ticks_ms()
 for n in range(N_UPDATES):
