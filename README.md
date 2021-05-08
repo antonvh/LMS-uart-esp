@@ -16,3 +16,7 @@ Easily execute MicroPython commands on the remote board. No software needed on t
 
 ## Projects
 Example projects where we expand the EV3, SPIKE Prime and Robot Inventor hubs with third party electronics and hardware. Full code and instructions included as much as possible. 
+
+## Work in Progress
+
+In this folder you will find projects that we are currently working at. They will not necessarily be without bugs and they can be in an unfinished state. As soon as they are ready to execute, the projects will be moved to the Projects folder.
