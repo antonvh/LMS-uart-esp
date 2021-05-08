@@ -65,8 +65,8 @@ def rotate():
             for c in range(255):
                 np[i]=[min(x,c) for x in color]
                 np.write()
-                yield
-        # Slowly turn them of again
+                yield # Pause and check uart
+        # Slowly turn them off again
         for i in range(12):
             # Update lit pixels in case the color has changed
             for j in range(i+1, 12):
@@ -75,7 +75,7 @@ def rotate():
             for c in range(255,-1,-1):
                 np[i]=[min(x,c) for x in color]
                 np.write()
-                yield
+                yield # Pause and check uart
 
 rotateframe = rotate()
 
@@ -118,6 +118,7 @@ print("entered loop")
 while True:
     r = hub.port.E.motor.get()[2]%360
     ur.call('set_color', 'i', r)
-    print(ur.call('get_fps'))
+    ack, fps = ur.call('get_fps')
+    print("Running at {}fps on the ESP breakout".format(fps))
 
 raise SystemExit
