@@ -13,8 +13,10 @@ The timestanps will be different on your system.
 
 Now the uartremote.py library is copied to the `/project` directory.
 
-The file `install_uartremote_mpy.py` does the same thing as described above, except that it installs the compiled version `uartremote.mpy` to the `/projects` directory. The compiled version will use less RAM memory when loaded and thus leaving more space for other code on the SPIKE.
-
- To use the library inlude the following line in your python code:
+To use the library inlude the following line in your python code:
 
 ```from project.uartremote import *```
+
+## Creating the install file
+If you have mpy cross installed, just do this in the SPIKE directory:
+`./create_install_file.py`
