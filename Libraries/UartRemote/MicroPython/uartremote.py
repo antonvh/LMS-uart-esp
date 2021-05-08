@@ -144,12 +144,16 @@ class UartRemote:
         return s
 
     def enable_repl_locally(self):
-        if platform==ESP8266 or platform==H7:
+        if platform==ESP8266:
+            dupterm(self.uart, 1)
+        elif platform==H7:
             dupterm(self.uart, 2)
 
     @staticmethod
     def disable_repl_locally():
-        if platform==ESP8266 or platform==H7:
+        if platform==ESP8266:
+            dupterm(None, 1)
+        elif platform==H7:
             dupterm(None, 2)
 
     def add_command(self,command_function, format="", name=None):
