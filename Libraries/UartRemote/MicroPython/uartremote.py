@@ -328,12 +328,16 @@ class UartRemote:
     def uart_read(self, size=1, timeout=100):
         # SPIKE and OpenMV reads too fast and sometimes returns None
         # check: on SPIKE b'' is returned, on OpenMV None
-        r=self.uart.read(size)
+        data = b''
+        r=self.uart.read(1)
         for i in range(timeout):
-            if r==b'' or r==None:
-                r=self.uart.read(size)
+            if r==None:
+                r=b''
+            data += r
+            if len(data) == size:
+                return data
             else:
-                return r
+                r=self.uart.read(1)
 
 
     def receive_command(self,**kwargs):
@@ -477,13 +481,12 @@ class UartRemote:
 
         if raw_paste:
             self.uart.write(b"\x05A\x01") # Try raw paste
-            sleep_ms(5)
-            result = self.uart.read(2) # Should be b'R\x01\x80\x00\x01' where \x80 is the window size and the first \x01 says paste mode works
+            result = self.uart_read(2)
             if self.DEBUG: print(result)
             if result == b'R\x01':
                 raw_paste = True
-                result = self.uart.read(3)
-                window = struct.unpack("B", result[0])[0]
+                result = self.uart.read(3) # Should be b'x80\x00\x01' where \x80 is the window size
+                window = int(result[0])
             else:
                 raw_paste = False
                 self.flush()
@@ -499,8 +502,8 @@ class UartRemote:
         self.uart.write(command_bytes_left+b'\x04')
 
         if raw_paste:
-            data = self.uart.read(1)
-            if data != '\x04':
+            data = self.uart_read(1)
+            if data != b'\x04':
                 raise UartRemoteError("could not exec command (response: %r)" % data)
         else:
             sleep_ms(10)
@@ -529,3 +532,4 @@ class UartRemote:
 
     def repl_exit(self):
         self.uart.write(b"\x02") # Ctrl-B
+        
