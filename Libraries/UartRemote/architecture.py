@@ -1,5 +1,6 @@
 # This is non working code !!!
-# Just sketching architecture on user side.
+# Just sketching architecture on user side. Not everything is implemented yet.
+
 
 
 #######  master side #######
@@ -131,3 +132,7 @@ def ack_ok(self, *args, **kwargs):
 
 def ack_err(self, message, **kwargs):
     self.call('err', 's', message, wait=False, **kwargs)
+
+## TODO: check wether using these wrappers limits speed. 
+# So far encoding/decoding routines seem to have te biggest impact
+# Payload size not so much.
