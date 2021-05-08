@@ -1,11 +1,19 @@
 # Remote UART library: uartremote.py
 
-This is a library for robust communication between lego EV3/Spike and other MicroPython modules using the UART.
+This is a library for robust, near real-time communication between two UART devices. We developed it with LEGO EV3, SPIKE Prime and other MicroPython (ESP) modules. The library has te following properties:
+- It fast enough to read sensor data at 30-50Hz.
+- It is fully symmetrical, so master and slave can have the same import.
+- It includes a RAW REPL mode to upload code to a slave module. This means you can develop code for both modules in one file.
+- It is implemented in MicroPython and Arduino/C code. With arduino code, much higher sensor reading speeds are possible, but flashing is a bit less user friendly.
+- The library has a command loop to wait and listen for calls. That loop is customizable and non-blocking so you can add your own code to it.
+- The C-struct-like encoding is included in the payload, so the other side always knows how to decode it.
 
 ## Micropython
 
-This is a uniform library that works on standard MicroPython platforms, the EV3 and the Spike. 
-Here is a tutorial of the [MicroPython version of the UartRemote library](https://www.youtube.com/watch?v=3U67RWEsXiU)
+Uniform library that works on standard MicroPython platforms, the EV3 and the Spike. See [example code and usage in the MicroPython subdirectory](MicroPython/README.md).
+
+There is also a YouTube tutorial here:
+[![Youtube tutorial](tutorial_thumbnail.png)](https://www.youtube.com/watch?v=3U67RWEsXiU)
 
 ## Arduino
 
