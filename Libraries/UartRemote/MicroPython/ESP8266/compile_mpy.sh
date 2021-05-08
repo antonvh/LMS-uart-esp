@@ -1,0 +1,1 @@
+mpy-cross -march=xtensa ../uartremote.py -o uartremote.mpy
