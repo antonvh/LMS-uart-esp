@@ -3,15 +3,47 @@
 The micropython firmware of the ESP8266 baord, can be updated by using the EV3 hub, or by using an external FTDI board on a PC. Here we describe a method for upgrading the firmware using the Wifi connection.
 
 ## Using YAOTA8266 to flash the ESP8266
-Once the bootloader is installed on the ESP8266, boot the ESP in OTA mode. The following command will upload the new firmware:
+Once the bootloader is installed on the ESP8266, boot the ESP in OTA mode by pressing the BOOT button within 3 seconds from reset. The output of the ESP8266 can be followied on the SPIKE using the following code:
+
+```python
+from projects.uartremote import *
+u=UartRemote("E")
+while True:
+    q=u.uart.read(100)
+    if q:
+	try:
+	    print(q.decode('utf-8'),end='')
+	except:
+	    pass
+```
+
+
+
+The following command will upload the new firmware:
 
 ```
-./ota_client.py -a <IP-address> live-ota  firmware-ota.bin 
+./ota_client.py -a <IP-address> live-ota  micropython_v1.15_uartremote-ota.bin
 ``` 
+The ota versions of the firmware with and without precompiled uartremote library  can be found in the `yaota8266_bin` directory.
 
 The micropython firmware needs to be build for OTA application, where the ROM segment is shifted by 0x3c000 to allow extra space for the first and second stage bootloader.
 
 The OTA server contains a public RSA key to verify the signature of all data packets. The private key in the `OTA_client` directory is used to sign each data packet before sensding it to the OTA server. These two keys should form a pair. The keys as provided in this repository can be used adn there is no need to rebuild te OTA server. When you generate your own keypair, you need replace the `modulus` in the `config.h` file and recompile the OTA server.
+
+### Enable webrepl
+
+Paste the following program in a new project on the SPIKE and execute.
+
+```python
+from projects.uartremote import *
+u=UartRemote("E")
+u.repl_activate()
+u.repl_run('from webrepl_setup import *')
+u.repl_run('change_daemon(True)')
+u.repl_run('pw="PASS = \'python\'\\n"')
+u.repl_run('open("webrepl_cfg.py","w").write(pw)')
+u.repl_run('import machine\nmachine.reset()')
+```
 
 ## First time flashing OTA bootloader
 Before you can use the OTA firmware update, you need to flash the bootloader.
@@ -21,7 +53,7 @@ Use the following `esptool.py` commands:
 ```
 esptool.py --port your-port erase_flash
 esptool.py --port your-port --baud 230400 write_flash -fm dio --flash_size=detect 0x0 <projects-dir>/yaota8266_bin/yaota8266.bin
-esptool.py --port your-port --baud 230400 write_flash -fm dio --flash_size=detect 0x3c000 <projects-dir>/yaota8266_bin//micropython_v1.15_uartremote-ota.bin
+esptool.py --port your-port --baud 230400 write_flash -fm dio --flash_size=detect 0x3c000 <projects-dir>/yaota8266_bin//micropython_v1.15-ota.bin
 ```
 
 ## YAOTA8266
