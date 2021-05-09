@@ -100,13 +100,15 @@ class UartRemote:
 
     def __init__(self,port=0,baudrate=115200,timeout=1000,debug=False,esp32_rx=0,esp32_tx=26):
         # Baud rates of up to 230400 work. 115200 is the default for REPL.
+
+        self.reads_per_ms = 10
         if platform==EV3:
             if not port: port=Port.S1
             self.uart = UARTDevice(port,baudrate=baudrate,timeout=timeout)
         elif platform==H7:
+            self.reads_per_ms = 20
             if not port: port=3
             self.uart = UART(port, baudrate, timeout_char=timeout)
-            self.enable_repl_locally()
         elif platform==ESP8266:
             self.baudrate=baudrate # store baudrate for repl init
             self.uart = UART(port,baudrate=baudrate,timeout=timeout,timeout_char=timeout,rxbuf=100)
@@ -129,14 +131,15 @@ class UartRemote:
         self.DEBUG=debug
         self.unprocessed_data=b''
         self.baudrate = baudrate
+        self.local_repl_enabled = True
         self.add_command(self.enable_repl_locally, name='enable repl')
         self.add_command(self.disable_repl_locally, name='disable repl')
         self.add_command(self.echo, 's', name='echo')
         self.add_command(self.raw_echo, name='raw_echo')
 
 
-    @staticmethod
-    def echo(s):
+    def echo(self, s):
+        if self.DEBUG: print(s)
         return str(s)
 
     @staticmethod
@@ -144,17 +147,30 @@ class UartRemote:
         return s
 
     def enable_repl_locally(self):
-        if platform==ESP8266:
-            dupterm(self.uart, 1)
-        elif platform==H7:
-            dupterm(self.uart, 2)
+        global interrupt_pressed
+        self.local_repl_enabled = True
+        interrupt_pressed = 1
 
-    @staticmethod
-    def disable_repl_locally():
-        if platform==ESP8266:
-            dupterm(None, 1)
-        elif platform==H7:
-            dupterm(None, 2)
+    def disable_repl_locally(self):
+        self.local_repl_enabled = False
+
+    @property
+    def local_repl_enabled(self):
+        return self._local_repl_enabled
+
+    @local_repl_enabled.setter
+    def local_repl_enabled(self, enabled):
+        if enabled:
+            if platform==ESP8266:
+                dupterm(self.uart, 1)
+            elif platform==H7:
+                dupterm(self.uart, 2)
+        else:
+            if platform==ESP8266:
+                dupterm(None, 1)
+            elif platform==H7:
+                dupterm(None, 2)
+        self._local_repl_enabled = enabled
 
     def add_command(self,command_function, format="", name=None):
         if not name:
@@ -299,7 +315,7 @@ class UartRemote:
     def available(self):
         """ Platform independent check for available characters in receive queue of UART """
         if platform==SPIKE:
-            self.unprocessed_data=self.uart_read(1, timeout=1)
+            self.unprocessed_data=self.force_read(1, timeout=1)
             if self.unprocessed_data==None:
                 self.unprocessed_data=b''
             return len(self.unprocessed_data)
@@ -314,27 +330,28 @@ class UartRemote:
             return self.uart.in_waiting()
 
     def read_all(self):
-        # empty receive buffer
-        data = b''
-        if platform==EV3:
-            if self.uart.waiting()>0:
-                data = self.uart.read_all()
-        elif platform==SPIKE:
+        # Read full receive buffer
+        available = self.available()
+        data = self.unprocessed_data
+        if platform == SPIKE:
+
+            self.unprocessed_data = b''
             while True:
                 r=self.uart.read(1)
-                if r == None or r==b'': break
+                if r==b'': break
                 data += r
-        elif platform==ESP32_S2:
-            data = self.uart.read(self.uart.in_waiting)
-        if self.DEBUG: print("Read all: %r" % data)
+        else:
+            if available:
+                data = self.uart.read(available)
+
         return data
 
-    def uart_read(self, size=1, timeout=100):
+    def force_read(self, size=1, timeout=50):
         # SPIKE and OpenMV reads too fast and sometimes returns None
         # check: on SPIKE b'' is returned, on OpenMV None
         data = b''
         r=self.uart.read(1)
-        for i in range(timeout):
+        for i in range(timeout*self.reads_per_ms):
             if r==None:
                 r=b''
             data += r
@@ -342,72 +359,92 @@ class UartRemote:
                 return data
             else:
                 r=self.uart.read(1)
+            if i > 3 and self.DEBUG:
+                print("Waiting for data in force read...")
+        return data
 
 
-    def receive_command(self,**kwargs):
+    def receive_command(self,timeout=1000,**kwargs):
         global interrupt_pressed
 
         delim=b''
         if platform==SPIKE:
             if self.unprocessed_data:
                 delim = self.unprocessed_data
-                self.unprocessed_data=b''# in case this function gets called without calling available()
-            else:
-                c=b''
-                while c==b'':
-                    c=self.uart.read(1)
-                delim=c
+                self.unprocessed_data=b''
 
-        if delim==b'':
+            for i in range(timeout*self.reads_per_ms):
+                if delim==b'<':
+                    break
+                else:
+                    delim=self.uart.read(1)
+
+            if delim!=b'<':
+                return ("err","< delim not found")
+
+            payload=self.force_read(1)
+            l=struct.unpack('B',payload)[0]
+            for i in range(l):
+                    r = self.force_read(1)
+                    payload+=r
             delim=self.uart.read(1)
-        if delim!=b'<':
-            self.flush()
-            return ("err","< delim not found")
 
-        ls=self.uart_read(1)
-        l=struct.unpack('B',ls)[0]
-        payload = ls
-        for i in range(l):
-                r = self.uart_read(1)
-                payload+=r
-        delim=self.uart.read(1)
+        else: # other platforms
+            for i in range(timeout*self.reads_per_ms):
+                data = self.read_all()
+                if data: break
+            if not data:
+                if self.DEBUG: print("No data after timeout")
+                return ("err","No data")
+            #if self.DEBUG: print("Decoding {}".format(data))
+            size = len(data)
+            for i in range(size):
+                #if self.DEBUG: print(data[i:i+1])
+                if data[i:i+1] == b'<':
+                    if size >= i+2:
+                        l=data[i+1]
+                    else:
+                        l=self.force_read(1,timeout=10)[0]
+                    max_reads = timeout*self.reads_per_ms
+                    reads=0
+                    while len(data) <= i+l+2: #not enough data, read some more. Maybe it's +2.
+                        data += self.read_all()
+                        reads+=1
+                        if reads > 2 and self.DEBUG:
+                            print("Waiting for data in rcv command...")
+                        if reads > max_reads:
+                            break
+                    payload = data[i+1:i+2+l]
+                    delim = data[i+2+l:i+3+l]
+                    #if self.DEBUG: print("Payload: {}, delim: {}".format(payload,delim))
+                    break
         if delim!=b'>':
-            self.flush()
             return ("err","> delim not found")
         else:
-            result=self.decode(payload,**kwargs)
-
-        return result
+            result = self.decode(payload,**kwargs)
+            #if self.DEBUG: print(result)
+            return result
 
     def send_command(self,command,*argv,**kwargs):
         s=self.encode(command,*argv,**kwargs)
         msg=b'<'+s+b'>'
+        #if self.DEBUG: print(msg)
         if platform==SPIKE: # on spike send 32-bytes at a time
             window=32
             while len(msg) > window:
                 self.uart.write(msg[:window])
-                sleep_ms(4)
+                sleep_ms(5)
                 msg = msg[window:]
             self.uart.write(msg)
         else:
             self.uart.write(msg)
+        self.flush()
 
     def call(self,command,*args,**kwargs):
-        self.flush()
         self.send_command(command,*args,**kwargs)
-        for i in range(100):
-            if self.available():
-                return self.receive_command(**kwargs)
-            else:
-                sleep_ms(1)
-        return ('err', 'No response')
+        return self.receive_command(**kwargs)
 
-    def execute_command(self, check=True):
-        command,value=self.receive_command()
-        if check and len(command)>3:
-            if command[-3:] in ['err', 'ack']:
-                self.send_command('err','s','err or ack received as command')
-                return
+    def execute_command(self, command, value):
         # name should reflect that it send back respons of exeuted command
         if command in self.commands:
             command_ack=command+"ack"
@@ -432,39 +469,41 @@ class UartRemote:
                     else: # user probably wants raw response.
                         self.send_command(command_ack,resp)
                 except Exception as e:
-                    self.send_command('err','s', "Respons packing failed: {}".format(e))
+                    self.send_command('err','s', "Response packing failed: {}".format(e))
                     return
             else:
                 self.send_command(command_ack,'s','ok')
         else:
-            if command[-3:] not in ['ack','err']:# discard any ack from other command
-                self.send_command('err','s','Command not found')
+            #if command[-3:] not in ['ack','err']:# discard any ack from other command
+                #self.send_command('err','s','Command not found')
+            self.send_command('err','s','Command not found: {}'.format(command))
+
+    def process_uart(self):
+        if self.local_repl_enabled:
+            self.local_repl_enabled=False
+        if self.available():
+            self.execute_command(*self.receive_command())
+        else:
+            if self.DEBUG:
+                print("Nothing available. Sleeping 100ms")
+                sleep_ms(100)
+            else:
+                 if platform==H7:
+                     sleep_ms(13)
+                 else:
+                     sleep_ms(1)
 
     def loop(self):
-        if self.DEBUG: print("Starting loop, disabling repl")
         global interrupt_pressed
-        self.disable_repl_locally()
-        if self.DEBUG: print("Repl on UART disabled")
         while True:
             if interrupt_pressed==1:
                 interrupt_pressed=0
                 break
-            if self.available():
-                self.execute_command()
-            else:
-                if self.DEBUG:
-                    print("Nothing available. Sleeping 1s")
-                    sleep_ms(1000)
-                else:
-                    if platform==H7:
-                        sleep_ms(10)
-                    else:
-                        sleep_ms(1)
-
-
+            self.process_uart()
 
     def flush(self):
         _ = self.read_all()
+        if self.DEBUG: print("Flushed: %r" % _)
 
     def repl_activate(self):
         self.flush()
@@ -481,16 +520,16 @@ class UartRemote:
 
     def repl_run(self, command, reply=True, raw_paste=True):
         command_bytes_left = bytes(command, "utf-8")
-        window = 256
+        window = 128
 
         if raw_paste:
             self.uart.write(b"\x05A\x01") # Try raw paste
-            result = self.uart_read(2)
+            result = self.force_read(2)
             if self.DEBUG: print(result)
             if result == b'R\x01':
                 raw_paste = True
                 result = self.uart.read(3) # Should be b'x80\x00\x01' where \x80 is the window size
-                window = int(result[0])
+                window = result[0]
             else:
                 raw_paste = False
                 self.flush()
@@ -506,7 +545,7 @@ class UartRemote:
         self.uart.write(command_bytes_left+b'\x04')
 
         if raw_paste:
-            data = self.uart_read(1)
+            data = self.force_read(1)
             if data != b'\x04':
                 raise UartRemoteError("could not exec command (response: %r)" % data)
         else:
@@ -536,4 +575,3 @@ class UartRemote:
 
     def repl_exit(self):
         self.uart.write(b"\x02") # Ctrl-B
-        
