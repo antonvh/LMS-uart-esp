@@ -3,7 +3,7 @@
 # Also copy the main.py file in the Library/Micropython/H7 to that flash drive to
 # enable the REPL on the UART port.
 
-# TODO: Fix the 20% packet loss on the uart line
+# TODO: Fix the 20% packet loss on the uart line. Maybe higher baud rate?
 # TODO: Increase the framerate
 # TODO: Create an inverse solution where the OpenMV camera is the boss.
 
