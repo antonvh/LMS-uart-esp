@@ -189,8 +189,10 @@ class UartRemote:
             s=b''
             if f=='raw':
                 # No encoding, raw bytes
-                # s=struct.pack('B',len(argv[1])) + argv[1]
                 s=b'\x03raw'+argv[1]
+            elif f=='repr':
+                # use a pickle-like encoding to send any Python object.
+                s=b'\x04repr'+repr(argv[1:]).encode()
             else:
                 while (len(f)>0):# keep parsing formatstring
                     nf,f=digitformat(f) # split preceding digits and format character
@@ -249,38 +251,50 @@ class UartRemote:
             p=0
             nf=s[p]
             p+=1
-            f=s[p:p+nf].decode('utf-8')
+            f=s[p:p+nf].decode('utf-8') #TODO: parse this without decoding. Probably faster.
             p+=nf
             data=()
             if f=="z":# dummy format 'z' for empty data
                 return None
-            if f=="raw": # Raw bytes, no decoding needed
+            elif f=="raw": # Raw bytes, no decoding needed
                 return s[p:]
-            while (len(f)>0):
-                nf,f=digitformat(f)
-                fo=f[0]
-                if f[0]=='a' or f[0]=='t': # array
-                    extra=f[0]
-                    f=f[1:]
+            elif f=="repr":
+                d={}
+                data = s[p:].decode('utf-8')
+                if "(" in data:
+                    qualname = data.split("(", 1)[0]
+                    if "." in qualname:
+                        pkg = qualname.rsplit(".", 1)[0]
+                        mod = __import__(pkg)
+                        d[pkg] = mod
+                data = eval(data, d)
+            else:
+                while (len(f)>0):
                     nf,f=digitformat(f)
                     fo=f[0]
-                    nr_bytes=nf*sizes[fo]
-                    if extra=='a':
-                        data=data+(list(struct.unpack("%d"%nf+fo,s[p:p+nr_bytes])),) # make list from tuple returnd by unpack
+                    if f[0]=='a' or f[0]=='t': # array
+                        extra=f[0]
+                        f=f[1:]
+                        nf,f=digitformat(f)
+                        fo=f[0]
+                        nr_bytes=nf*sizes[fo]
+                        if extra=='a':
+                            data=data+(list(struct.unpack("%d"%nf+fo,s[p:p+nr_bytes])),) # make list from tuple returnd by unpack
+                        else:
+                            data=data+(tuple(struct.unpack("%d"%nf+fo,s[p:p+nr_bytes])),) # make list from tuple returnd by unpack
                     else:
-                        data=data+(tuple(struct.unpack("%d"%nf+fo,s[p:p+nr_bytes])),) # make list from tuple returnd by unpack
-                else:
-                    ff=fo if nf==0 else "%d"%nf+fo
-                    if nf==0: nf=1
-                    nr_bytes=nf*sizes[fo]
-                    if ff[-1]=='r': ff=ff[:-1]+'s'
-                    decoded=struct.unpack(ff,s[p:p+nr_bytes])
-                    if fo=='s':
-                        decoded=(decoded[0].decode('utf-8'),) # transform bytes in string
-                    data=data+(decoded)
-                p+=nr_bytes
-                f=f[1:]
-            if len(data)==1: # convert from tuple size 1 to single value
+                        ff=fo if nf==0 else "%d"%nf+fo
+                        if nf==0: nf=1
+                        nr_bytes=nf*sizes[fo]
+                        if ff[-1]=='r': ff=ff[:-1]+'s'
+                        decoded=struct.unpack(ff,s[p:p+nr_bytes])
+                        if fo=='s':
+                            decoded=(decoded[0].decode('utf-8'),) # transform bytes in string
+                        data=data+(decoded)
+                    p+=nr_bytes
+                    f=f[1:]
+            if len(data)==1: 
+                # convert from tuple size 1 to single value
                 data=data[0]
             return data
         except:
