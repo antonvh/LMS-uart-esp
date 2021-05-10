@@ -98,7 +98,7 @@ class UartRemote:
     commands={}
     command_formats={}
 
-    
+
 
     def __init__(self,port=0,baudrate=115200,timeout=1000,debug=False,esp32_rx=0,esp32_tx=26):
         # Baud rates of up to 230400 work. 115200 is the default for REPL.
@@ -181,152 +181,72 @@ class UartRemote:
         self.command_formats[name]=format
 
     @staticmethod
-    def pack(*argv):
-        try:
-            f=argv[0] # formatstring
-            i=0
-            ff=''
-            s=b''
-            if f=='raw':
-                # No encoding, raw bytes
-                s=b'\x03raw'+argv[1]
-            elif f=='repr':
-                # use a pickle-like encoding to send any Python object.
-                s=b'\x04repr'+repr(argv[1:]).encode()
-            else:
-                while (len(f)>0):# keep parsing formatstring
-                    nf,f=digitformat(f) # split preceding digits and format character
-                    if nf==0:
-                        nf=1
-                        fo=f[0]
-                        data=argv[1+i]# get data data that needs to be encoded
-                        td=type(data) # check type of data
-                        if td==list: # for lists, use a special 'a' format character preceding the normal formatcharacter
-                            n=len(data)
-                            ff+="a%d"%n+fo # 'a' for list
-                            for d in data:
-                                s+=struct.pack(fo,d) # encode each element in list with format character fo
-                        elif td==tuple: # for lists, use a special 'a' format character preceding the normal formatcharacter
-                            n=len(data)
-                            ff+="t%d"%n+fo # 'a' for list
-                            for d in data:
-                                s+=struct.pack(fo,d) # encode each element in list with format character fo
-                        elif td==str:
-                            n=len(data)
-                            ff+="%d"%n+fo
-                            s+=data.encode('utf-8')
-                        elif td==bytes:
-                            n=len(data)
-                            ff+="%d"%n+fo
-                            s+=data
-                        else:
-                            ff+=fo
-                            s+=struct.pack(fo,data)
-                    else:
-                        fo="%d"%nf+f[0]
-                        data=argv[1+i:1+i+nf]
-                        ff+=fo
-                        s+=struct.pack(fo,*data)
-                    i+=nf
-                    f=f[1:] # continue parsing with remainder of f
-                s=struct.pack('B',len(ff))+ff.encode('utf-8')+s
-            return s
-        except:
-            t=type(argv[0])
-            if t==bytes:
-                return argv[0]
-            elif t==str:
-                return bytes(argv[0],"utf-8")
-            elif t==int:
-                return bytes((argv[0],))
-            elif t==list:
-                return bytes(argv[0])
-            else:
-                return b'\x01z'
-
-    @staticmethod
-    def unpack(s):
-        sizes={'b':1,'B':1,'i':4,'I':4,'f':4,'s':1,'r':1}
-        try:
-            p=0
-            nf=s[p]
-            p+=1
-            f=s[p:p+nf].decode('utf-8') #TODO: parse this without decoding. Probably faster.
-            p+=nf
-            data=()
-            if f=="z":# dummy format 'z' for empty data
-                return None
-            elif f=="raw": # Raw bytes, no decoding needed
-                return s[p:]
-            elif f=="repr":
-                d={}
-                data = s[p:].decode('utf-8')
-                if "(" in data:
-                    qualname = data.split("(", 1)[0]
-                    if "." in qualname:
-                        pkg = qualname.rsplit(".", 1)[0]
-                        mod = __import__(pkg)
-                        d[pkg] = mod
-                data = eval(data, d)
-            else:
-                while (len(f)>0):
-                    nf,f=digitformat(f)
-                    fo=f[0]
-                    if f[0]=='a' or f[0]=='t': # array
-                        extra=f[0]
-                        f=f[1:]
-                        nf,f=digitformat(f)
-                        fo=f[0]
-                        nr_bytes=nf*sizes[fo]
-                        if extra=='a':
-                            data=data+(list(struct.unpack("%d"%nf+fo,s[p:p+nr_bytes])),) # make list from tuple returnd by unpack
-                        else:
-                            data=data+(tuple(struct.unpack("%d"%nf+fo,s[p:p+nr_bytes])),) # make list from tuple returnd by unpack
-                    else:
-                        ff=fo if nf==0 else "%d"%nf+fo
-                        if nf==0: nf=1
-                        nr_bytes=nf*sizes[fo]
-                        if ff[-1]=='r': ff=ff[:-1]+'s'
-                        decoded=struct.unpack(ff,s[p:p+nr_bytes])
-                        if fo=='s':
-                            decoded=(decoded[0].decode('utf-8'),) # transform bytes in string
-                        data=data+(decoded)
-                    p+=nr_bytes
-                    f=f[1:]
-            if len(data)==1: 
-                # convert from tuple size 1 to single value
-                data=data[0]
-            return data
-        except:
-            return s
-
-    def encode(self,cmd,*argv,encoder=-1):
-        """ Encodes command with specified encoder """
+    def encode(cmd,*argv):
         if argv:
-            if encoder:
-                if encoder==-1:
-                    encoder=self.pack
-                s=encoder(*argv)
-            else:
-                s=argv[0]
+            try:
+                f=argv[0]
+                if f=='raw':
+                    # No encoding, raw bytes
+                    s=b'\x03raw'+argv[1]
+                elif f=='repr':
+                    # use a pickle-like encoding to send any Python object.
+                    s=b'\x04repr'+repr(argv[1:]).encode()
+                else:
+                    # struct pack
+                    s = bytes((len(f),)) + f.encode() + struct.pack(f, *argv[1:])
+            except:
+                # raise
+                t=type(argv[0])
+                if t==bytes:
+                    s = argv[0]
+                elif t==str:
+                    s = bytes(argv[0],"utf-8")
+                elif t==int:
+                    s = bytes((argv[0],))
+                elif t==list:
+                    s = bytes(argv[0])
+                else:
+                    s = b'\x01z'
         else: # no formatstring
             s=b'\x01z'# dummy format 'z' for no arguments
-        s=struct.pack("B",len(cmd))+cmd.encode('utf-8')+s
-        s=struct.pack("B",len(s))+s
+        s=bytes((len(cmd),))+cmd.encode('utf-8')+s
+        s=bytes((len(s),))+s
         return s
 
-    def decode(self,s,decoder=-1):
-        """ Decodes command + encoded bytes with specified decoder"""
-        nl=s[0] #number bytes in total length of message
+    @staticmethod
+    def decode(s):
+        # nl=s[0] #number bytes in total length of message
         nc=s[1] #number of bytes in command
         cmd=s[2:2+nc].decode('utf-8')
         data=s[2+nc:]
-        if decoder:
-            if decoder==-1:
-                decoder=self.unpack
-            data=decoder(data)
+        if data==b'\x01z': 
+            data=None
         else:
-            if data==b'\x01z': data=None
+            try:
+                p=data[0]+1
+                f=data[1:p]
+                # if f==b"z":# dummy format 'z' for empty data
+                #     return None
+                if f==b"raw": # Raw bytes, no decoding needed
+                    data = data[p:]
+                elif f==b"repr":
+                    d={}
+                    text = data[p:].decode('utf-8')
+                    if "(" in text:
+                        qualname = text.split("(", 1)[0]
+                        if "." in qualname:
+                            pkg = qualname.rsplit(".", 1)[0]
+                            mod = __import__(pkg)
+                            d[pkg] = mod
+                    data = eval(text, d)
+                else:
+                    data=struct.unpack(f,data[p:])
+                if len(data)==1:
+                    # convert from tuple size 1 to single value
+                    data=data[0]
+            except:
+                # Pass data as raw bytes
+                pass
         return cmd,data
 
 
@@ -390,7 +310,7 @@ class UartRemote:
             if self.unprocessed_data:
                 delim = self.unprocessed_data
                 self.unprocessed_data=b''
-
+            
             for i in range(timeout*self.reads_per_ms):
                 if delim==b'<':
                     break
@@ -506,10 +426,10 @@ class UartRemote:
                 print("Nothing available. Sleeping 100ms")
                 sleep_ms(100)
             else:
-                 if platform==H7:
-                     sleep_ms(13)
-                 else:
-                     sleep_ms(1)
+                if platform==H7:
+                    sleep_ms(13)
+                else:
+                    sleep_ms(1)
 
     def loop(self):
         global interrupt_pressed
