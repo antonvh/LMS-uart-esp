@@ -80,6 +80,16 @@ else:
     def sleep_ms(ms):
         sleep(ms/1000)
 
+
+def digitformat(f):
+    nn='0'
+    i=0
+    while f[i]>='0' and f[i]<='9':
+            nn+=f[i]
+            i+=1
+    return (int(nn),f[i:])
+
+
 class UartRemote:
     """
     UartRemote
@@ -88,15 +98,7 @@ class UartRemote:
     commands={}
     command_formats={}
 
-    @staticmethod
-    def digitformat(f):
-        nn='0'
-        i=0
-        while f[i]>='0' and f[i]<='9':
-                nn+=f[i]
-                i+=1
-        return (int(nn),f[i:])
-
+    
 
     def __init__(self,port=0,baudrate=115200,timeout=1000,debug=False,esp32_rx=0,esp32_tx=26):
         # Baud rates of up to 230400 work. 115200 is the default for REPL.
@@ -178,7 +180,8 @@ class UartRemote:
         self.commands[name]=command_function
         self.command_formats[name]=format
 
-    def pack(self,*argv):
+    @staticmethod
+    def pack(*argv):
         try:
             f=argv[0] # formatstring
             i=0
@@ -190,7 +193,7 @@ class UartRemote:
                 s=b'\x03raw'+argv[1]
             else:
                 while (len(f)>0):# keep parsing formatstring
-                    nf,f=self.digitformat(f) # split preceding digits and format character
+                    nf,f=digitformat(f) # split preceding digits and format character
                     if nf==0:
                         nf=1
                         fo=f[0]
@@ -239,7 +242,8 @@ class UartRemote:
             else:
                 return b'\x01z'
 
-    def unpack(self,s):
+    @staticmethod
+    def unpack(s):
         sizes={'b':1,'B':1,'i':4,'I':4,'f':4,'s':1,'r':1}
         try:
             p=0
@@ -253,12 +257,12 @@ class UartRemote:
             if f=="raw": # Raw bytes, no decoding needed
                 return s[p:]
             while (len(f)>0):
-                nf,f=self.digitformat(f)
+                nf,f=digitformat(f)
                 fo=f[0]
                 if f[0]=='a' or f[0]=='t': # array
                     extra=f[0]
                     f=f[1:]
-                    nf,f=self.digitformat(f)
+                    nf,f=digitformat(f)
                     fo=f[0]
                     nr_bytes=nf*sizes[fo]
                     if extra=='a':
