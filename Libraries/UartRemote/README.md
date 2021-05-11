@@ -20,6 +20,7 @@ There is also a YouTube tutorial here:
 The same UartRemote library is also implemented for Arduino.
 
 # Packet format
+
 When a command with its accompanying values is transmitted over the Uart, the following packet format is used:
 
 |delimiter|total len|command len|command|format len| format| data|delimiter|
@@ -31,12 +32,19 @@ with
 - `lc` the length of the command string `<cmd>` as a single byte,
 - `cmd` the command specified as a string,
 - `lf` the length of the format string
-- `f` the Format character used for `struct.pack` to pack the values; when data is a list, the character `a` is prepended to `f`.
-- `data` a number of values packed using `struct.pack`
+- `f` the Format string used to pack the values.
+- `data` bytes payload.
+
+This means packets included information about how to decode them. This adds some handy flexibility. The options for `f` are:
+- struct
+- pickle/repr 
+- raw bytes
+
+## Format Option 1: Struct
 
 When the method
 
-`ur.send_command('test','B',[1,2,3,4,5])`
+`ur.send_command('test','5B',1,2,3,4,5)`
 is used, the following packet will be transmitted over the line:
 
 ```b'<\x0e\x04test\x03a5B\x01\x02\x03\x04\x05'```
@@ -49,3 +57,26 @@ When the Format string `f` is a single character, and the data is a list, each e
 
 ```send_command('special','3b3s1f',1,2,3,"aap",1.3)```.
 
+This is the fastest method (1ms) but is limited to c-types, like int, unsigned int etc...
+
+## Format Option 2: repr/pickle
+This uses the string representation of data, `repr()` to encode it. Then `eval()` is used on the receiving end.
+`ur.encode('test_command', 'repr', [[1,2],[3,4]])`
+
+will be encoded as:
+`b'%\x0ctest_command\x04repr([[1, 2], [3, 4]],)'`
+
+Here's the power of repr:
+`ur.encode('test_command','repr',[[1,2],[3,str],[len,True],[2+3]])`
+becomes
+`b"W\x0ctest_command\x04repr([[1, 2], [3, <class 'str'>], [<built-in function len>, True], [5]],)"`
+
+This is slower (7ms) and incompatible with Arduino but it is more flexible.
+
+## Format Option 3: raw bytes
+This is the fastest option of all, but you'll have to do your own decoding/encoding.
+
+`ur.encode('test_command','raw',b'abcd')`
+
+is encoded as:
+`b'\x15\x0ctest_command\x03rawabcd'`

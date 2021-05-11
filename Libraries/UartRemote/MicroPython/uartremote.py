@@ -15,6 +15,7 @@ ESP32_S2=3
 ESP8266=4
 SPIKE=5
 H7=7
+MAC=6
 
 platforms = {
     'linux':EV3, # EV3. TODO This might not be precise enough for python3 running on Linux laptops
@@ -22,7 +23,8 @@ platforms = {
     'Espressif ESP32-S2':ESP32_S2,
     'esp8266':ESP8266,
     'OpenMV4P-H7':H7,
-    'LEGO Learning System Hub':SPIKE
+    'LEGO Learning System Hub':SPIKE,
+    'darwin':MAC
 }
 platform = platforms[sys.platform]
 
