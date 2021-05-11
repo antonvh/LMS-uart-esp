@@ -81,8 +81,10 @@ u.call('led','B',[2,100,100,100])
 ### `call(<cmd>,[<type>,<data>])`
 The `call` method allows the Master to send a command to the Slave. When no values need to be passed with the command, the `<type>` and `<data>` can be omitted.  The `<data>` can be a single value, a string or a list of values. 
 
+The Slave acknowledges a command by sending back an acknowledge command, where the string `ack` is appended to the command, and return values of the function being called are sent back. When an error occurs, the `<cmd>` that is sent back, contains `err` and the value is the type of error.
+
 #### The format string
-The type of `<data>` is given according to the struct Format characters, of which the most commonly used are shown below:
+The type of `<data>` is given according to the [struct Format characters](https://docs.python.org/3/library/struct.html), of which the most commonly used are shown below:
 
 | Format character | type | number of bytes |
 |---------------------|-------|--------------|
@@ -93,19 +95,24 @@ The type of `<data>` is given according to the struct Format characters, of whic
 | `f` | float | 4 |
 | `d` | double | 8 |
 | `s` | string[] | one per char
-| `r` | raw bytes | one per byte
+
+example:
+`ur.call('mycommand','bb3sb',-3,-2,"aha",120)`
+
+Note that struct DOES NOT decode utf-8. You will always get a bytestring on the other side. It uses about 1ms to encode/decode.
 
 #### Special format strings for other encoding types
 - `repr`: use for a pickle-like serialized string encoding/decoding
 - `raw` : skip encoding altogether and just pas one raw byte string.
 
-The Slave acknowledges a command by sending back an acknowledge command, where the string `ack` is appended to the command, and return values of the function being called are sent back. When an error occurs, the `<cmd>` that is sent back, contains `error`.
+example:
+`ur.call('mycommand','repr',[[12,34],[56,78]],"tekst",(1,2,3))`
+This will get all the python types across, but uses about 7ms to encode/decode.
 
-When the Format string `f` is a single character, and the data is a list, each element of the list will be encoded using the specified Format character. The format field can also consist of multiple Format characters, for example 
+`ur.call('mycommand','raw',b"Raw byte string")`
 
-```call('special','3bs1fr',1,2,3,"text",1.3,b'raw bytes here')```.
-
-
+#### If encoding fails
+If the encoder fails it resorts to raw bytes by default.
 
 # Example application
 ## Slave code

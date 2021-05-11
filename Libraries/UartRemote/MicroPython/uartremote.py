@@ -81,15 +81,6 @@ else:
         sleep(ms/1000)
 
 
-def digitformat(f):
-    nn='0'
-    i=0
-    while f[i]>='0' and f[i]<='9':
-            nn+=f[i]
-            i+=1
-    return (int(nn),f[i:])
-
-
 class UartRemote:
     """
     UartRemote
@@ -97,8 +88,6 @@ class UartRemote:
     """
     commands={}
     command_formats={}
-
-
 
     def __init__(self,port=0,baudrate=115200,timeout=1000,debug=False,esp32_rx=0,esp32_tx=26):
         # Baud rates of up to 230400 work. 115200 is the default for REPL.
@@ -272,7 +261,6 @@ class UartRemote:
         available = self.available()
         data = self.unprocessed_data
         if platform == SPIKE:
-
             self.unprocessed_data = b''
             while True:
                 r=self.uart.read(1)
@@ -281,9 +269,12 @@ class UartRemote:
         else:
             if available:
                 data = self.uart.read(available)
-
         return data
 
+    def flush(self):
+        _ = self.read_all()
+        if self.DEBUG: print("Flushed: %r" % _)
+        
     def force_read(self, size=1, timeout=50):
         # SPIKE and OpenMV reads too fast and sometimes returns None
         # check: on SPIKE b'' is returned, on OpenMV None
@@ -439,9 +430,6 @@ class UartRemote:
                 break
             self.process_uart()
 
-    def flush(self):
-        _ = self.read_all()
-        if self.DEBUG: print("Flushed: %r" % _)
 
     def repl_activate(self):
         self.flush()
