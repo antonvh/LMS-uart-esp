@@ -106,7 +106,9 @@ Note that struct DOES NOT decode utf-8. You will always get a bytestring on the 
 - `raw` : skip encoding altogether and just pas one raw byte string.
 
 example:
+
 `ur.call('mycommand','repr',[[12,34],[56,78]],"tekst",(1,2,3))`
+
 This will get all the python types across, but uses about 7ms to encode/decode.
 
 `ur.call('mycommand','raw',b"Raw byte string")`

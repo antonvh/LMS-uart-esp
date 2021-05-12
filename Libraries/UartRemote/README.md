@@ -61,14 +61,19 @@ This is the fastest method (1ms) but is limited to c-types, like int, unsigned i
 
 ## Format Option 2: repr/pickle
 This uses the string representation of data, `repr()` to encode it. Then `eval()` is used on the receiving end.
+
 `ur.encode('test_command', 'repr', [[1,2],[3,4]])`
 
 will be encoded as:
+
 `b'%\x0ctest_command\x04repr([[1, 2], [3, 4]],)'`
 
 Here's the power of repr:
+
 `ur.encode('test_command','repr',[[1,2],[3,str],[len,True],[2+3]])`
+
 becomes
+
 `b"W\x0ctest_command\x04repr([[1, 2], [3, <class 'str'>], [<built-in function len>, True], [5]],)"`
 
 This is slower (7ms) and incompatible with Arduino but it is more flexible.
@@ -79,4 +84,5 @@ This is the fastest option of all, but you'll have to do your own decoding/encod
 `ur.encode('test_command','raw',b'abcd')`
 
 is encoded as:
+
 `b'\x15\x0ctest_command\x03rawabcd'`
