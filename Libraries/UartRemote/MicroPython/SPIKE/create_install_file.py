@@ -26,8 +26,10 @@ except OSError:
 
 print('writing uartremote.mpy to folder /projects')
 print('writing uartremote.mpy to folder /projects')
-open('/projects/uartremote.mpy','wb').write(uartremote)
-print('Finished writing uartremote.mpy')
+f=open('/projects/uartremote.mpy','wb')
+f.write(uartremote)
+f.close()
+print('Finished writing uartremote.mpy. Resetting.')
 machine.reset()
 """
 

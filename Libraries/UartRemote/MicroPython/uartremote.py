@@ -88,7 +88,7 @@ class UartRemote:
     """
     commands={}
     command_formats={}
-    version="May 12, 2021, 18:30"
+    version="May 12, 2021, 20:30"
 
     def __init__(self,port=0,baudrate=115200,timeout=1000,debug=False,esp32_rx=0,esp32_tx=26):
         # Baud rates of up to 230400 work. 115200 is the default for REPL.
@@ -291,16 +291,22 @@ class UartRemote:
         global interrupt_pressed
 
         delim=b''
-        if platform==SPIKE:
+        if platform==SPIKE or platform==ESP8266:
             if self.unprocessed_data:
                 delim = self.unprocessed_data
                 self.unprocessed_data=b''
-            
-            for i in range(timeout*self.reads_per_ms):
-                if delim==b'<':
-                    break
-                else:
-                    delim=self.uart.read(1)
+            if timeout > 0:
+                for i in range(timeout*self.reads_per_ms):
+                    if delim==b'<':
+                        break
+                    else:
+                        delim=self.uart.read(1)
+            else:
+                while True:
+                    if delim==b'<':
+                        break
+                    else:
+                        delim=self.uart.read(1)
 
             if delim!=b'<':
                 return ("err","< delim not found")
@@ -319,7 +325,7 @@ class UartRemote:
             if not data:
                 if self.DEBUG: print("No data after timeout")
                 return ("err","No data")
-            #if self.DEBUG: print("Decoding {}".format(data))
+            
             size = len(data)
             for i in range(size):
                 #if self.DEBUG: print(data[i:i+1])
@@ -342,6 +348,7 @@ class UartRemote:
                     #if self.DEBUG: print("Payload: {}, delim: {}".format(payload,delim))
                     break
         if delim!=b'>':
+            if self.DEBUG: print("Delim {}".format(delim))
             return ("err","> delim not found")
         else:
             result = self.decode(payload,**kwargs)
@@ -402,13 +409,13 @@ class UartRemote:
 
     def process_uart(self):
         if self.local_repl_enabled:
-            self.local_repl_enabled=False
+            self.disable_repl_locally()
         if self.available():
             self.execute_command(*self.receive_command())
         else:
             if self.DEBUG:
-                print("Nothing available. Sleeping 100ms")
-                sleep_ms(100)
+                print("Nothing available. Sleeping 1000ms")
+                sleep_ms(1000)
             else:
                 if platform==H7:
                     sleep_ms(13)
