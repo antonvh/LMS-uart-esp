@@ -6,12 +6,12 @@
 
 import binascii, mpy_cross, time
 
-mpy_cross.run('-march=armv6','../uartremote.py','-o','uartremote.mpy')
+mpy_cross.run('-march=armv6','../uartremote.py','-o','../SPIKE/uartremote.mpy')
 
 # Should be done in a second!
-time.sleep(1)
+time.sleep(2)
 
-uartremote=open('uartremote.mpy','rb').read()
+uartremote=open('../SPIKE/uartremote.mpy','rb').read()
 ur_b64=binascii.b2a_base64(uartremote)
 
 spike_code="import ubinascii, uos, machine\nb64=\"\"\""+ur_b64.decode('utf-8')+"\"\"\"\n\n"
@@ -33,4 +33,6 @@ print('Finished writing uartremote.mpy. Resetting.')
 machine.reset()
 """
 
-open('install_uartremote.py','w').write(spike_code)
+f=open('../SPIKE/install_uartremote.py','w')
+f.write(spike_code)
+f.close()
