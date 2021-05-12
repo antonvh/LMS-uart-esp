@@ -39,13 +39,12 @@ def esp_interrupt(p):
     # called by irq on gpio0
     global interrupt_pressed
     print("Interrupt Pressed")
-    dupterm(machine.UART(0, 115200), 1) # repl with 115200baud
+    dupterm(UART(0, 115200), 1) # repl with 115200baud
     interrupt_pressed=1
 
 if platform==ESP8266:
     from machine import UART
     from machine import Pin
-    import machine
     from utime import sleep_ms
     from uos import dupterm
     gpio0=Pin(0,Pin.IN)# define pin0 as input = BOOT button on board
@@ -53,7 +52,6 @@ if platform==ESP8266:
 elif platform==ESP32:
     from machine import UART
     from machine import Pin
-    import machine
     from utime import sleep_ms
     from uos import dupterm
     #gpio0=Pin(0,Pin.IN)# define pin0 as input = BOOT button on board
@@ -90,6 +88,7 @@ class UartRemote:
     """
     commands={}
     command_formats={}
+    version="May 12, 2021, 18:30"
 
     def __init__(self,port=0,baudrate=115200,timeout=1000,debug=False,esp32_rx=0,esp32_tx=26):
         # Baud rates of up to 230400 work. 115200 is the default for REPL.
@@ -124,16 +123,16 @@ class UartRemote:
         self.DEBUG=debug
         self.unprocessed_data=b''
         self.baudrate = baudrate
-        self.local_repl_enabled = True
+        self.local_repl_enabled = False
+        self.enable_repl_locally()
         self.add_command(self.enable_repl_locally, name='enable repl')
         self.add_command(self.disable_repl_locally, name='disable repl')
-        self.add_command(self.echo, 's', name='echo')
-        self.add_command(self.raw_echo, name='raw_echo')
-
+        self.add_command(self.echo, 'repr', name='echo')
+        self.add_command(self.raw_echo, name='raw echo')
 
     def echo(self, s):
         if self.DEBUG: print(s)
-        return str(s)
+        return s
 
     @staticmethod
     def raw_echo(s):
@@ -141,29 +140,24 @@ class UartRemote:
 
     def enable_repl_locally(self):
         global interrupt_pressed
-        self.local_repl_enabled = True
         interrupt_pressed = 1
+        if platform==ESP8266:
+            # dupterm(self.uart, 1)
+            dupterm(UART(0, 115200), 1)
+            self.local_repl_enabled = True
+        elif platform==H7:
+            # dupterm(self.uart, 2)
+            dupterm(UART(3, 115200), 2)
+            self.local_repl_enabled = True
+        else:
+            self.local_repl_enabled = False
 
     def disable_repl_locally(self):
         self.local_repl_enabled = False
-
-    @property
-    def local_repl_enabled(self):
-        return self._local_repl_enabled
-
-    @local_repl_enabled.setter
-    def local_repl_enabled(self, enabled):
-        if enabled:
-            if platform==ESP8266:
-                dupterm(self.uart, 1)
-            elif platform==H7:
-                dupterm(self.uart, 2)
-        else:
-            if platform==ESP8266:
-                dupterm(None, 1)
-            elif platform==H7:
-                dupterm(None, 2)
-        self._local_repl_enabled = enabled
+        if platform==ESP8266:
+            dupterm(None, 1)
+        elif platform==H7:
+            dupterm(None, 2)
 
     def add_command(self,command_function, format="", name=None):
         if not name:
@@ -240,7 +234,6 @@ class UartRemote:
                 pass
         return cmd,data
 
-
     def available(self):
         """ Platform independent check for available characters in receive queue of UART """
         if platform==SPIKE:
@@ -293,7 +286,6 @@ class UartRemote:
             if i > 3 and self.DEBUG:
                 print("Waiting for data in force read...")
         return data
-
 
     def receive_command(self,timeout=1000,**kwargs):
         global interrupt_pressed
@@ -359,7 +351,6 @@ class UartRemote:
     def send_command(self,command,*argv,**kwargs):
         s=self.encode(command,*argv,**kwargs)
         msg=b'<'+s+b'>'
-        #if self.DEBUG: print(msg)
         if platform==SPIKE: # on spike send 32-bytes at a time
             window=32
             while len(msg) > window:
@@ -426,12 +417,12 @@ class UartRemote:
 
     def loop(self):
         global interrupt_pressed
+        interrupt_pressed=0
         while True:
             if interrupt_pressed==1:
                 interrupt_pressed=0
                 break
             self.process_uart()
-
 
     def repl_activate(self):
         self.flush()
