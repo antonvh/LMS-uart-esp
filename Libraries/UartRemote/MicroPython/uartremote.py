@@ -391,7 +391,7 @@ class UartRemote:
                 else:
                     resp=self.commands[command]()
             except Exception as e:
-                self.send_command('err','16s', "Command failed: {}".format(e))
+                self.send_command('err','repr', "Command failed: {}".format(e))
                 return
             if resp!=None:
                 try:
@@ -403,14 +403,14 @@ class UartRemote:
                     else: # user probably wants raw response.
                         self.send_command(command_ack,resp)
                 except Exception as e:
-                    self.send_command('err','16s', "Response packing failed: {}".format(e))
+                    self.send_command('err','repr', "Response packing failed: {}".format(e))
                     return
             else:
-                self.send_command(command_ack,'s','ok')
+                self.send_command(command_ack,'2s','ok')
         else:
             #if command[-3:] not in ['ack','err']:# discard any ack from other command
                 #self.send_command('err','s','Command not found')
-            self.send_command('err','16s','Command not found: {}'.format(command))
+            self.send_command('err','repr','Command not found: {}'.format(command))
 
     def process_uart(self):
         if self.local_repl_enabled: self.disable_repl_locally()
@@ -433,7 +433,10 @@ class UartRemote:
             if interrupt_pressed==1:
                 interrupt_pressed=0
                 break
-            self.process_uart()
+            try:
+                self.process_uart()
+            except KeyboardInterrupt:
+                self.enable_repl_locally()
 
     def repl_activate(self):
         self.flush()
