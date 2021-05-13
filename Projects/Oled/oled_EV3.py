@@ -11,7 +11,8 @@ class Oled:
         self.uartremote.send_receive("oledf","B",color)
     
     def text(self,txt,x,y):
-        self.uartremote.send_receive("oledt","sBB",txt,x,y)
+        s="%ds"%len(txt)
+        return(self.uartremote.call("oledt",s+"BB",txt,x,y))
 
     def show(self):
         self.uartremote.send_receive("oleds")

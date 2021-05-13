@@ -31,7 +31,6 @@ class Oled:
 
 # initialize UartRemote library
 u=UartRemote()
-u.flush()
 # initialize Oled instance
 oled=Oled()
 # define different commands
