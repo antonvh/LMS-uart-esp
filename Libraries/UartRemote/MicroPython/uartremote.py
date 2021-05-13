@@ -433,10 +433,8 @@ class UartRemote:
             if interrupt_pressed==1:
                 interrupt_pressed=0
                 break
-            try:
-                self.process_uart()
-            except KeyboardInterrupt:
-                self.enable_repl_locally()
+            self.process_uart()
+        self.enable_repl_locally()
 
     def repl_activate(self):
         self.flush()
