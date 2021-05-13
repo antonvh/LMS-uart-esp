@@ -19,7 +19,7 @@ class TestClient(WebSocketClient):
 
             if u.available():
                 (cmd,value)=u.receive_command()
-                u.send_command(cmd+"ack",'s','ok')
+                u.send_command(cmd+"ack",'repr','ok')
                 print(value)
                 s=cmd+" "+",".join(["%f"%i for i in value])
                 self.connection.write(s)
@@ -34,9 +34,9 @@ class TestClient(WebSocketClient):
                 print("ws connection opened")
                 #u.disable_repl_locally()
                 #u.flush()
-                u.send_command("wsopen",'s','ok')
+                u.send_command("wsopen",'repr','ok')
             elif cmd=="euler":
-                u.send_command("euler",'s','ok')
+                u.send_command("euler",'repr','ok')
         except ClientClosedError:
             self.connection.close()
 
@@ -68,13 +68,7 @@ for i in (network.AP_IF, network.STA_IF):
 """
 
 
-ur=UartRemote("A") # connect ESP to port A
-
-
-ur.flush() # remove evernything
-# try to enable repl if esp is still in non_repl mode
-ur.send_command("enable repl",'s','ok')
-print("response enable repl",ur.uart.read(100))
+ur=UartRemote("E") # connect ESP to port A
 
 
 ur.repl_activate()
@@ -103,10 +97,10 @@ while True:
     if ws_opened:
         t_ms=ticks_ms()
         if ticks_diff(t_ms,t_old)>refresh_ms:
-            ur.call(cur_mode,'f',value)
+            ur.call(cur_mode,'repr',value)
             t_old=t_ms
     if ur.available():
-        cmd,val=ur.receive_command(wait=False)
+        cmd,val=ur.receive_command()
         print("received:",cmd,val)
         if cmd=="wsopen": # if websocket is opened, initialize chart
             print("WebSocket opened")
