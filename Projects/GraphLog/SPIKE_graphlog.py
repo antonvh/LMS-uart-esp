@@ -12,13 +12,7 @@ for i in (network.AP_IF, network.STA_IF):
 GRAPHLOG="""from graphlog import *
 """
 
-ur=UartRemote("A") # connect ESP to port A
-
-
-ur.flush() # remove evernything
-# try to enable repl if esp is still in non_repl mode
-ur.send_command("enable repl",'s','ok')
-print("response enable repl",ur.uart.read(100))
+ur=UartRemote("E") # connect ESP to port A
 
 
 ur.repl_activate()
@@ -31,13 +25,13 @@ ws_opened=False
 
 
 def init_chart():
-    ur.call("add_series","s","ay")
-    ur.call("add_series","s","az")
-    ur.call("series_name",'Bs',0,'ax')
-    ur.call("series_name",'Bs',1,'ay')
-    ur.call("series_name",'Bs',2,'az')
-    ur.call('title','s','Acceleration')
-    ur.call('yaxis','s','acceleration (m/s^2)')
+    ur.call("add_series","repr","ay")
+    ur.call("add_series","repr","az")
+    ur.call("series_name",'repr',0,'ax')
+    ur.call("series_name",'repr',1,'ay')
+    ur.call("series_name",'repr',2,'az')
+    ur.call('title','repr','Acceleration')
+    ur.call('yaxis','repr','acceleration (m/s^2)')
 
 
 refresh_ms=100# refresh every 100ms
@@ -48,10 +42,10 @@ while True:
     if ws_opened:
         t_ms=ticks_ms()
         if ticks_diff(t_ms,t_old)>refresh_ms:
-            ur.call('data','f',acc)
+            ur.call('data','repr',acc)
             t_old=t_ms
     if ur.available():
-        cmd,val=ur.receive_command(wait=False)
+        cmd,val=ur.receive_command()
         print("received:",cmd,val)
         if cmd=="wsopen": # if websocket is opened, initialize chart
             print("WebSocket opened")
