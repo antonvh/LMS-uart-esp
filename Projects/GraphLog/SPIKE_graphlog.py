@@ -7,12 +7,16 @@ for i in (network.AP_IF, network.STA_IF):
     iface = network.WLAN(i)
     if iface.active():
         print("WebSocket started on ws://%s" % iface.ifconfig()[0])
+
+
+
+#done
 """
 
 GRAPHLOG="""from graphlog import *
 """
 
-ur=UartRemote("E") # connect ESP to port A
+ur=UartRemote("D") # connect ESP to port A
 
 
 ur.repl_activate()

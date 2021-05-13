@@ -5,6 +5,7 @@
 # And run to install
 
 import binascii, mpy_cross, time
+import hashlib
 
 mpy_cross.run('-march=armv6','../uartremote.py','-o','../SPIKE/uartremote.mpy')
 
@@ -12,27 +13,51 @@ mpy_cross.run('-march=armv6','../uartremote.py','-o','../SPIKE/uartremote.mpy')
 time.sleep(2)
 
 uartremote=open('../SPIKE/uartremote.mpy','rb').read()
+hash=hashlib.sha256(uartremote).hexdigest()
 ur_b64=binascii.b2a_base64(uartremote)
 
-spike_code="import ubinascii, uos, machine\nb64=\"\"\""+ur_b64.decode('utf-8')+"\"\"\"\n\n"
-spike_code+="""
-uartremote=ubinascii.a2b_base64(b64)
+spike_code=f"""import ubinascii, uos, machine,uhashlib
+from ubinascii import hexlify
+b64=\"\"\"{ur_b64.decode('utf-8')}\"\"\"
 
-try:
+def calc_hash(b):
+    return hexlify(uhashlib.sha256(uartremote).digest()).decode()
+
+# this is the hash of the compiled uartremote.mpy
+hash_gen='{hash}'
+
+uartremote=ubinascii.a2b_base64(b64)
+hash_initial=calc_hash(uartremote)
+
+try: # remove any old versions of uartremote library
     uos.remove('/projects/uartremote.py')
     uos.remove('/projects/uartremote.mpy')
 except OSError:
     pass
 
 print('writing uartremote.mpy to folder /projects')
-print('writing uartremote.mpy to folder /projects')
-f=open('/projects/uartremote.mpy','wb')
-f.write(uartremote)
-f.close()
-print('Finished writing uartremote.mpy. Resetting.')
-machine.reset()
-"""
+with open('/projects/uartremote.mpy','wb') as f:
+    f.write(uartremote)
+print('Finished writing uartremote.mpy.')
+print('Checking hash.')
+uartremote_check=open('/projects/uartremote.mpy','rb').read()
+hash_check=calc_hash(uartremote_check)
 
-f=open('../SPIKE/install_uartremote.py','w')
-f.write(spike_code)
-f.close()
+print('Hash generated: ',hash_gen)
+error=False
+if hash_initial != hash_gen:
+    print('Failed hash of base64 input : '+hash_initial)
+    error=True
+if hash_check != hash_gen:
+    print('Failed hash of .mpy on SPIKE: '+hash_check)
+    error=True
+
+if not error:
+    print('Uartremote library written succesfully. Resetting....')
+    machine.reset()
+else:
+    print('Failure in Uartremote library!')
+
+"""
+with open('../SPIKE/install_uartremote.py','w') as f:
+    f.write(spike_code)
