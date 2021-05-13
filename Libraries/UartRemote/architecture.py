@@ -70,12 +70,10 @@ def total(my_encoded_list):
     total=sum(my_list)
     return struct.pack('i', total)
 
-ur.add_command(echo, 's')
-ur.add_command(echo, 's', name=echo.__name__) # equivalent
-ur.add_command(echo, 's', name='echo')        # equivalent
-
-# Does 's' work both for a list of strings and for a string ?? To test.
-ur.add_command(my_function, 's')
+# Examples
+ur.add_command(echo, 'repr')
+ur.add_command(echo, 'repr', name='echo')        # equivalent
+ur.add_command(my_function, 'repr')
 
 
 # Void or raw return
@@ -94,6 +92,7 @@ def loop():
         ur.process_uart()
         # Do your stuff here
         pass
+    ur.enable_local_repl()
 # loop()
 
 # Alternatively get commands and their data. 
@@ -102,7 +101,7 @@ def loop():
         # Non-blocking receipt if any available calls over uart
         # Also disables local repl for convenience
         # Auto acks receipt of call
-        command, value = ur.check_for_call(ack=True)
+        command, value = ur.receive_command(ack=True)
         # Do your stuff here
         if command == 'wait':
             utime.sleep_ms(value)
@@ -114,7 +113,7 @@ def loop():
         # Non-blocking receipt if any available calls over uart
         # Also disables local repl for convenience
         # Auto acks receipt of call
-        command, value = ur.check_for_call(ack=False)
+        command, value = ur.receive_command(ack=False)
         # Do your stuff here
         if command == 'local_ticks':
             result = utime.ticks_ms()
@@ -124,14 +123,14 @@ def loop():
 #loop()
 
 # Ack_ok and ack_err are just wrappers:
-def ack_ok(self, *args, **kwargs):
+def ack_ok(self, *args):
     if len(args > 1):
-        self.call(args[0]+'ack', *args[1:], wait=False, **kwargs)
+        self.call(args[0]+'ack', *args[1:], wait=False)
     else:
-        self.call(args[0]+'ack', wait=False, **kwargs)
+        self.call(args[0]+'ack', wait=False)
 
-def ack_err(self, message, **kwargs):
-    self.call('err', 's', message, wait=False, **kwargs)
+def ack_err(self, message):
+    self.call('err', 's', message, wait=False)
 
 ## TODO: check wether using these wrappers limits speed. 
 # So far encoding/decoding routines seem to have te biggest impact

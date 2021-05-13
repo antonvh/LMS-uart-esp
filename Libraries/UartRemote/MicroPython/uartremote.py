@@ -1,10 +1,5 @@
-# this library support the following micropython based platforms
-# - pybricks on EV3
-# - micropython on ESP8266
-# - micropython on ESP32
-# - micropython on OpenMV H7 plus
-# - SPIKE hub
-# python3 on any other platform. pyserial is required in that case.
+# Symmetrical communication library for Micropython devices
+# (c) 2021 Ste7an, Anton Vanhoucke
 
 import struct
 import sys
