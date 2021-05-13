@@ -40,7 +40,7 @@ class TestClient(WebSocketClient):
             msg = self.connection.read()
             if u.available():
                 (cmd,value)=u.receive_command()
-                u.send_command(cmd+"ack",'s','ok')
+                u.send_command(cmd+"ack",'repr','ok')
                 print(value)
                 if cmd=="data":
                     #try:
@@ -66,7 +66,7 @@ class TestClient(WebSocketClient):
                 print("ws connection opened")
                 #u.disable_repl_locally()
                 #u.flush()
-                u.send_command("wsopen",'s','ok')
+                u.send_command("wsopen",'repr','ok')
         except ClientClosedError:
             self.connection.close()
 
