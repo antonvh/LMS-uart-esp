@@ -57,7 +57,6 @@ elif platform==ESP32_S2: # circuipython
     from time import sleep
     def sleep_ms(ms):
         sleep(ms/1000)
-
 elif platform==EV3:
     from utime import sleep_ms
     from pybricks.iodevices import UARTDevice
@@ -85,13 +84,13 @@ class UartRemote:
     command_formats={}
     version="May 13, 2021, 00:45"
 
-    def __init__(self,port=0,baudrate=115200,timeout=1,debug=False,esp32_rx=0,esp32_tx=26):
+    def __init__(self,port=0,baudrate=115200,timeout=1500,debug=False,esp32_rx=0,esp32_tx=26):
         # Baud rates of up to 230400 work. 115200 is the default for REPL.
         self.local_repl_enabled = False
-        self.reads_per_ms = timeout
+        self.reads_per_ms = 1
         if platform==EV3:
             if not port: port=Port.S1
-            self.uart = UARTDevice(port,baudrate=baudrate,timeout=timeout)
+            self.uart = UARTDevice(port,baudrate=baudrate,timeout=1)
         elif platform==H7:
             self.reads_per_ms = 20
             self.enable_repl_locally()
@@ -102,7 +101,7 @@ class UartRemote:
             # self.uart = UART(port,baudrate=baudrate,timeout=timeout,timeout_char=timeout,rxbuf=100)
         elif platform==ESP32:
             if not port: port = 1
-            self.uart = UART(port,rx=esp32_rx,tx=esp32_tx,baudrate=baudrate,timeout=timeout)
+            self.uart = UART(port,rx=esp32_rx,tx=esp32_tx,baudrate=baudrate,timeout=1)
         elif platform==ESP32_S2:
             self.uart = UART(board.TX,board.RX,baudrate=baudrate,timeout=0.5)
         elif platform==SPIKE:
@@ -116,7 +115,7 @@ class UartRemote:
             self.uart.baud(baudrate) # set baud rate
         else:
             # Try regular python3 pyserial
-            self.uart = serial.Serial(port, baudrate, timeout=timeout)
+            self.uart = serial.Serial(port, baudrate, timeout=1)
         self.DEBUG=debug
         self.unprocessed_data=b''
         self.port = port
@@ -139,11 +138,11 @@ class UartRemote:
         global interrupt_pressed
         interrupt_pressed = 1 # Break any running ur.loop() before turning REPL on
         if platform==ESP8266:
-            # dupterm(self.uart, 1)
+            # Hard coded default ESP8266 values:
             dupterm(UART(0, 115200), 1)
             self.local_repl_enabled = True
         elif platform==H7:
-            # dupterm(self.uart, 2)
+            # Hard coded default H7 values:
             dupterm(UART(3, 115200), 2)
             self.local_repl_enabled = True
         else:
@@ -153,10 +152,10 @@ class UartRemote:
         self.local_repl_enabled = False
         if platform==ESP8266:
             dupterm(None, 1)
-            self.uart = UART(self.port,baudrate=self.baudrate,timeout=self.timeout,timeout_char=self.timeout,rxbuf=100)
+            self.uart = UART(self.port,baudrate=self.baudrate,timeout=1,timeout_char=1,rxbuf=100)
         elif platform==H7:
             dupterm(None, 2)
-            self.uart = UART(self.port,baudrate=self.baudrate,timeout_char=self.timeout)
+            self.uart = UART(self.port,baudrate=self.baudrate,timeout_char=1)
 
     def add_command(self,command_function, format="", name=None):
         if not name:
@@ -286,8 +285,9 @@ class UartRemote:
                 print("Waiting for data in force read...")
         return data
 
-    def receive_command(self,timeout=1000):
+    def receive_command(self,timeout=-2):
         # Set timeout to -1 to wait forever.
+        if timeout == -2: timeout = self.timeout
         if self.local_repl_enabled: self.disable_repl_locally()
         delim=b''
         if platform==SPIKE or platform==ESP8266:
@@ -297,7 +297,7 @@ class UartRemote:
             i=0
             while True:
                 if delim==b'<': break
-                elif i >= timeout*self.reads_per_ms and timeout >= 0: break
+                elif i >= timeout*self.reads_per_ms and timeout != -1: break
                 else: 
                     delim=self.uart.read(1)
                     i+=1
@@ -359,7 +359,7 @@ class UartRemote:
         if self.local_repl_enabled: self.disable_repl_locally()
         s=self.encode(command,*argv)
         msg=b'<'+s+b'>'
-        if platform==SPIKE: # on spike send 32-bytes at a time
+        if platform==SPIKE: # On spike send 32-bytes at a time
             window=32
             while len(msg) > window:
                 self.uart.write(msg[:window])
@@ -368,11 +368,11 @@ class UartRemote:
             self.uart.write(msg)
         else:
             self.uart.write(msg)
-        self.flush()
+        self.flush() # Clear the uart buffer so it's read to pick up an answer
 
-    def call(self,command,*args):
+    def call(self,command,*args,**kwargs):
         self.send_command(command,*args)
-        return self.receive_command()
+        return self.receive_command(**kwargs)
 
     def reply_command(self, command, value):
         if command in self.commands:
@@ -407,10 +407,11 @@ class UartRemote:
                 #self.send_command('err','s','Command not found')
             self.send_command('err','repr','Command not found: {}'.format(command))
 
-    def process_uart(self):
+    def process_uart(self, **kwargs):
+        # Answer a call if there is one, with the results from added commands.
         if self.local_repl_enabled: self.disable_repl_locally()
         if self.available():
-            self.reply_command(*self.receive_command())
+            self.reply_command(*self.receive_command(**kwargs))
         else:
             if self.DEBUG:
                 print("Nothing available. Sleeping 1000ms")
@@ -422,6 +423,8 @@ class UartRemote:
                     sleep_ms(1)
 
     def loop(self):
+        # Loop forever and check for incoming calls
+        # You can create a similar loop yourself and your own control code to it.
         global interrupt_pressed
         interrupt_pressed=0
         while True:
@@ -473,13 +476,13 @@ class UartRemote:
         if raw_paste:
             data = self.force_read(1)
             if data != b'\x04':
-                raise UartRemoteError("could not exec command (response: %r)" % data)
+                raise UartRemoteError("Could not send command (response: %r)" % data)
         else:
             sleep_ms(10)
-            # check if we could exec command
+            # Check if we could send command
             data = self.uart.read(2)
             if data != b"OK":
-                raise UartRemoteError("could not exec command (response: %r)" % data)
+                raise UartRemoteError("Could not send command (response: %r)" % data)
 
         if reply:
             result = b""
@@ -499,5 +502,3 @@ class UartRemote:
             else:
                 return
 
-    def repl_exit(self):
-        self.uart.write(b"\x02") # Ctrl-B
