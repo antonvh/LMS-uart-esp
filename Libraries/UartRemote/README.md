@@ -1,7 +1,7 @@
 # Remote UART library: uartremote.py
 
-This is a library for robust, near real-time communication between two UART devices. We developed it with LEGO EV3, SPIKE Prime and other MicroPython (ESP) modules. The library has te following properties:
-- It fast enough to read sensor data at 30-50Hz.
+This is a library for robust, near real-time communication between two UART devices. We developed it with LEGO EV3, SPIKE Prime and other MicroPython (ESP) modules. The library has the following properties:
+- It is fast enough to read sensor data at 30-50Hz.
 - It is fully symmetrical, so master and slave can have the same import.
 - It includes a RAW REPL mode to upload code to a slave module. This means you can develop code for both modules in one file.
 - It is implemented in MicroPython and Arduino/C code. With arduino code, much higher sensor reading speeds are possible, but flashing is a bit less user friendly.
@@ -31,23 +31,20 @@ with
 - `lc` the length of the command string `<cmd>` as a single byte,
 - `cmd` the command specified as a string,
 - `lf` the length of the format string
-- `f` the Format character used for `struct.pack` to pack the values; when data is a list, the character `a` is prepended to `f`.
-- `data` a number of values packed using `struct.pack`
+- `f` the Format encapsulation to pack the values; This can be `repr` for encapsulating arbitrary objects, `raw` for no encapsulation, or a Python struct format string.
+- `data` a number of values encapsulated according to `f`.
 
 When the method
 
-`ur.send_command('test','B',[1,2,3,4,5])`
+`ur.send_command('test','repr',[1,2,3,4,5])`
 is used, the following packet will be transmitted over the line:
 
-```b'<\x0e\x04test\x03a5B\x01\x02\x03\x04\x05'```
+```b'<b'\x1c\x04test\x04repr([1, 2, 3, 4, 5],)>'```
 
-or in hex:
+## Format Option 1: python struct.pack
+This option interpretes the Format string `f` as the format string of the `struct.pack/unpack` method (see https://docs.python.org/3/library/struct.html), for example 
 
-```0e0474657374036135420102030405```
-
-When the Format string `f` is a single character, and the data is a list, each element of the list will be encoded using the specified Format character. The format field can also consist of multiple Format characters, for example 
-
-```send_command('special','3b3s1f',1,2,3,"aap",1.3)```.
+```send_command('test_struct','3b3s1f',1,2,3,"ale",1.3)```.
 
 This is the fastest method (1ms) but is limited to c-types, like int, unsigned int etc...
 
