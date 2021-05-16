@@ -397,12 +397,12 @@ class UartRemote:
 
     def ack_ok(self, command="",fmt="2s", resp="ok"):
         command_ack=command+"ack"
-        if type(resp) == tuple:
+        if type(resp) is tuple:
             # Command has returned multiple values in a tuple. Unpack the tuple
-            args=(fmt, *resp) 
+            args=(fmt,) + resp
         else:
-            args=(fmt,resp)
-        self.send_command(command_ack,*args)
+            args=(fmt, resp)
+        self.send_command(command_ack, *args)
 
     def ack_err(self, command="",fmt="repr", msg="not ok"):
         command_err=command+"err"
