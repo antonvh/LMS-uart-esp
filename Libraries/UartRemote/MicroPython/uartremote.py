@@ -86,6 +86,7 @@ class UartRemote:
 
     def __init__(self,port=0,baudrate=115200,timeout=1500,debug=False,esp32_rx=0,esp32_tx=26):
         # Baud rates of up to 230400 work. 115200 is the default for REPL.
+        # Timeout is the time the lib waits in a receive_comand() after placing a call().
         self.local_repl_enabled = False
         self.reads_per_ms = 1
         if platform==EV3:
@@ -198,7 +199,6 @@ class UartRemote:
 
     @staticmethod
     def decode(s):
-        # nl=s[0] #number bytes in total length of message
         nc=s[1] #number of bytes in command
         cmd=s[2:2+nc].decode('utf-8')
         data=s[2+nc:]
@@ -208,8 +208,6 @@ class UartRemote:
             try:
                 p=data[0]+1
                 f=data[1:p]
-                # if f==b"z":# dummy format 'z' for empty data
-                #     return None
                 if f==b"raw": # Raw bytes, no decoding needed
                     data = data[p:]
                 elif f==b"repr":
@@ -328,7 +326,6 @@ class UartRemote:
             
             size = len(data)
             for i in range(size):
-                #if self.DEBUG: print(data[i:i+1])
                 if data[i:i+1] == b'<':
                     if size >= i+2:
                         l=data[i+1]
@@ -336,7 +333,7 @@ class UartRemote:
                         l=self.force_read(1,timeout=10)[0]
                     max_reads = timeout*self.reads_per_ms
                     reads=0
-                    while len(data) <= i+l+2: #not enough data, read some more. Maybe it's +2.
+                    while len(data) <= i+l+2: #not enough data, read some more.
                         data += self.read_all()
                         reads+=1
                         if reads > 2 and self.DEBUG:
@@ -345,14 +342,12 @@ class UartRemote:
                             break
                     payload = data[i+1:i+2+l]
                     delim = data[i+2+l:i+3+l]
-                    #if self.DEBUG: print("Payload: {}, delim: {}".format(payload,delim))
                     break
         if delim!=b'>':
             if self.DEBUG: print("Delim {}".format(delim))
             return ("err","> delim not found")
         else:
             result = self.decode(payload)
-            #if self.DEBUG: print(result)
             return result
 
     def send_command(self,command,*argv):
@@ -368,16 +363,19 @@ class UartRemote:
             self.uart.write(msg)
         else:
             self.uart.write(msg)
-        self.flush() # Clear the uart buffer so it's read to pick up an answer
 
     def call(self,command,*args,**kwargs):
+        # Send a command to a remote host that is waiting for a call. 
+        # wait until an answer comes.
+        # Timeout for the answer is self.timout, or passable as timeout=...
         self.send_command(command,*args)
+        self.flush() # Clear the uart buffer so it's ready to pick up an answer
         return self.receive_command(**kwargs)
 
     def reply_command(self, command, value):
+        # Process command(value) and send_command() with the result and an ack.
         if command in self.commands:
-            command_ack=command+"ack"
-            try:
+            try:  # executing command
                 if value!=None:
                     if type(value)==tuple:
                         resp=self.commands[command](*value)
@@ -386,41 +384,51 @@ class UartRemote:
                 else:
                     resp=self.commands[command]()
             except Exception as e:
-                self.send_command('err','repr', "Command failed: {}".format(e))
+                self.ack_err(command=command, value="Command failed: {}".format(e))
                 return
-            if resp!=None:
-                try:
-                    f=self.command_formats[command]
-                    if f: # There is a (smart)pack format
-                        if type(resp)!=tuple:
-                            resp=(resp,) # make a tuple
-                        self.send_command(command_ack,f,*resp)
-                    else: # user probably wants raw response.
-                        self.send_command(command_ack,resp)
-                except Exception as e:
-                    self.send_command('err','repr', "Response packing failed: {}".format(e))
-                    return
-            else:
-                self.send_command(command_ack,'2s','ok')
-        else:
-            #if command[-3:] not in ['ack','err']:# discard any ack from other command
-                #self.send_command('err','s','Command not found')
-            self.send_command('err','repr','Command not found: {}'.format(command))
 
-    def process_uart(self, **kwargs):
-        # Answer a call if there is one, with the results from added commands.
+            try: # packing and sensing the result
+                self.ack_ok(command, self.command_formats[command], resp)
+            except Exception as e:
+                self.ack_err(command=command, msg="Response packing failed: {}".format(e))
+                return
+        else:
+            self.ack_err(command=command, msg='Command not found: {}'.format(command))
+
+    def ack_ok(self, command="",fmt="2s", resp="ok"):
+        command_ack=command+"ack"
+        if type(resp) == tuple:
+            # Command has returned multiple values in a tuple. Unpack the tuple
+            args=(fmt, *resp) 
+        else:
+            args=(fmt,resp)
+        self.send_command(command_ack,*args)
+
+    def ack_err(self, command="",fmt="repr", msg="not ok"):
+        command_err=command+"err"
+        if self.DEBUG: print(msg)
+        self.send_command(command_err,fmt,msg)
+
+    def process_uart(self, sleep=-2):
+        # Answer a call if there is one:
+        # Receive an incoming command
+        # Process the results with any commands from commands[].
+        # Reply with the answer.
+        # Sleep for sleep ms after every listen.
+        if sleep == -2:
+            if platform == H7: 
+                sleep=13
+            else:
+                sleep=1
         if self.local_repl_enabled: self.disable_repl_locally()
         if self.available():
-            self.reply_command(*self.receive_command(**kwargs))
+            self.reply_command(*self.receive_command())
         else:
             if self.DEBUG:
                 print("Nothing available. Sleeping 1000ms")
                 sleep_ms(1000)
             else:
-                if platform==H7:
-                    sleep_ms(13)
-                else:
-                    sleep_ms(1)
+                sleep_ms(sleep)
 
     def loop(self):
         # Loop forever and check for incoming calls
@@ -435,6 +443,7 @@ class UartRemote:
         self.enable_repl_locally()
 
     def repl_activate(self):
+        # Cajole the other side into a raw REPL with a lot of ctrl-c and ctrl-a.
         self.flush()
         self.send_command('enable repl')
         sleep_ms(300)
@@ -448,6 +457,8 @@ class UartRemote:
             raise UartRemoteError("Raw REPL failed (response: %r)" % data)
 
     def repl_run(self, command, reply=True, raw_paste=True):
+        # Execute MicroPython remotely via raw repl.
+        # RAW repl must be activated first!
         command_bytes_left = bytes(command, "utf-8")
         window = 128
 
