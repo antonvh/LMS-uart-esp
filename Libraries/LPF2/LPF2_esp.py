@@ -101,7 +101,7 @@ class LPF2(object):
      def hubCallback(self, timerInfo):
           if self.connected:
                chr =self.readchar()     # read in any heartbeat bytes
-               print("cb",chr)
+               # print("cb",chr)
                while chr>=0:
                     if chr == 0:   # port has nto been setup yet
                          pass
@@ -146,7 +146,7 @@ class LPF2(object):
                     #           pass
                     else:
                          pass
-                         print("else cb",chr)
+                         print("Unexpected callback from hub",chr)
                     chr = self.readchar()
                     
                size = self.writeIt(self.payload)    # send out the latest payload
