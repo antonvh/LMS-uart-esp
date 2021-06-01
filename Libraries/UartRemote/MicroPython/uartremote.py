@@ -3,23 +3,30 @@
 
 import struct
 import sys
+try:
+    from micropython import const
+    # _COLS = const(0x10): underscore saves memory by not posting const outside lib
+except:
+    # Polyfill. Maybe add a Final type?
+    def const(arg):
+        return arg
 
-EV3=1
-ESP32=2
-ESP32_S2=3
-ESP8266=4
-SPIKE=5
-H7=7
-MAC=6
+_EV3=const(0x01)
+_ESP32=const(0x02)
+_ESP32_S2=const(0x03)
+_ESP8266=const(0x04)
+_SPIKE=const(0x05)
+_H7=const(0x07)
+_MAC=const(0x06)
 
 platforms = {
-    'linux':EV3, # EV3. TODO This might not be precise enough for python3 running on Linux laptops
-    'esp32':ESP32,
-    'Espressif ESP32-S2':ESP32_S2,
-    'esp8266':ESP8266,
-    'OpenMV4P-H7':H7,
-    'LEGO Learning System Hub':SPIKE,
-    'darwin':MAC
+    'linux':_EV3, # EV3. TODO This might not be precise enough for python3 running on Linux laptops
+    'esp32':_ESP32,
+    'Espressif ESP32-S2':_ESP32_S2,
+    'esp8266':_ESP8266,
+    'OpenMV4P-H7':_H7,
+    'LEGO Learning System Hub':_SPIKE,
+    'darwin':_MAC
 }
 platform = platforms[sys.platform]
 
@@ -37,35 +44,35 @@ def esp_interrupt(p):
     dupterm(UART(0, 115200), 1) # repl with 115200baud
     interrupt_pressed=1
 
-if platform==ESP8266:
+if platform==_ESP8266:
     from machine import UART
     from machine import Pin
     from utime import sleep_ms
     from uos import dupterm
     gpio0=Pin(0,Pin.IN)# define pin0 as input = BOOT button on board
     gpio0.irq(trigger=Pin.IRQ_FALLING, handler=esp_interrupt)
-elif platform==ESP32:
+elif platform==_ESP32:
     from machine import UART
     from machine import Pin
     from utime import sleep_ms
     from uos import dupterm
     #gpio0=Pin(0,Pin.IN)# define pin0 as input = BOOT button on board
     #gpio0.irq(trigger=Pin.IRQ_FALLING, handler=esp_interrupt)
-elif platform==ESP32_S2: # circuipython
+elif platform==_ESP32_S2: # circuipython
     from busio import UART
     import board
     from time import sleep
     def sleep_ms(ms):
         sleep(ms/1000)
-elif platform==EV3:
+elif platform==_EV3:
     from utime import sleep_ms
     from pybricks.iodevices import UARTDevice
     from pybricks.parameters import Port
-elif platform==H7:
+elif platform==_H7:
     from machine import UART
     from utime import sleep_ms
     from uos import dupterm
-elif platform==SPIKE:
+elif platform==_SPIKE:
     from utime import sleep_ms
     import hub
 else:
@@ -89,23 +96,23 @@ class UartRemote:
         # Timeout is the time the lib waits in a receive_comand() after placing a call().
         self.local_repl_enabled = False
         self.reads_per_ms = 1
-        if platform==EV3:
+        if platform==_EV3:
             if not port: port=Port.S1
             self.uart = UARTDevice(port,baudrate=baudrate,timeout=1)
-        elif platform==H7:
+        elif platform==_H7:
             self.reads_per_ms = 20
             self.enable_repl_locally()
             if not port: port=3
             # self.uart = UART(port, baudrate, timeout_char=timeout)
-        elif platform==ESP8266:
+        elif platform==_ESP8266:
             self.enable_repl_locally()            
             # self.uart = UART(port,baudrate=baudrate,timeout=timeout,timeout_char=timeout,rxbuf=100)
-        elif platform==ESP32:
+        elif platform==_ESP32:
             if not port: port = 1
             self.uart = UART(port,rx=esp32_rx,tx=esp32_tx,baudrate=baudrate,timeout=1)
-        elif platform==ESP32_S2:
+        elif platform==_ESP32_S2:
             self.uart = UART(board.TX,board.RX,baudrate=baudrate,timeout=0.5)
-        elif platform==SPIKE:
+        elif platform==_SPIKE:
             self.reads_per_ms = 10
             if type(port) == str:
                 self.uart = eval("hub.port."+port)
@@ -138,11 +145,11 @@ class UartRemote:
     def enable_repl_locally(self):
         global interrupt_pressed
         interrupt_pressed = 1 # Break any running ur.loop() before turning REPL on
-        if platform==ESP8266:
+        if platform==_ESP8266:
             # Hard coded default ESP8266 values:
             dupterm(UART(0, 115200), 1)
             self.local_repl_enabled = True
-        elif platform==H7:
+        elif platform==_H7:
             # Hard coded default H7 values:
             dupterm(UART(3, 115200), 2)
             self.local_repl_enabled = True
@@ -151,10 +158,10 @@ class UartRemote:
 
     def disable_repl_locally(self):
         self.local_repl_enabled = False
-        if platform==ESP8266:
+        if platform==_ESP8266:
             dupterm(None, 1)
             self.uart = UART(self.port,baudrate=self.baudrate,timeout=1,timeout_char=1,rxbuf=100)
-        elif platform==H7:
+        elif platform==_H7:
             dupterm(None, 2)
             self.uart = UART(self.port,baudrate=self.baudrate,timeout_char=1)
 
@@ -232,16 +239,16 @@ class UartRemote:
 
     def available(self):
         # Platform independent check for available characters in receive queue of UART
-        if platform==SPIKE:
+        if platform==_SPIKE:
             self.unprocessed_data=self.uart.read(1)
             if self.unprocessed_data==None:
                 self.unprocessed_data=b''
             return len(self.unprocessed_data)
-        if platform==EV3:
+        if platform==_EV3:
             return self.uart.waiting()
-        if platform==ESP32 or platform==ESP8266 or platform==H7:
+        if platform==_ESP32 or platform==_ESP8266 or platform==_H7:
             return self.uart.any()
-        if platform==ESP32_S2:
+        if platform==_ESP32_S2:
             return self.uart.in_waiting
         else:
             #pyserial
@@ -251,7 +258,7 @@ class UartRemote:
         # Read full receive buffer
         available = self.available()
         data = self.unprocessed_data
-        if platform == SPIKE:
+        if platform == _SPIKE:
             self.unprocessed_data = b''
             while True:
                 r=self.uart.read(1)
@@ -288,7 +295,7 @@ class UartRemote:
         if timeout == -2: timeout = self.timeout
         if self.local_repl_enabled: self.disable_repl_locally()
         delim=b''
-        if platform==SPIKE or platform==ESP8266:
+        if platform==_SPIKE or platform==_ESP8266:
             if self.unprocessed_data:
                 delim = self.unprocessed_data
                 self.unprocessed_data=b''
@@ -354,7 +361,7 @@ class UartRemote:
         if self.local_repl_enabled: self.disable_repl_locally()
         s=self.encode(command,*argv)
         msg=b'<'+s+b'>'
-        if platform==SPIKE: # On spike send 32-bytes at a time
+        if platform==_SPIKE: # On spike send 32-bytes at a time
             window=32
             while len(msg) > window:
                 self.uart.write(msg[:window])
@@ -416,7 +423,7 @@ class UartRemote:
         # Reply with the answer.
         # Sleep for sleep ms after every listen.
         if sleep == -2:
-            if platform == H7: 
+            if platform == _H7: 
                 sleep=13
             else:
                 sleep=1
@@ -474,7 +481,7 @@ class UartRemote:
                 raw_paste = False
                 self.flush()
 
-        if platform==SPIKE:
+        if platform==_SPIKE:
             window = 32
 
         while len(command_bytes_left) > window:
