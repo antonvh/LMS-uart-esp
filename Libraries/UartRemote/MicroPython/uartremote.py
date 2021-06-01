@@ -28,8 +28,8 @@ platforms = {
     'LEGO Learning System Hub':_SPIKE,
     'darwin':_MAC
 }
-platform = platforms[sys.platform]
-
+platform = const(platforms[sys.platform])
+del(platforms)
 
 class UartRemoteError(Exception):
     def __init__(self, message="An error occured with remote uart"):
@@ -89,7 +89,7 @@ class UartRemote:
     """
     commands={}
     command_formats={}
-    version="May 13, 2021, 00:45"
+    version="Nightly"
 
     def __init__(self,port=0,baudrate=115200,timeout=1500,debug=False,esp32_rx=0,esp32_tx=26):
         # Baud rates of up to 230400 work. 115200 is the default for REPL.
@@ -147,11 +147,11 @@ class UartRemote:
         interrupt_pressed = 1 # Break any running ur.loop() before turning REPL on
         if platform==_ESP8266:
             # Hard coded default ESP8266 values:
-            dupterm(UART(0, 115200), 1)
+            dupterm(UART(self.port, baudrate=self.baudrate), 1)
             self.local_repl_enabled = True
         elif platform==_H7:
             # Hard coded default H7 values:
-            dupterm(UART(3, 115200), 2)
+            dupterm(UART(self.port, baudrate=self.baudrate), 2)
             self.local_repl_enabled = True
         else:
             self.local_repl_enabled = False
@@ -160,10 +160,10 @@ class UartRemote:
         self.local_repl_enabled = False
         if platform==_ESP8266:
             dupterm(None, 1)
-            self.uart = UART(self.port,baudrate=self.baudrate,timeout=1,timeout_char=1,rxbuf=100)
+            self.uart = UART(self.port, baudrate=self.baudrate,timeout=1,timeout_char=1,rxbuf=100)
         elif platform==_H7:
             dupterm(None, 2)
-            self.uart = UART(self.port,baudrate=self.baudrate,timeout_char=1)
+            self.uart = UART(self.port, baudrate=self.baudrate,timeout_char=1)
 
     def add_command(self,command_function, format="", name=None):
         if not name:
@@ -200,8 +200,8 @@ class UartRemote:
                     s = b'\x01z'
         else: # no formatstring
             s=b'\x01z'# dummy format 'z' for no arguments
-        s=bytes((len(cmd),))+cmd.encode('utf-8')+s
-        s=bytes((len(s),))+s
+        s=b'\x00' + bytes((len(cmd),)) + cmd.encode('utf-8') + s
+        s[0]=bytes((len(s),))
         return s
 
     @staticmethod
@@ -249,7 +249,7 @@ class UartRemote:
         if platform==_ESP32 or platform==_ESP8266 or platform==_H7:
             return self.uart.any()
         if platform==_ESP32_S2:
-            return self.uart.in_waiting
+            return self.uart.in_waiting #TODO: Check if this shouldnt be in_waiting()
         else:
             #pyserial
             return self.uart.in_waiting()
@@ -261,7 +261,7 @@ class UartRemote:
         if platform == _SPIKE:
             self.unprocessed_data = b''
             while True:
-                r=self.uart.read(1)
+                r=self.uart.read(32) #TODO test!! Was 1
                 if r==b'': break
                 data += r
         else:
