@@ -1,5 +1,5 @@
 # This is non working code !!!
-# Just sketching architecture on user side. Not everything is implemented yet.
+# Just some usage examples.
 
 
 
@@ -101,6 +101,7 @@ def loop():
         # Non-blocking receipt if any available calls over uart
         # Also disables local repl for convenience
         # Auto acks receipt of call
+        # WARNING: Autoack Not implemented yet. (only in dev branch)
         command, value = ur.receive_command(ack=True)
         # Do your stuff here
         if command == 'wait':
@@ -113,6 +114,7 @@ def loop():
         # Non-blocking receipt if any available calls over uart
         # Also disables local repl for convenience
         # Auto acks receipt of call
+        
         command, value = ur.receive_command(ack=False)
         # Do your stuff here
         if command == 'local_ticks':
@@ -123,6 +125,7 @@ def loop():
 #loop()
 
 # Ack_ok and ack_err are just wrappers:
+# WARNING: ack_ok Not implemented yet. (only in dev branch)
 def ack_ok(self, *args):
     if len(args > 1):
         self.call(args[0]+'ack', *args[1:], wait=False)
