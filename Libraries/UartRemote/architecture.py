@@ -22,7 +22,7 @@ reply == ('my_functionack', ['hi', 'hihi', 'hihihi'])
 # You can also use struct.pack like format strings
 # But the you can only use int, string and float (no list etc...)
 # This is a bit faster, though.
-reply = ur.call('some function', 'BBBssf', 1,2,3, "hi", 5.7)
+reply = ur.call('some function', 'BBB2sf', 1,2,3, "hi", 5.7)
 reply = ur.call('some function', '3B2sf', 1,2,3, "hi", 5.7)
 
 # default testing command. Returns strings you throw at it.
