@@ -1,18 +1,20 @@
-# LMS-uart-esp
+# LEGO MINDSTORMS Uart API libraries and breakout boards
 
-This repository contains code from SPIKE Prime I2C and OpenMV hacking experiments.
+## Hi there!
 
-Be sure to also check out the [Wiki](https://github.com/antonvh/LMS-uart-esp/wiki) to get started with soledering, flashing and set-up.
+Welcom to this repository. If you just obtained one of the boards below, head over to the [Breakout Wiki](https://github.com/antonvh/LMS-uart-esp/wiki) to start soldering. All boards come pre-flashed so you shouldn't have to flash them. 
+
+Once you're done soldering, head back here to try the libraries and example projects.
+
 
 ## Libraries
-
-Generic communication libraries allowing for easy communication between the MINDSTORMS hubs and the WifiBoard ESP.
+We have built a couple of generic communication libraries allowing for easy communication between the MINDSTORMS hubs and other electronics.
 
 ### UartRemote
-A very lightweight RPC. Requires a main.py running on the wifiboard to respond to data requests and procedure calls. Runs up to 20 calls per second.
+This library helps you to exchange data between two programs, if they have a serial communications link between them. Currently it is only implemented on UART links, but sockets and RFCOMM are serial links too. They should also benefit from this easy UART API. 
 
-### WifiBoard REPL Remote
-Easily execute MicroPython commands on the remote board. No software needed on the remote board. Prototype the calls via the WebREPL and the build them into your MINDSTORMS script with this library.
+### LPF2
+This library emulates power function motors and sensors over the UART protocol. This means you can integrate those sensor with minimal programming on the LEGO hub side.
 
 ## Projects
 Example projects where we expand the EV3, SPIKE Prime and Robot Inventor hubs with third party electronics and hardware. Full code and instructions included as much as possible. 
