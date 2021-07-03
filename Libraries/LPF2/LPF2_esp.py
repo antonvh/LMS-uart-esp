@@ -33,7 +33,7 @@ Ev3_Utrasonic = 34
 
 length = {'Int8' : 1, 'uInt8' : 1, 'Int16' : 2, 'uInt16' : 2, 'Int32' : 4, 'uInt32' : 4, 'float' : 4}
 format = {'Int8' : '<b', 'uInt8' : '<B', 'Int16' : '<h', 'uInt16' : '<H', 
-     'Int32' : '<l', 'uInt32' : '<L', 'float' : '<f'}
+     'Int32' : '<l', 'uInt32' : '<L', 'float' : '>f'}
 
 # Name, Format [# datasets, type, figures, decimals], 
 # raw [min,max], Percent [min,max], SI [min,max], Symbol, functionMap [type, ?], view
@@ -87,7 +87,7 @@ class LPF2(object):
           else:
                bit = int(log2(length[type]))
                value = struct.pack(format[type], array)
-               print("load_payload",bit,value)
+               #print("load_payload",bit,value)
           payload = bytearray([CMD_Data | (bit << CMD_LLL_SHIFT) | self.current_mode])+value
           self.payload = self.addChksm(payload)
           
