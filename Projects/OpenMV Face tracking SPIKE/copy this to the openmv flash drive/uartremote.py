@@ -1,5 +1,10 @@
-# Symmetrical communication library for Micropython devices
-# (c) 2021 Ste7an, Anton Vanhoucke
+# this library support the following micropython based platforms
+# - pybricks on EV3
+# - micropython on ESP8266
+# - micropython on ESP32
+# - micropython on OpenMV H7 plus
+# - SPIKE hub
+# python3 on any other platform. pyserial is required in that case.
 
 import struct
 import sys
@@ -10,7 +15,6 @@ ESP32_S2=3
 ESP8266=4
 SPIKE=5
 H7=7
-MAC=6
 
 platforms = {
     'linux':EV3, # EV3. TODO This might not be precise enough for python3 running on Linux laptops
@@ -18,9 +22,7 @@ platforms = {
     'Espressif ESP32-S2':ESP32_S2,
     'esp8266':ESP8266,
     'OpenMV4P-H7':H7,
-    'OpenMV3-M7':H7,
-    'LEGO Learning System Hub':SPIKE,
-    'darwin':MAC
+    'LEGO Learning System Hub':SPIKE
 }
 platform = platforms[sys.platform]
 
@@ -35,12 +37,13 @@ def esp_interrupt(p):
     # called by irq on gpio0
     global interrupt_pressed
     print("Interrupt Pressed")
-    dupterm(UART(0, 115200), 1) # repl with 115200baud
+    dupterm(machine.UART(0, 115200), 1) # repl with 115200baud
     interrupt_pressed=1
 
 if platform==ESP8266:
     from machine import UART
     from machine import Pin
+    import machine
     from utime import sleep_ms
     from uos import dupterm
     gpio0=Pin(0,Pin.IN)# define pin0 as input = BOOT button on board
@@ -48,6 +51,7 @@ if platform==ESP8266:
 elif platform==ESP32:
     from machine import UART
     from machine import Pin
+    import machine
     from utime import sleep_ms
     from uos import dupterm
     #gpio0=Pin(0,Pin.IN)# define pin0 as input = BOOT button on board
@@ -76,7 +80,6 @@ else:
     def sleep_ms(ms):
         sleep(ms/1000)
 
-
 class UartRemote:
     """
     UartRemote
@@ -84,30 +87,37 @@ class UartRemote:
     """
     commands={}
     command_formats={}
-    version="May 13, 2021, 00:45"
 
-    def __init__(self,port=0,baudrate=115200,timeout=1,debug=False,esp32_rx=0,esp32_tx=26):
+    @staticmethod
+    def digitformat(f):
+        nn='0'
+        i=0
+        while f[i]>='0' and f[i]<='9':
+                nn+=f[i]
+                i+=1
+        return (int(nn),f[i:])
+
+
+    def __init__(self,port=0,baudrate=115200,timeout=1000,debug=False,esp32_rx=0,esp32_tx=26):
         # Baud rates of up to 230400 work. 115200 is the default for REPL.
-        self.local_repl_enabled = False
-        self.reads_per_ms = timeout
+
+        self.reads_per_ms = 10
         if platform==EV3:
             if not port: port=Port.S1
             self.uart = UARTDevice(port,baudrate=baudrate,timeout=timeout)
         elif platform==H7:
             self.reads_per_ms = 20
-            self.enable_repl_locally()
             if not port: port=3
-            # self.uart = UART(port, baudrate, timeout_char=timeout)
+            self.uart = UART(port, baudrate, timeout_char=timeout)
         elif platform==ESP8266:
-            self.enable_repl_locally()            
-            # self.uart = UART(port,baudrate=baudrate,timeout=timeout,timeout_char=timeout,rxbuf=100)
+            self.baudrate=baudrate # store baudrate for repl init
+            self.uart = UART(port,baudrate=baudrate,timeout=timeout,timeout_char=timeout,rxbuf=100)
         elif platform==ESP32:
             if not port: port = 1
             self.uart = UART(port,rx=esp32_rx,tx=esp32_tx,baudrate=baudrate,timeout=timeout)
         elif platform==ESP32_S2:
             self.uart = UART(board.TX,board.RX,baudrate=baudrate,timeout=0.5)
         elif platform==SPIKE:
-            self.reads_per_ms = 10
             if type(port) == str:
                 self.uart = eval("hub.port."+port)
             else:
@@ -120,17 +130,17 @@ class UartRemote:
             self.uart = serial.Serial(port, baudrate, timeout=timeout)
         self.DEBUG=debug
         self.unprocessed_data=b''
-        self.port = port
-        self.timeout=timeout
-        self.baudrate=baudrate # store baudrate for repl init
+        self.baudrate = baudrate
+        self.local_repl_enabled = True
         self.add_command(self.enable_repl_locally, name='enable repl')
         self.add_command(self.disable_repl_locally, name='disable repl')
-        self.add_command(self.echo, 'repr', name='echo')
-        self.add_command(self.raw_echo, name='raw echo')
+        self.add_command(self.echo, 's', name='echo')
+        self.add_command(self.raw_echo, name='raw_echo')
 
-    def echo(self, *s):
+
+    def echo(self, s):
         if self.DEBUG: print(s)
-        return s
+        return str(s)
 
     @staticmethod
     def raw_echo(s):
@@ -138,26 +148,29 @@ class UartRemote:
 
     def enable_repl_locally(self):
         global interrupt_pressed
-        interrupt_pressed = 1 # Break any running ur.loop() before turning REPL on
-        if platform==ESP8266:
-            # dupterm(self.uart, 1)
-            dupterm(UART(0, 115200), 1)
-            self.local_repl_enabled = True
-        elif platform==H7:
-            # dupterm(self.uart, 2)
-            dupterm(UART(3, 115200), 2)
-            self.local_repl_enabled = True
-        else:
-            self.local_repl_enabled = False
+        self.local_repl_enabled = True
+        interrupt_pressed = 1
 
     def disable_repl_locally(self):
         self.local_repl_enabled = False
-        if platform==ESP8266:
-            dupterm(None, 1)
-            self.uart = UART(self.port,baudrate=self.baudrate,timeout=self.timeout,timeout_char=self.timeout,rxbuf=100)
-        elif platform==H7:
-            dupterm(None, 2)
-            self.uart = UART(self.port,baudrate=self.baudrate,timeout_char=self.timeout)
+
+    @property
+    def local_repl_enabled(self):
+        return self._local_repl_enabled
+
+    @local_repl_enabled.setter
+    def local_repl_enabled(self, enabled):
+        if enabled:
+            if platform==ESP8266:
+                dupterm(self.uart, 1)
+            elif platform==H7:
+                dupterm(self.uart, 2)
+        else:
+            if platform==ESP8266:
+                dupterm(None, 1)
+            elif platform==H7:
+                dupterm(None, 2)
+        self._local_repl_enabled = enabled
 
     def add_command(self,command_function, format="", name=None):
         if not name:
@@ -165,79 +178,144 @@ class UartRemote:
         self.commands[name]=command_function
         self.command_formats[name]=format
 
-    @staticmethod
-    def encode(cmd,*argv):
+    def pack(self,*argv):
+        try:
+            f=argv[0] # formatstring
+            i=0
+            ff=''
+            s=b''
+            if f=='raw':
+                # No encoding, raw bytes
+                # s=struct.pack('B',len(argv[1])) + argv[1]
+                s=b'\x03raw'+argv[1]
+            else:
+                while (len(f)>0):# keep parsing formatstring
+                    nf,f=self.digitformat(f) # split preceding digits and format character
+                    if nf==0:
+                        nf=1
+                        fo=f[0]
+                        data=argv[1+i]# get data data that needs to be encoded
+                        td=type(data) # check type of data
+                        if td==list: # for lists, use a special 'a' format character preceding the normal formatcharacter
+                            n=len(data)
+                            ff+="a%d"%n+fo # 'a' for list
+                            for d in data:
+                                s+=struct.pack(fo,d) # encode each element in list with format character fo
+                        elif td==tuple: # for lists, use a special 'a' format character preceding the normal formatcharacter
+                            n=len(data)
+                            ff+="t%d"%n+fo # 'a' for list
+                            for d in data:
+                                s+=struct.pack(fo,d) # encode each element in list with format character fo
+                        elif td==str:
+                            n=len(data)
+                            ff+="%d"%n+fo
+                            s+=data.encode('utf-8')
+                        elif td==bytes:
+                            n=len(data)
+                            ff+="%d"%n+fo
+                            s+=data
+                        else:
+                            ff+=fo
+                            s+=struct.pack(fo,data)
+                    else:
+                        fo="%d"%nf+f[0]
+                        data=argv[1+i:1+i+nf]
+                        ff+=fo
+                        s+=struct.pack(fo,*data)
+                    i+=nf
+                    f=f[1:] # continue parsing with remainder of f
+                s=struct.pack('B',len(ff))+ff.encode('utf-8')+s
+            return s
+        except:
+            t=type(argv[0])
+            if t==bytes:
+                return argv[0]
+            elif t==str:
+                return bytes(argv[0],"utf-8")
+            elif t==int:
+                return bytes((argv[0],))
+            elif t==list:
+                return bytes(argv[0])
+            else:
+                return b'\x01z'
+
+    def unpack(self,s):
+        sizes={'b':1,'B':1,'i':4,'I':4,'f':4,'s':1,'r':1}
+        try:
+            p=0
+            nf=s[p]
+            p+=1
+            f=s[p:p+nf].decode('utf-8')
+            p+=nf
+            data=()
+            if f=="z":# dummy format 'z' for empty data
+                return None
+            if f=="raw": # Raw bytes, no decoding needed
+                return s[p:]
+            while (len(f)>0):
+                nf,f=self.digitformat(f)
+                fo=f[0]
+                if f[0]=='a' or f[0]=='t': # array
+                    extra=f[0]
+                    f=f[1:]
+                    nf,f=self.digitformat(f)
+                    fo=f[0]
+                    nr_bytes=nf*sizes[fo]
+                    if extra=='a':
+                        data=data+(list(struct.unpack("%d"%nf+fo,s[p:p+nr_bytes])),) # make list from tuple returnd by unpack
+                    else:
+                        data=data+(tuple(struct.unpack("%d"%nf+fo,s[p:p+nr_bytes])),) # make list from tuple returnd by unpack
+                else:
+                    ff=fo if nf==0 else "%d"%nf+fo
+                    if nf==0: nf=1
+                    nr_bytes=nf*sizes[fo]
+                    if ff[-1]=='r': ff=ff[:-1]+'s'
+                    decoded=struct.unpack(ff,s[p:p+nr_bytes])
+                    if fo=='s':
+                        decoded=(decoded[0].decode('utf-8'),) # transform bytes in string
+                    data=data+(decoded)
+                p+=nr_bytes
+                f=f[1:]
+            if len(data)==1: # convert from tuple size 1 to single value
+                data=data[0]
+            return data
+        except:
+            return s
+
+    def encode(self,cmd,*argv,encoder=-1):
+        """ Encodes command with specified encoder """
         if argv:
-            try:
-                f=argv[0]
-                if f=='raw':
-                    # No encoding, raw bytes
-                    s=b'\x03raw'+argv[1]
-                elif f=='repr':
-                    # use a pickle-like encoding to send any Python object.
-                    s=b'\x04repr'+repr(argv[1:]).encode()
-                else:
-                    # struct pack
-                    s = bytes((len(f),)) + f.encode() + struct.pack(f, *argv[1:])
-            except:
-                # raise
-                t=type(argv[0])
-                if t==bytes:
-                    s = argv[0]
-                elif t==str:
-                    s = bytes(argv[0],"utf-8")
-                elif t==int:
-                    s = bytes((argv[0],))
-                elif t==list:
-                    s = bytes(argv[0])
-                else:
-                    s = b'\x01z'
+            if encoder:
+                if encoder==-1:
+                    encoder=self.pack
+                s=encoder(*argv)
+            else:
+                s=argv[0]
         else: # no formatstring
             s=b'\x01z'# dummy format 'z' for no arguments
-        s=bytes((len(cmd),))+cmd.encode('utf-8')+s
-        s=bytes((len(s),))+s
+        s=struct.pack("B",len(cmd))+cmd.encode('utf-8')+s
+        s=struct.pack("B",len(s))+s
         return s
 
-    @staticmethod
-    def decode(s):
-        # nl=s[0] #number bytes in total length of message
+    def decode(self,s,decoder=-1):
+        """ Decodes command + encoded bytes with specified decoder"""
+        nl=s[0] #number bytes in total length of message
         nc=s[1] #number of bytes in command
         cmd=s[2:2+nc].decode('utf-8')
         data=s[2+nc:]
-        if data==b'\x01z': 
-            data=None
+        if decoder:
+            if decoder==-1:
+                decoder=self.unpack
+            data=decoder(data)
         else:
-            try:
-                p=data[0]+1
-                f=data[1:p]
-                # if f==b"z":# dummy format 'z' for empty data
-                #     return None
-                if f==b"raw": # Raw bytes, no decoding needed
-                    data = data[p:]
-                elif f==b"repr":
-                    d={}
-                    text = data[p:].decode('utf-8')
-                    if "(" in text:
-                        qualname = text.split("(", 1)[0]
-                        if "." in qualname:
-                            pkg = qualname.rsplit(".", 1)[0]
-                            mod = __import__(pkg)
-                            d[pkg] = mod
-                    data = eval(text, d)
-                else:
-                    data=struct.unpack(f,data[p:])
-                if len(data)==1:
-                    # convert from tuple size 1 to single value
-                    data=data[0]
-            except:
-                # Pass data as raw bytes
-                pass
+            if data==b'\x01z': data=None
         return cmd,data
 
+
     def available(self):
-        # Platform independent check for available characters in receive queue of UART
+        """ Platform independent check for available characters in receive queue of UART """
         if platform==SPIKE:
-            self.unprocessed_data=self.uart.read(1)
+            self.unprocessed_data=self.force_read(1, timeout=1)
             if self.unprocessed_data==None:
                 self.unprocessed_data=b''
             return len(self.unprocessed_data)
@@ -256,6 +334,7 @@ class UartRemote:
         available = self.available()
         data = self.unprocessed_data
         if platform == SPIKE:
+
             self.unprocessed_data = b''
             while True:
                 r=self.uart.read(1)
@@ -264,12 +343,9 @@ class UartRemote:
         else:
             if available:
                 data = self.uart.read(available)
+
         return data
 
-    def flush(self):
-        _ = self.read_all()
-        if self.DEBUG: print("Flushed: %r" % _)
-        
     def force_read(self, size=1, timeout=50):
         # SPIKE and OpenMV reads too fast and sometimes returns None
         # check: on SPIKE b'' is returned, on OpenMV None
@@ -287,26 +363,24 @@ class UartRemote:
                 print("Waiting for data in force read...")
         return data
 
-    def receive_command(self,timeout=1000):
-        # Set timeout to -1 to wait forever.
-        if self.local_repl_enabled: self.disable_repl_locally()
+
+    def receive_command(self,timeout=1000,**kwargs):
+        global interrupt_pressed
+
         delim=b''
-        if platform==SPIKE or platform==ESP8266:
+        if platform==SPIKE:
             if self.unprocessed_data:
                 delim = self.unprocessed_data
                 self.unprocessed_data=b''
-            i=0
-            while True:
-                if delim==b'<': break
-                elif i >= timeout*self.reads_per_ms and timeout >= 0: break
-                else: 
+
+            for i in range(timeout*self.reads_per_ms):
+                if delim==b'<':
+                    break
+                else:
                     delim=self.uart.read(1)
-                    i+=1
 
             if delim!=b'<':
-                err = "< delim not found after timeout of {}".format(timeout)
-                if self.DEBUG: print(err)
-                return ("err",err)
+                return ("err","< delim not found")
 
             payload=self.force_read(1)
             l=struct.unpack('B',payload)[0]
@@ -315,18 +389,14 @@ class UartRemote:
                     payload+=r
             delim=self.uart.read(1)
 
-        else: # other platforms like H7
-            i=0
-            while True:
+        else: # other platforms
+            for i in range(timeout*self.reads_per_ms):
                 data = self.read_all()
-                i+=1
                 if data: break
-                if i > timeout*self.reads_per_ms and timeout > 0: break
             if not data:
-                err="No data after timeout of {}".format(timeout)
-                if self.DEBUG: print(err)
-                return ("err",err)
-            
+                if self.DEBUG: print("No data after timeout")
+                return ("err","No data")
+            #if self.DEBUG: print("Decoding {}".format(data))
             size = len(data)
             for i in range(size):
                 #if self.DEBUG: print(data[i:i+1])
@@ -349,17 +419,16 @@ class UartRemote:
                     #if self.DEBUG: print("Payload: {}, delim: {}".format(payload,delim))
                     break
         if delim!=b'>':
-            if self.DEBUG: print("Delim {}".format(delim))
             return ("err","> delim not found")
         else:
-            result = self.decode(payload)
+            result = self.decode(payload,**kwargs)
             #if self.DEBUG: print(result)
             return result
 
-    def send_command(self,command,*argv):
-        if self.local_repl_enabled: self.disable_repl_locally()
-        s=self.encode(command,*argv)
+    def send_command(self,command,*argv,**kwargs):
+        s=self.encode(command,*argv,**kwargs)
         msg=b'<'+s+b'>'
+        #if self.DEBUG: print(msg)
         if platform==SPIKE: # on spike send 32-bytes at a time
             window=32
             while len(msg) > window:
@@ -371,11 +440,12 @@ class UartRemote:
             self.uart.write(msg)
         self.flush()
 
-    def call(self,command,*args):
-        self.send_command(command,*args)
-        return self.receive_command()
+    def call(self,command,*args,**kwargs):
+        self.send_command(command,*args,**kwargs)
+        return self.receive_command(**kwargs)
 
-    def reply_command(self, command, value):
+    def execute_command(self, command, value):
+        # name should reflect that it send back respons of exeuted command
         if command in self.commands:
             command_ack=command+"ack"
             try:
@@ -387,7 +457,7 @@ class UartRemote:
                 else:
                     resp=self.commands[command]()
             except Exception as e:
-                self.send_command('err','repr', "Command failed: {}".format(e))
+                self.send_command('err','s', "Command failed: {}".format(e))
                 return
             if resp!=None:
                 try:
@@ -399,38 +469,41 @@ class UartRemote:
                     else: # user probably wants raw response.
                         self.send_command(command_ack,resp)
                 except Exception as e:
-                    self.send_command('err','repr', "Response packing failed: {}".format(e))
+                    self.send_command('err','s', "Response packing failed: {}".format(e))
                     return
             else:
-                self.send_command(command_ack,'2s','ok')
+                self.send_command(command_ack,'s','ok')
         else:
             #if command[-3:] not in ['ack','err']:# discard any ack from other command
                 #self.send_command('err','s','Command not found')
-            self.send_command('err','repr','Command not found: {}'.format(command))
+            self.send_command('err','s','Command not found: {}'.format(command))
 
     def process_uart(self):
-        if self.local_repl_enabled: self.disable_repl_locally()
+        if self.local_repl_enabled:
+            self.local_repl_enabled=False
         if self.available():
-            self.reply_command(*self.receive_command())
+            self.execute_command(*self.receive_command())
         else:
             if self.DEBUG:
-                print("Nothing available. Sleeping 1000ms")
-                sleep_ms(1000)
+                print("Nothing available. Sleeping 100ms")
+                sleep_ms(100)
             else:
-                if platform==H7:
-                    sleep_ms(13)
-                else:
-                    sleep_ms(1)
+                 if platform==H7:
+                     sleep_ms(13)
+                 else:
+                     sleep_ms(1)
 
     def loop(self):
         global interrupt_pressed
-        interrupt_pressed=0
         while True:
             if interrupt_pressed==1:
                 interrupt_pressed=0
                 break
             self.process_uart()
-        self.enable_repl_locally()
+
+    def flush(self):
+        _ = self.read_all()
+        if self.DEBUG: print("Flushed: %r" % _)
 
     def repl_activate(self):
         self.flush()
