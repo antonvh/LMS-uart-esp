@@ -7,7 +7,7 @@ Welcom to this repository. If you just obtained one of the boards below, head ov
 Once you're done soldering, head back here to try the libraries and example projects.
 
 
-## Libraries
+## [Libraries]((https://github.com/antonvh/LMS-uart-esp/tree/main/Libraries)
 We have built a couple of generic communication libraries allowing for easy communication between the MINDSTORMS hubs and other electronics.
 
 ### UartRemote
@@ -16,7 +16,7 @@ This library helps you to exchange data between two programs, if they have a ser
 ### LPF2
 This library emulates power function motors and sensors over the UART protocol. This means you can integrate those sensor with minimal programming on the LEGO hub side.
 
-## Projects
+## [Projects](https://github.com/antonvh/LMS-uart-esp/tree/main/Projects)
 Example projects where we expand the EV3, SPIKE Prime and Robot Inventor hubs with third party electronics and hardware. Full code and instructions included as much as possible. 
 
 ## Work in Progress
