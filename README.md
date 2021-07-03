@@ -7,7 +7,7 @@ Welcom to this repository. If you just obtained one of the boards below, head ov
 Once you're done soldering, head back here to try the libraries and example projects.
 
 
-## [Libraries]((https://github.com/antonvh/LMS-uart-esp/tree/main/Libraries)
+## [Libraries](https://github.com/antonvh/LMS-uart-esp/tree/main/Libraries)
 We have built a couple of generic communication libraries allowing for easy communication between the MINDSTORMS hubs and other electronics.
 
 ### UartRemote
