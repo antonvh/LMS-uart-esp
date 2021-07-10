@@ -29,7 +29,7 @@ This tool is tested on linux, mac-osx and windows. For using the tool, you need 
 
 Each of the different OS-es will enumerate the usb serial port differently. To help you find out the specific name that is used on your system of the serial port used for  connecting with the ESP8266 module, you can use the `--detect-port` or `-d` option of the tool. 
 
-### typical sequence for flashing and configuration
+### Typical sequence for flashing and configuration the ESP8266
 
 1 - Request serial port for later usage (use the port name in the `--webrepl` and `--getip` commands):
 
