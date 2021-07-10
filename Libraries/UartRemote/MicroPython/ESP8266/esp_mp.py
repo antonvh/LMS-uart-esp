@@ -111,9 +111,14 @@ if args.detect_port:
     serial_port=detect_port()
 
 if args.flash:
+    set_mode("boot")
+    print('[*] erasing flash')
     erase(port=args.port)
+    print('[*] writing flash')
     flash(args.flash,port=args.port)
-
+    print('[*] flashing done')
+    set_mode("user")
+    
 if args.getip or args.wifi or args.webrepl:
     if not args.port:
         if not serial_port:
@@ -139,11 +144,7 @@ if args.getip or args.wifi or args.webrepl:
         cur_serial.close()
 
     if args.webrepl:
-        if cur_mode=="boot":
-            set_mode("user")
-        else:
-            cur_mode="user"
-            input("\nPress the reset button on the esp module.\nHit <Enter> when done.")
+        set_mode("user")
         print('[*] configuring webrepl with password:',args.webrepl)
         cur_serial = serial.Serial(serial_port, 115200)
         webrepl(args.webrepl)
