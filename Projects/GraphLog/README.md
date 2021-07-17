@@ -26,13 +26,13 @@ See the wiki about [connecting to Wifi](https://github.com/antonvh/LMS-uart-esp/
 Open the project file `graphlog_local.html` in a browser.
 
 ### On the SPIKE
-Paste `Libraries/UartRemote/MicroPython/SPIKE/install_uartremote.py` in a new project and run once.
+When you did not yet install the uartremote library on the SPIKE, paste `Libraries/UartRemote/MicroPython/SPIKE/install_uartremote.py` in a new project and run once.
 Paste the program `SPIKE_graphlog.py` in a new project.
 
 ## Running GraphLog.
 1. Start the program on the SPIKE hub
 2. The client and/or server address of the ESP8266 is shown in the print console
-3. If your LMS-wifi board is connected to your WLAN: Open a browser to the web address shown & and connect to ws on the same address. Done!
+3. If your LMS-wifi board is connected to your WLAN: Open a browser to the web address shown and connect to ws on the same address. Done!
 4. If your LMS-wifi board is in AP mode, switch your Wifi network to the LMS-wifi board network (`MicroPython-xxxxxx`)
 5. Open the project file `graphlog_local.html` in a browser.
 6. Click connect.
