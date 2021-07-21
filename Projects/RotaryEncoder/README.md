@@ -8,9 +8,14 @@ This example allows you tpo connect a rotary encoder to two digital pins of the 
 
 We use a magnetic encoder designed by polulo (see (https://www.pololu.com/product/3499)). This encoder uses high-precision Hall effect sensors to probe changes of orientation of a 10-pole magnetic disk.
 
+## 3D printed lego mounts
+
+See [thingiverse](https://www.thingiverse.com/thing:4913776) for a holder for the magnet that can be attached to a lego axle, and a mount for the magnetic encoder pcb. Use a axle with a thin flange in the middle hole to mount the encoder in the mount.
+
+![Magentic encoder mounted in lego](./images/magentic_encoder_lego.jpg)
 
 ## Background
-The MicroPythin code used in this projects lives on Github: [MicrPython Rotary](https://github.com/miketeachman/micropython-rotary). However, this projects decodes only half steps, whereas the rotary sensor could be decoded using quadrature decoding, giving a step at each transistion.
+The MicroPython code used in this projects lives on Github: [MicrPython Rotary](https://github.com/miketeachman/micropython-rotary). However, this projects decodes only half steps, whereas the rotary sensor could be decoded using quadrature decoding, giving a step at each transistion.
 
 ### State diagram
 When turning clockwise (CW), the following consecutive bitstates (`AB`) are seen: `00 -> 10 -> 11 -> 01 -> 00 ...`. Turning counter clockwise (CCW), the states are visited in the opposite order: `00 -> 01 -> 11 -> 10 -> 00 ...`.
