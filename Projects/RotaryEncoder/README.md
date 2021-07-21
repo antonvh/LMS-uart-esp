@@ -1,4 +1,5 @@
 # Rotary Encoder
+This is a project for building a frictionless rotary encoder with 20 steps per revolution. By using some gear transmission, the precision can be increased. These encoders can be used for frictionless odometry by driving them by e.g. omni
 
 ![Magentic encoder mounted in lego](./images/magentic_encoder_lego.jpg)
 
