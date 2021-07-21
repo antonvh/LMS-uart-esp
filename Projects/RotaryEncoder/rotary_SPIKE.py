@@ -9,32 +9,25 @@ machine.soft_reset()
 """
 
 MAINPY="""
-from oled_ESP import *
+from rotary import *
+from uartremote import *
+r=Rotary(4,5)
+
+ur=UartRemote()
+
+def rotary():
+    return r.value()
+
+
+ur.add_comand(rotary,'i')
+
+ur.loop()
 """
 
-class Oled:
-    def __init__(self,uartremote,width=128,height=64):
-        self.uartremote=uartremote
-        uartremote.call("oledi","BB",width,height)
-
-    def fill(self,color):
-        return(self.uartremote.call("oledf","B",color))
-
-    def text(self,txt,x,y):
-        s="%ds"%len(txt)
-        return(self.uartremote.call("oledt",s+"BB",txt,x,y))
-
-    def line(self,x1,y1,x2,y2,color):
-        self.uartremote.call("oledl","5B",x1,y1,x2,y2,color)
-
-    def pixel(self,x1,y1,color):
-        self.uartremote.call("oledp","3B",x1,y1,color)
-
-    def show(self):
-        return(self.uartremote.call("oleds"))
 
 
-ur=UartRemote("E") # connect ESP to port A
+
+ur=UartRemote("A") # connect ESP to port A
 
 ur.flush() # remove everything from rx buffer
 
@@ -49,9 +42,10 @@ ur.repl_run(MAINPY,reply=False)
 sleep_ms(1000)
 
 print(ur.call('echo','repr',"Echo test is working"))
-oled=Oled(ur)
-# scroll text
-for i in range(40):
-    oled.fill(0)
-    oled.text("This is cool!",10,i+5)
-    oled.show()
+
+old_val=0
+while True:
+    cmd,val=ur.call('rotary')
+    if old_val!=val:
+        print("rotary=",val)
+        old_val=val
