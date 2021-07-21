@@ -1,9 +1,12 @@
 # Rotary Encoder
-This is a project for building a frictionless rotary encoder with 20 steps per revolution. By using some gear transmission, the precision can be increased. These encoders can be used for frictionless odometry by driving them by e.g. omni
+This is a project for building a frictionless rotary encoder with 20 steps per revolution. By using some gear transmission, the precision can be increased. These encoders can be used for frictionless odometry by driving them by e.g. omni wheels.
+
 
 ![Magentic encoder mounted in lego](./images/magentic_encoder_lego.jpg)
 
 ## Example code
+
+Upload the file `rotary.py` to the ESP8266 board using WebREPL. Copy the program `rotarySPIKE.py` in a new python project for Spike Prime or Mindstorms Robot inventor. The UartRemote library should already be installed on both the ESP8266 and the robot brick. Connect a motor to port B, connect the ESP8266 module to port A. The motor should follow the rotation of the encoder.
 
 ## Hardware
 This example allows you tpo connect a rotary encoder to two digital pins of the ESP8266 Board. In this example we use GPIO4 and GPIO5, which are labeled on the ESP8266 baord as `SDA`, and `SCL`, respectively. These bits will be called `A` and `B` in the remainder of this write up.
