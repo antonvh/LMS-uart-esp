@@ -4,15 +4,12 @@
 
 This example allows you tpo connect a rotary encoder to two digital pins of the ESP8266 Board. In this example we use GPIO4 and GPIO5, which are labeled on the ESP8266 baord as `SDA`, and `SCL`, respectively. These bits will be called `A` and `B` in the remainder of this write up.
 
-![Magnetic encoder](./images/magnetic_encoder.JPG)
-
+![Magentic encoder mounted in lego](./images/magentic_encoder_lego.jpg)
 We use a magnetic encoder designed by polulo (see (https://www.pololu.com/product/3499)). This encoder uses high-precision Hall effect sensors to probe changes of orientation of a 10-pole magnetic disk.
 
 ## 3D printed lego mounts
 
 See [thingiverse](https://www.thingiverse.com/thing:4913776) for a holder for the magnet that can be attached to a lego axle, and a mount for the magnetic encoder pcb. Use a axle with a thin flange in the middle hole to mount the encoder in the mount.
-
-![Magentic encoder mounted in lego](./images/magentic_encoder_lego.jpg)
 
 ## Background
 The MicroPython code used in this projects lives on Github: [MicrPython Rotary](https://github.com/miketeachman/micropython-rotary). However, this projects decodes only half steps, whereas the rotary sensor could be decoded using quadrature decoding, giving a step at each transistion.
