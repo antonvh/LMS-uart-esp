@@ -1,10 +1,13 @@
 # Rotary Encoder
 
+![Magentic encoder mounted in lego](./images/magentic_encoder_lego.jpg)
+
 ## Example code
 
+## Hardware
 This example allows you tpo connect a rotary encoder to two digital pins of the ESP8266 Board. In this example we use GPIO4 and GPIO5, which are labeled on the ESP8266 baord as `SDA`, and `SCL`, respectively. These bits will be called `A` and `B` in the remainder of this write up.
 
-![Magentic encoder mounted in lego](./images/magentic_encoder_lego.jpg)
+
 We use a magnetic encoder designed by polulo (see (https://www.pololu.com/product/3499)). This encoder uses high-precision Hall effect sensors to probe changes of orientation of a 10-pole magnetic disk.
 
 ## 3D printed lego mounts
