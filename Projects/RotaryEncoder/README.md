@@ -4,7 +4,7 @@
 
 This example allows you tpo connect a rotary encoder to two digital pins of the ESP8266 Board. In this example we use GPIO4 and GPIO5, which are labeled on the ESP8266 baord as `SDA`, and `SCL`, respectively. These bits will be called `A` and `B` in the remainder of this write up.
 
-![Magnetic encoder](images/magnetic_encoder.jpg)
+![Magnetic encoder](./images/magnetic_encoder.JPG)
 
 We use a magnetic encoder designed by polulo (see (https://www.pololu.com/product/3499)). This encoder uses high-precision Hall effect sensors to probe changes of orientation of a 10-pole magnetic disk.
 
@@ -12,7 +12,7 @@ We use a magnetic encoder designed by polulo (see (https://www.pololu.com/produc
 ## Background
 The MicroPythin code used in this projects lives on Github: [MicrPython Rotary](https://github.com/miketeachman/micropython-rotary). However, this projects decodes only half steps, whereas the rotary sensor could be decoded using quadrature decoding, giving a step at each transistion.
 
-### state diagram
+### State diagram
 When turning clockwise (CW), the following consecutive bitstates (`AB`) are seen: `00 -> 10 -> 11 -> 01 -> 00 ...`. Turning counter clockwise (CCW), the states are visited in the opposite order: `00 -> 01 -> 11 -> 10 -> 00 ...`.
 From that the following state diagram can be drawn:
 |state | `00` | `01` | `10` | `11` |
@@ -24,7 +24,7 @@ From that the following state diagram can be drawn:
 
 where '+' indicates a CW step and '-' indicates a CCW step.
 
-### qudrature algorithm
+### Quadrature algorithm
 If we set at start a counter to 0, the following loop will count the steps in CW and CCW and adjust the counter accordingly
 
 ```python
