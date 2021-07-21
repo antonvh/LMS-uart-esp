@@ -25,32 +25,38 @@ optional arguments:
 
 ```
 
-This tool is tested on linux, mac-osx and windows. For using the tool, you need to connect an FTDI-232 serial usb converter to the ESP8266 module. You can read in the Wiki how that can be done.
+This tool is tested on linux, mac-osx and windows. For using the tool, you need to connect an FTDI-232 serial usb converter to the ESP8266 module. You can read in the Wiki how that can be done. 
 
-Each of the different OS-es will enumerate the usb serial port differently. To help you find out the specific name of the serial port on your system, to use for connecting to the ESP8266 module, yout can use the `--detect-port` or `-d` option of the tool. 
+Each of the different OS-es will enumerate the usb serial port differently. To help you find out the specific name that is used on your system of the serial port used for  connecting with the ESP8266 module, you can use the `--detect-port` or `-d` option of the tool. 
 
-### typical sequence for flashing and cponfiguring
+### Typical sequence for flashing and configuration the ESP8266
 
-- Request serial port for later usage:
+1 - Request serial port for later usage (use the port name in the `--webrepl` and `--getip` commands):
 
 ```python3 esp_flash_config.py -d```
 
-- Flash microptyhon binary:
+2 - Flash microptyhon binary:
 
 ```python3 esp_flash_config.py -f micropython_v1.16_uartremote.bin```
 
-- Reset the ESP module and configure webrepl:
+3 - Reset the ESP module and configure webrepl, with `<portname>` the serial port obtained from step 1:
 
-```python3 esp_flash_config.py --webrepl python```
+```python3 esp_flash_config.py --webrepl python --port <portname>```
 
-- Configure wifi in STA mode (for connecting to a wifi base station):
+4 - Configure wifi in STA mode (for connecting to a wifi base station), with `<portname>` the serial port obtained from step 1:
 
-```python3 esp_flash_config.py --wifi examplessid,examplepassword```
+```python3 esp_flash_config.py --wifi examplessid,examplepassword --port <portname>```
 
-- Request IP addresses for AP and STA mode:
+5 - Request IP addresses for AP and STA mode:
 
-```python3 esp_flash_config.py --getip```
+```python3 esp_flash_config.py --getip --port <portname>```
 
+Note: if the `--port` option is ommitted in steps 3, 4, and 5, the tool will tyry to call step 1 first. A change from user to boot mode and back is then neccessary. The tool will indicate when to change mode.
+
+## Firmware `micropython_v1.16_uartremote.bin`
+We also compiled the Micropython firmware with the `uartremote` compiled as frozen module. The latest MicroPython version can be found i This has the advantage that the module uses far less RAM memory (1kb vs 4kb) as compared to loading the `uartremote.mpy` module from flash.
+
+All that is needed, is to copy the `uartremote.py` file in de `/ports/esp8266/modules` directory and build the firmware. The firmware `micropython-v1.16-uartremote.bin` is version MicroPython v1.16 and can be flashed on the ESP8266 board, as described above or in the Wiki.
 
 ## Mpy library import.
 You can copy `uartremote.mpy` to the ESP8266 module using the WebREPL. This is the easiest way to install it. It will take about 4kb of memory.
@@ -58,7 +64,3 @@ You can copy `uartremote.mpy` to the ESP8266 module using the WebREPL. This is t
 The file is the result of running this command in the LMS-uart-esp/Libraries/UartRemote/MicroPython/ESP8266 directory:
 `mpy-cross -march=xtensa ../uartremote.py -o uartremote.mpy`
 
-## Firmware
-We also compiled the Micropython firmware with the `uartremote` compiled as frozen module. This has the advantage that the module uses far less RAM memory (1kb vs 4kb) as compared to loading the `uartremote.mpy` module from flash.
-
-All that is needed, is to copyt the `uartremote.py` file in de `/ports/esp8266/modules` directory and build the firmware. The firmware `micropython-v1.15-uartremote.bin` is version MicroPython v1.15 and can be flashed on the ESP8266 board, as described in the Wiki.

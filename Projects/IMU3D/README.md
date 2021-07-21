@@ -30,9 +30,11 @@ From http://planning.cs.uiuc.edu/node102.html the matrices for rotating over the
 See this [calculation](https://www.wolframalpha.com/input/?i=%5B%5Bcos%28a%29%2C-sin%28a%29%2C0%5D%2C%5Bsin%28a%29%2Ccos%28a%29%2C0%5D%2C%5B0%2C0%2C1%5D%5D*%5B%5Bcos%28b%29%2C0%2Csin%28b%29%5D%2C%5B0%2C1%2C0%5D%2C%5B-sin%28b%29%2Ccos%28b%29%2C0%5D%5D) in  Wolfram Alpha which results in:
 
 ```
-(cos(a) cos(b) | -sin(a) | cos(a) sin(b)
-sin(a) cos(b) | cos(a) | sin(a) sin(b)
--sin(b) | cos(b) | 0)
+[
+cos(a) cos(b) | -sin(a) | cos(a) sin(b)
+sin(a) cos(b) | cos(a)  | sin(a) sin(b)
+-sin(b)       | cos(b)  | 0
+]
 ```
 
 where the first column is `[cos(a) cos(b), sin(a) cos(b), -sin(b)]` with `a` the yaw and `b` the pitch angle.
