@@ -22,7 +22,7 @@ See [thingiverse](https://www.thingiverse.com/thing:4913776) for a holder for th
 The MicroPython code used in this projects lives on Github: [MicrPython Rotary](https://github.com/miketeachman/micropython-rotary). However, this projects decodes only half steps, whereas the rotary sensor could be decoded using quadrature decoding, giving a step at each transistion.
 
 ### State diagram
-When turning clockwise (CW), the following consecutive bitstates (`AB`) are seen: `00 -> 10 -> 11 -> 01 -> 00 ...`. Turning counter clockwise (CCW), the states are visited in the opposite order: `00 -> 01 -> 11 -> 10 -> 00 ...`.
+When turning clockwise (CW), the following consecutive bit states (`AB`) are observed: `00 -> 10 -> 11 -> 01 -> 00 ...`. Turning counter clockwise (CCW), the states are visited in the opposite order: `00 -> 01 -> 11 -> 10 -> 00 ...`.
 From that the following state diagram can be drawn:
 |state | `00` | `01` | `10` | `11` |
 |------|------|------|------|------|
