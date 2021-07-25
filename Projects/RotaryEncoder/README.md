@@ -16,7 +16,7 @@ We use a magnetic encoder designed by polulo (see (https://www.pololu.com/produc
 
 ## 3D printed lego mounts
 
-See [thingiverse](https://www.thingiverse.com/thing:4913776) for a holder for the magnet that can be attached to a lego axle, and a mount for the magnetic encoder pcb. Use a axle with a thin flange in the middle hole to mount the encoder in the mount.
+I designed a holder for the magnet that can be attached to a lego axle, and a mount for the magnetic encoder pcb. The STL-files can be found on [thingiverse](https://www.thingiverse.com/thing:4913776).  Use a axle with a thin flange in the middle hole to keep the encoder fixed in the mount.
 
 ## Background
 The MicroPython code used in this projects lives on Github: [MicrPython Rotary](https://github.com/miketeachman/micropython-rotary). However, this projects decodes only half steps, whereas the rotary sensor could be decoded using quadrature decoding, giving a step at each transistion.
