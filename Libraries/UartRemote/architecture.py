@@ -84,7 +84,7 @@ ur.add_command(total)
 ur.loop()
 
 
-# Create custom loop, handling any 'call()' from master
+# Alternatively, Create custom loop, handling any 'call()' from master
 def loop():
     while True:
         # Non-blocking processing of any available calls over uart
@@ -93,19 +93,20 @@ def loop():
         # Do your stuff here
         pass
     ur.enable_local_repl()
-# loop()
+loop()
 
 # Alternatively get commands and their data. 
 def loop():
     while True:
         # Non-blocking receipt if any available calls over uart
         # Also disables local repl for convenience
-        # Auto acks receipt of call
-        command, value = ur.receive_command(ack=True)
-        # Do your stuff here
-        if command == 'wait':
-            utime.sleep_ms(value)
-#loop()
+        if ur.available():
+            command, value = ur.receive_command()
+            ur.ack_ok() # The other side expects a reply.
+            # Do your stuff here
+            if command == 'wait':
+                utime.sleep_ms(value)
+loop()
 
 # Alternatively get commands and their data and send custom reply. 
 def loop():
@@ -113,25 +114,13 @@ def loop():
         # Non-blocking receipt if any available calls over uart
         # Also disables local repl for convenience
         # Auto acks receipt of call
-        command, value = ur.receive_command(ack=False)
-        # Do your stuff here
-        if command == 'local_ticks':
-            result = utime.ticks_ms()
-            ur.ack_ok(command, 'I', result)
-        else:
-            ur.ack_err('no such command')
-#loop()
-
-# Ack_ok and ack_err are just wrappers:
-def ack_ok(self, *args):
-    if len(args > 1):
-        self.call(args[0]+'ack', *args[1:], wait=False)
-    else:
-        self.call(args[0]+'ack', wait=False)
-
-def ack_err(self, message):
-    self.call('err', 's', message, wait=False)
-
-## TODO: check wether using these wrappers limits speed. 
-# So far encoding/decoding routines seem to have te biggest impact
-# Payload size not so much.
+        if ur.available():
+            command, value = ur.receive_command()
+            # Do your stuff here
+            if command == 'local_ticks':
+                result = utime.ticks_ms()
+                ur.ack_ok(command, 'I', result)
+            else:
+                if command != 'err': value = 'no such command'
+                ur.ack_err(value)
+loop()
