@@ -1,0 +1,3 @@
+[submodule "Libraries/UartRemote"]
+	path = Libraries/UartRemote
+	url = https://github.com/antonvh/UartRemote
