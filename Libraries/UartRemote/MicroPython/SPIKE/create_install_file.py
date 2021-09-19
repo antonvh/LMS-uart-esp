@@ -7,21 +7,25 @@
 import binascii, mpy_cross, time
 import hashlib
 
-mpy_cross.run('-march=armv6','../uartremote.py','-o','../SPIKE/uartremote.mpy')
+LIB = '../uartremote.py'
+MPY_LIB = '../SPIKE/uartremote.mpy'
+INSTALLER = '../SPIKE/install_uartremote.py'
+
+mpy_cross.run('-march=armv6',LIB,'-o', MPY_LIB)
 
 # Should be done in a second!
 time.sleep(2)
 
-uartremote=open('../SPIKE/uartremote.mpy','rb').read()
-hash=hashlib.sha256(uartremote).hexdigest()
-ur_b64=binascii.b2a_base64(uartremote)
+mpy_file=open(MPY_LIB,'rb').read()
+hash=hashlib.sha256(mpy_file).hexdigest()
+ur_b64=binascii.b2a_base64(mpy_file)
 
 spike_code=f"""import ubinascii, uos, machine,uhashlib
 from ubinascii import hexlify
 b64=\"\"\"{ur_b64.decode('utf-8')}\"\"\"
 
 def calc_hash(b):
-    return hexlify(uhashlib.sha256(uartremote).digest()).decode()
+    return hexlify(uhashlib.sha256(b).digest()).decode()
 
 # this is the hash of the compiled uartremote.mpy
 hash_gen='{hash}'
@@ -59,5 +63,5 @@ else:
     print('Failure in Uartremote library!')
 
 """
-with open('../SPIKE/install_uartremote.py','w') as f:
+with open(INSTALLER,'w') as f:
     f.write(spike_code)
