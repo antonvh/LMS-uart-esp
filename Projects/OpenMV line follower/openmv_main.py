@@ -52,3 +52,5 @@ while(True):
         print(largest_blob_center, command, value)
         if command == 'blob':
             ur.ack_ok(command, largest_blob_center)
+        else:
+            ur.reply_command(command, value)
