@@ -17,6 +17,7 @@ This library helps you to exchange data between two programs, if they have a ser
     - [LEGO EV3](https://github.com/antonvh/UartRemote/tree/master/MicroPython/EV3)
     - [ESP8266](https://github.com/antonvh/UartRemote/tree/master/MicroPython/ESP8266)
     - [OpenMV](https://github.com/antonvh/UartRemote/tree/master/MicroPython/H7)
+    - [Aduino](https://github.com/antonvh/UartRemote/tree/master/Arduino/UartRemote)
 
  -  [LPF2](https://github.com/antonvh/LMS-uart-esp/tree/main/Libraries/LPF2)
 This library emulates power function motors and sensors over the UART protocol. This means you can integrate those sensor with minimal programming on the LEGO hub side. the [Distance Sensor Breakout board](https://antonsmindstorms.com/product/distance-sensor-breakout-board-for-spike-prime-and-robot-inventor/) would be an example.
