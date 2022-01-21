@@ -20,7 +20,7 @@ This library helps you to exchange data between two programs, if they have a ser
 
  -  [LPF2](https://github.com/antonvh/LMS-uart-esp/tree/main/Libraries/LPF2)
 This library emulates power function motors and sensors over the UART protocol. This means you can integrate those sensor with minimal programming on the LEGO hub side. the [Distance Sensor Breakout board](https://antonsmindstorms.com/product/distance-sensor-breakout-board-for-spike-prime-and-robot-inventor/) would be an example.
-     - [LPF2 Example](https://github.com/antonvh/LMS-uart-esp/tree/main/Libraries/LPF2/LPF2_simple) micropython, possible use case OpenMV is quickly connected with this examole and can exchange digits 0-9 with the Lego Hub.
+     - [LPF2 Example](https://github.com/antonvh/LMS-uart-esp/tree/main/Libraries/LPF2/LPF2_simple) micropython, possible use case OpenMV is quickly connected with this example and can exchange digits 0-9 with the Lego Hub with minimal code.
 
  - [VL53](https://github.com/antonvh/LMS-uart-esp/tree/main/Libraries/vl53%20tof%20rangefinder)
 This library is for use of the I2C VL53 chip, that can detect the "time of flight", or how long the light has taken to bounce back to the sensor for distance. Calibration and sensor readings.
