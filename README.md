@@ -26,6 +26,9 @@ This library emulates power function motors and sensors over the UART protocol. 
  - [VL53](https://github.com/antonvh/LMS-uart-esp/tree/main/Libraries/vl53%20tof%20rangefinder)
 This library is for use of the I2C VL53 chip, that can detect the "time of flight", or how long the light has taken to bounce back to the sensor for distance. Calibration and sensor readings.
 
+ - [Huskylens](https://github.com/antonvh/LEGO-HuskyLenslib)
+ Connect LEGO robots to the [Huskylens](https://wiki.dfrobot.com/HUSKYLENS_V1.0_SKU_SEN0305_SEN0336)
+ 
 # Projects and Examples
 
  - [Example Projects](https://github.com/antonvh/LMS-uart-esp/tree/main/Projects) where we expand the EV3, SPIKE Prime and Robot Inventor hubs with third party electronics and hardware. Full code and instructions included as much as possible. 
