@@ -11,8 +11,9 @@ The original Lego Sensors, such as the color sensor and the distance sensor of t
 A [good desciption](https://github.com/pybricks/technical-info/blob/master/uart-protocol.md) of the protoocl can be found in the PyBricks documentation 
 
 The LPF2 protocol for the EV3 is very similar to that for the SPIKE. A description of this subset can be found in the links below, and can be helpfull for understanding the protocol as a whole:
-- (https://sourceforge.net/p/lejos/wiki/UART%20Sensor%20Protocol/)
+- [UART protocol spoken by LEGO EV3 sensors](https://sourceforge.net/p/lejos/wiki/UART%20Sensor%20Protocol/)
 - [An Arduino implementatie for the EV3 protocol](https://github.com/lawrie/EV3_Dexter_Industries_Sensors/tree/master/EV3_arduino)
+- https://www.philohome.com/wedo2reverse/wedo2.htm
 
 ## counting test
 
