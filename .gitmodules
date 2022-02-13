@@ -1,3 +1,6 @@
 [submodule "Libraries/UartRemote"]
 	path = Libraries/UartRemote
 	url = https://github.com/antonvh/UartRemote
+[submodule "Tools/flash-esp"]
+	path = Tools/flash-esp
+	url = https://github.com/antonvh/flash-esp
