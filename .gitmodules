@@ -4,3 +4,6 @@
 [submodule "Tools/flash-esp"]
 	path = Tools/flash-esp
 	url = https://github.com/antonvh/flash-esp
+[submodule "Projects/BluePad32_idf/esp-idf-arduino-bluepad32-template"]
+	path = Projects/BluePad32_idf/esp-idf-arduino-bluepad32-template
+	url = https://gitlab.com/ricardoquesada/esp-idf-arduino-bluepad32-template.git
