@@ -7,6 +7,7 @@ Install esp-idf as described here https://docs.espressif.com/projects/esp-idf/en
 ## Set-up BluePad32 idf Arduino environment
 
 Full explanation is in: https://github.com/ricardoquesada/bluepad32/blob/main/docs/plat_arduino.md
+
 Choose: option A
 
 ```
@@ -24,6 +25,7 @@ cd BluePad32_uartremote
 idf.py build
 idf.py -p /dev/ttyUSB0 flash
 idf.py -p /dev/ttyUSB0 monitor
+```
 
 ## On Lego Spike Prime or Robot Inventor
 
