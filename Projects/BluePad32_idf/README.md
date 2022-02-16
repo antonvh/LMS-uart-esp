@@ -13,7 +13,7 @@ Choose: option A
 ```
 source esp-idf/export.sh
 cd LMS-uart-esp/Projects/BluePad32_idf
-git clone --recursive https://gitlab.com/ricardoquesada/esp-idf-arduino-bluepad32-template.git BLuePad32_Uartremote
+git clone --recursive https://gitlab.com/ricardoquesada/esp-idf-arduino-bluepad32-template.git BluePad32_Uartremote
 ```
 
 in  `LMS-uart-esp/Projects/BluePad32_idf` do
