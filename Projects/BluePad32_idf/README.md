@@ -46,15 +46,53 @@ idf.py -p /dev/ttyUSB0 flash
 idf.py -p /dev/ttyUSB0 monitor
 ```
 
-## On Lego Spike Prime or Robot Inventor
+## On Lego Spike Prime or Mindstorms Robot Inventor
 
-Use Python code in `LMS-uart-esp/Projects/BluePad32_idf/SPIKE/bluepad32.py`
-
+Use example uPython code in `LMS-uart-esp/Projects/BluePad32_idf/SPIKE/bluepad32.py`
 
 
 ## Development Notes
 
-Changes that I have made to esp-idf-arduino-bluepad32-template.git:
+you can edit `Projects/BluePad32_idf/BluePad32_Uartremote/main/arduino_main.cpp` like you would your Arduino/main
+for example you could add 
+
+
+### Add Wifi AP
+The following requires advanced use with `idf.py menuconfig` to increse the memory space available in the build process.
+
+the menu option needed to change is as follows:
+* Partition table >>> Partition Table (Single factory app (large), no OTA) >>> ENTER
+  * you should see Single factory app (large), no OTA, 
+    * select it and press enter 
+      * then 'S' then enter to save config and exit
+
+```
+// Wifi
+#include <WiFi.h>
+
+// Replace with your network credentials
+const char* ssid     = "LEGO-ESP32";
+const char* password = "legoesp32";
+
+// Set web server port number to 80
+WiFiServer server(80);
+
+// Variable to store the HTTP request
+String header;
+
+##
+## this is not a direct cut and paste
+void setup() { # the following is for setup loop
+    // Setup wifi AP
+    WiFi.softAP(ssid, password);
+    IPAddress IP = WiFi.softAPIP();
+    Serial.print("AP IP address: ");
+    Serial.println(IP);
+```
+
+once this is modified `idf.py clean` and `idf.py build`
+
+### Changes made to esp-idf-arduino-bluepad32-template.git:
 
 * copied UartRemote [arduino](https://github.com/antonvh/UartRemote/tree/master/Arduino) library in components/arduino/libraries
 * in components/arduino/CMakeLists.txt make the following changes
