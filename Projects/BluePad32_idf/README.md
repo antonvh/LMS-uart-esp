@@ -15,6 +15,14 @@ source esp-idf/export.sh
 cd LMS-uart-esp/Projects/BluePad32_idf
 git clone --recursive https://gitlab.com/ricardoquesada/esp-idf-arduino-bluepad32-template.git BluePad32_Uartremote
 ```
+Build BluePad32 original app in BluePad32_Uartremote directory:
+
+```
+cd BluePad32_uartremote
+idf.py build
+```
+
+Then integrate UartRemote library by doig the following:
 
 in  `LMS-uart-esp/Projects/BluePad32_idf` do
 
