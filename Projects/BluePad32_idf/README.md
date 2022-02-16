@@ -1,52 +1,123 @@
 # BluePad32 for Lego robot
 
-## installation
+## Installation of ESP-IDF
 
-Install esp-idf as described here https://docs.espressif.com/projects/esp-idf/en/stable/esp32/get-started/#get-started-get-esp-idf
+Install esp-idf as described here https://docs.espressif.com/projects/esp-idf/en/stable/esp32/get-started/#get-started-get-esp-idf also there is a handy VSCode plugin with additional ways  to get the IDF setup https://github.com/espressif/vscode-esp-idf-extension/blob/master/docs/tutorial/install.md
 
-## Set-up BluePad32 idf Arduino environment
+you must have idf.py working to continue open a shell/console and test the following command:
 
-Full explanation is in: https://github.com/ricardoquesada/bluepad32/blob/main/docs/plat_arduino.md
+`. ~/esp/esp-idf/export.sh`
 
-Choose: option A
+you should have seen something like: *Done! You can now compile ESP-IDF projects. Go to the project directory and run: idf.py build.* If so you are ready to proceed, if not you must correct the issues.
+
+## Set-up of IDF-ESP32-Arduino with BluePad32 and UartRemote
+
+Quick-start with this project https://github.com/ricardoquesada/bluepad32/blob/main/docs/plat_arduino.md we used option A. This will setup a IDE with BluePad32 and its requirements including Aduino. For more troubleshooting or details on the Aduino on ESP32 see [here](https://github.com/espressif/arduino-esp32)
+
+From your command shell where you have esp-idf ready (install step) enter the working directory of LMS-uart-esp/Projects/BluePad32_idf and clone the esp-idf-arduino-bluepad32-template.git into a new folder BluePad32_Uartremote
 
 ```
-source esp-idf/export.sh
 cd LMS-uart-esp/Projects/BluePad32_idf
 git clone --recursive https://gitlab.com/ricardoquesada/esp-idf-arduino-bluepad32-template.git BluePad32_Uartremote
 ```
-Build BluePad32 original app in BluePad32_Uartremote directory:
+
+This is a large download (~2GB) When download is done, you can take time to build this vanilla project to test your full IDE enviroment issuing a `idf.py build` in the Bluepad32_uartremote directory, this was described in the Quick-Start document above as well, you dont need to do it twice but you can `idf.py clean`. Also noteworthy you can [config](https://github.com/ricardoquesada/bluepad32/blob/main/docs/plat_arduino.md#update-configuration) `idf.py menuconfig` from here to modify components. Build should pass with no halting errors, you will want to correct or fix anything before proceeding (it is out of scope here, bluepad32 has a discord support channel) if you saw something like *Project build complete. To flash* then your good, go back a directory to continue.
+
+still in  `LMS-uart-esp/Projects/BluePad32_idf`
+
+copy in the uartremote component and modified aduino_main into BluePad32_uartremote
+
+```
+cp -a main BluePad32_Uartremote
+cp -a components BluePad32_Uartremote
+```
+
+You are now ready to build the full project with included uartremote, this will build, flash and monitor your ESP32
 
 ```
 cd BluePad32_uartremote
 idf.py build
 ```
 
-Then integrate UartRemote library by doig the following:
-
-in  `LMS-uart-esp/Projects/BluePad32_idf` do
+Update for your device and flash your ESP32 with the uartremote, bluepad firmware!
 
 ```
-cp -a main BLuePad32_Uartremote
-cp -a components BLuePad32_Uartremote
-cd BluePad32_uartremote
-idf.py build
 idf.py -p /dev/ttyUSB0 flash
 idf.py -p /dev/ttyUSB0 monitor
 ```
 
-## On Lego Spike Prime or Robot Inventor
+## On Lego Spike Prime or Mindstorms Robot Inventor
 
-Use Python code in `LMS-uart-esp/Projects/BluePad32_idf/SPIKE/bluepad32.py`
+Use example uPython code in `LMS-uart-esp/Projects/BluePad32_idf/SPIKE/bluepad32.py`
 
-## changes to original project
 
-Changes thay I have made:
+## Development Notes
 
-* copied UartRemote (arduino) library in omponents/arduino/libraries
-* in components/arduino/CMakeLists.txt make the following changes
+you can edit `Projects/BluePad32_idf/BluePad32_Uartremote/main/arduino_main.cpp` like you would your Arduino/main
+for example you could add 
 
-under the line
+[menuconfig](https://github.com/ricardoquesada/bluepad32/blob/main/docs/plat_arduino.md#update-configuration) details
+
+
+### Add Wifi AP
+The following requires advanced use with `idf.py menuconfig` to increse the memory space available in the build process.
+
+the menu option needed to change is as follows:
+* Partition table >>> Partition Table (Single factory app (large), no OTA) >>> ENTER
+  * you should see Single factory app (large), no OTA, 
+    * select it and press enter 
+      * then 'S' then enter to save config and exit
+
+
+* enable Component config > HTTP Server > WebSocket server support
+
+if further configs are needed but is advanced please see..
+https://docs.espressif.com/projects/esp-idf/en/latest/esp32/api-reference/kconfig.html#config-httpd-ws-support
+https://docs.espressif.com/projects/esp-idf/en/latest/esp32/api-reference/protocols/esp_http_server.html
+
+
+edit arduino_main.cpp with the following:
+```
+// Wifi
+#include <WiFi.h>
+
+// Replace with your network credentials
+const char* ssid     = "LEGO-ESP32";
+const char* password = "legoesp32";
+
+// Set web server port number to 80
+WiFiServer server(80);
+
+// Variable to store the HTTP request
+String header;
+
+##
+## this is not a direct cut and paste
+void setup() { # the following is for setup loop
+    // Setup wifi AP
+    WiFi.softAP(ssid, password);
+    IPAddress IP = WiFi.softAPIP();
+    Serial.print("AP IP address: ");
+    Serial.println(IP);
+```
+
+once this is modified `idf.py clean` and `idf.py build`
+
+### Add your 3rd party Arduino libraries:
+
+To include 3rd party Arduino libraries in your project, you have to:
+* Add them to the components folder.
+  * Add a CMakeLists.txt inside the component's folder 
+
+You can quickly test by adding your library in components/arduino/libraries and modify components/arduino/CMakeLists.txt 
+
+for example using [UartRemote-Aduino](https://github.com/antonvh/UartRemote/tree/master/Arduino) 
+
+* copied UartRemote-Arduino into components/arduino/libraries
+
+in components/arduino/CMakeLists.txt make the following changes:
+
+under
 
 ```
 set(LIBRARY_SRCS
