@@ -1,36 +1,47 @@
 # BluePad32 for Lego robot
 
-## installation
+## Installation of ESP-IDF
 
-Install esp-idf as described here https://docs.espressif.com/projects/esp-idf/en/stable/esp32/get-started/#get-started-get-esp-idf
+Install esp-idf as described here https://docs.espressif.com/projects/esp-idf/en/stable/esp32/get-started/#get-started-get-esp-idf also there is a handy VSCode plugin with additional ways  to get the IDF setup https://github.com/espressif/vscode-esp-idf-extension/blob/master/docs/tutorial/install.md
 
-## Set-up BluePad32 idf Arduino environment
+you must have idf.py working to continue open a shell/console and test the following command:
 
-Full explanation is in: https://github.com/ricardoquesada/bluepad32/blob/main/docs/plat_arduino.md
+`. ~/esp/esp-idf/export.sh`
 
-Choose: option A
+you should have seen something like: *Done! You can now compile ESP-IDF projects. Go to the project directory and run: idf.py build.* If so you are ready to proceed, if not you must correct the issues.
+
+## Set-up of IDF-ESP32-Arduino with BluePad32 and UartRemote
+
+Quick-start with this project https://github.com/ricardoquesada/bluepad32/blob/main/docs/plat_arduino.md we used option A. This will setup a IDE with BluePad32 and its requirements including Aduino. For more troubleshooting or details on the Aduino on ESP32 see [here](https://github.com/espressif/arduino-esp32)
+
+From your command shell where you have esp-idf ready (install step) enter the working directory of LMS-uart-esp/Projects/BluePad32_idf and clone the esp-idf-arduino-bluepad32-template.git into a new folder BluePad32_Uartremote
 
 ```
-source esp-idf/export.sh
 cd LMS-uart-esp/Projects/BluePad32_idf
 git clone --recursive https://gitlab.com/ricardoquesada/esp-idf-arduino-bluepad32-template.git BluePad32_Uartremote
 ```
-Build BluePad32 original app in BluePad32_Uartremote directory:
+
+This is a large download (~2GB) When download is done, you can take time to build this vanilla project to test your full IDE enviroment issuing a `idf.py build` in the Bluepad32_uartremote directory, this was described in the Quick-Start document above as well, you dont need to do it twice but you can `idf.py clean`. Build should pass with no halting errors, you will want to correct or fix anything before proceeding (it is out of scope here, bluepad32 has a discord support channel) if you saw something like *Project build complete. To flash* then your good, go back a directory to continue.
+
+still in  `LMS-uart-esp/Projects/BluePad32_idf`
+
+copy in the uartremote component and modified aduino_main into BluePad32_uartremote
+
+```
+cp -a main BluePad32_Uartremote
+cp -a components BluePad32_Uartremote
+```
+
+You are now ready to build the full project with included uartremote, this will build, flash and monitor your ESP32
 
 ```
 cd BluePad32_uartremote
 idf.py build
 ```
 
-Then integrate UartRemote library by doig the following:
-
-in  `LMS-uart-esp/Projects/BluePad32_idf` do
+Update for your device and flash your ESP32 with the uartremote, bluepad firmware!
 
 ```
-cp -a main BLuePad32_Uartremote
-cp -a components BLuePad32_Uartremote
-cd BluePad32_uartremote
-idf.py build
 idf.py -p /dev/ttyUSB0 flash
 idf.py -p /dev/ttyUSB0 monitor
 ```
@@ -39,11 +50,13 @@ idf.py -p /dev/ttyUSB0 monitor
 
 Use Python code in `LMS-uart-esp/Projects/BluePad32_idf/SPIKE/bluepad32.py`
 
-## changes to original project
 
-Changes thay I have made:
 
-* copied UartRemote (arduino) library in omponents/arduino/libraries
+## Development Notes
+
+Changes that I have made to esp-idf-arduino-bluepad32-template.git:
+
+* copied UartRemote [arduino](https://github.com/antonvh/UartRemote/tree/master/Arduino) library in components/arduino/libraries
 * in components/arduino/CMakeLists.txt make the following changes
 
 under the line
