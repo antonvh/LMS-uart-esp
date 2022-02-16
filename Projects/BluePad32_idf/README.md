@@ -21,7 +21,7 @@ cd LMS-uart-esp/Projects/BluePad32_idf
 git clone --recursive https://gitlab.com/ricardoquesada/esp-idf-arduino-bluepad32-template.git BluePad32_Uartremote
 ```
 
-This is a large download (~2GB) When download is done, you can take time to build this vanilla project to test your full IDE enviroment issuing a `idf.py build` in the Bluepad32_uartremote directory, this was described in the Quick-Start document above as well, you dont need to do it twice but you can `idf.py clean`. Build should pass with no halting errors, you will want to correct or fix anything before proceeding (it is out of scope here, bluepad32 has a discord support channel) if you saw something like *Project build complete. To flash* then your good, go back a directory to continue.
+This is a large download (~2GB) When download is done, you can take time to build this vanilla project to test your full IDE enviroment issuing a `idf.py build` in the Bluepad32_uartremote directory, this was described in the Quick-Start document above as well, you dont need to do it twice but you can `idf.py clean`. Also noteworthy you can `idf.py menuconfig` from here to modify components. Build should pass with no halting errors, you will want to correct or fix anything before proceeding (it is out of scope here, bluepad32 has a discord support channel) if you saw something like *Project build complete. To flash* then your good, go back a directory to continue.
 
 still in  `LMS-uart-esp/Projects/BluePad32_idf`
 
