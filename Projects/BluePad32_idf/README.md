@@ -21,7 +21,7 @@ cd LMS-uart-esp/Projects/BluePad32_idf
 git clone --recursive https://gitlab.com/ricardoquesada/esp-idf-arduino-bluepad32-template.git BluePad32_Uartremote
 ```
 
-This is a large download (~2GB) When download is done, you can take time to build this vanilla project to test your full IDE enviroment issuing a `idf.py build` in the Bluepad32_uartremote directory, this was described in the Quick-Start document above as well, you dont need to do it twice but you can `idf.py clean`. Also noteworthy you can `idf.py menuconfig` from here to modify components. Build should pass with no halting errors, you will want to correct or fix anything before proceeding (it is out of scope here, bluepad32 has a discord support channel) if you saw something like *Project build complete. To flash* then your good, go back a directory to continue.
+This is a large download (~2GB) When download is done, you can take time to build this vanilla project to test your full IDE enviroment issuing a `idf.py build` in the Bluepad32_uartremote directory, this was described in the Quick-Start document above as well, you dont need to do it twice but you can `idf.py clean`. Also noteworthy you can [config](https://github.com/ricardoquesada/bluepad32/blob/main/docs/plat_arduino.md#update-configuration) `idf.py menuconfig` from here to modify components. Build should pass with no halting errors, you will want to correct or fix anything before proceeding (it is out of scope here, bluepad32 has a discord support channel) if you saw something like *Project build complete. To flash* then your good, go back a directory to continue.
 
 still in  `LMS-uart-esp/Projects/BluePad32_idf`
 
@@ -56,6 +56,8 @@ Use example uPython code in `LMS-uart-esp/Projects/BluePad32_idf/SPIKE/bluepad32
 you can edit `Projects/BluePad32_idf/BluePad32_Uartremote/main/arduino_main.cpp` like you would your Arduino/main
 for example you could add 
 
+[menuconfig](https://github.com/ricardoquesada/bluepad32/blob/main/docs/plat_arduino.md#update-configuration) details
+
 
 ### Add Wifi AP
 The following requires advanced use with `idf.py menuconfig` to increse the memory space available in the build process.
@@ -65,6 +67,14 @@ the menu option needed to change is as follows:
   * you should see Single factory app (large), no OTA, 
     * select it and press enter 
       * then 'S' then enter to save config and exit
+
+
+* enable Component config > HTTP Server > WebSocket server support
+
+if further configs are needed but is advanced please see..
+https://docs.espressif.com/projects/esp-idf/en/latest/esp32/api-reference/kconfig.html#config-httpd-ws-support
+https://docs.espressif.com/projects/esp-idf/en/latest/esp32/api-reference/protocols/esp_http_server.html
+
 
 edit arduino_main.cpp with the following:
 ```
