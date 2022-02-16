@@ -66,6 +66,7 @@ the menu option needed to change is as follows:
     * select it and press enter 
       * then 'S' then enter to save config and exit
 
+edit arduino_main.cpp with the following:
 ```
 // Wifi
 #include <WiFi.h>
@@ -92,12 +93,21 @@ void setup() { # the following is for setup loop
 
 once this is modified `idf.py clean` and `idf.py build`
 
-### Changes made to esp-idf-arduino-bluepad32-template.git:
+### Add your 3rd party Arduino libraries:
 
-* copied UartRemote [arduino](https://github.com/antonvh/UartRemote/tree/master/Arduino) library in components/arduino/libraries
-* in components/arduino/CMakeLists.txt make the following changes
+To include 3rd party Arduino libraries in your project, you have to:
+* Add them to the components folder.
+  * Add a CMakeLists.txt inside the component's folder 
 
-under the line
+You can quickly test by adding your library in components/arduino/libraries and modify components/arduino/CMakeLists.txt 
+
+for example using [UartRemote-Aduino](https://github.com/antonvh/UartRemote/tree/master/Arduino) 
+
+* copied UartRemote-Arduino into components/arduino/libraries
+
+in components/arduino/CMakeLists.txt make the following changes:
+
+under
 
 ```
 set(LIBRARY_SRCS
