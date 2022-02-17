@@ -45,10 +45,15 @@ Update for your device and flash your ESP32 with the uartremote, bluepad firmwar
 idf.py -p /dev/ttyUSB0 flash
 idf.py -p /dev/ttyUSB0 monitor
 ```
+exit monitor with ctl+]
 
 ## On Lego Spike Prime or Mindstorms Robot Inventor
 
-Use example uPython code in `LMS-uart-esp/Projects/BluePad32_idf/SPIKE/bluepad32.py`
+to setup a remote see here https://github.com/ricardoquesada/bluepad32/blob/main/docs/supported_gamepads.md for list of supported devices.
+
+press connect on your remote while watching the ESP32 monitor you should see the device connect *Gamepad is connected!* success!
+
+Use example uPython code in `LMS-uart-esp/Projects/BluePad32_idf/SPIKE/bluepad32.py` on your Lego Hub
 
 
 ## Development Notes
