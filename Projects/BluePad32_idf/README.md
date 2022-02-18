@@ -1,5 +1,17 @@
 # BluePad32 for Lego robot
 
+## Precompiled binary
+The file `bluepad32_firmware.bin` contains the precompiled binary that can be flashed on the LMD-ESP32 board using this commands:
+
+```
+esptool.py -p <port> erase_flash
+esptool.py -p <port> --baud 500000 write_flash 0x1000 bluepad32_firmware.bin
+```
+
+Connect the LMS-ESP32 module to your Spike PRIME or Robot Inventor and run the program `bluepad32_spike.py` in the `SPIKE` directory.
+
+Once the controller is connected, you should see two dots on the robot 5x5 display, where each dot can be controlled by one of the analogue joysticks.
+
 ## Installation of ESP-IDF
 
 Install esp-idf as described here https://docs.espressif.com/projects/esp-idf/en/stable/esp32/get-started/#get-started-get-esp-idf also there is a handy VSCode plugin with additional ways  to get the IDF setup https://github.com/espressif/vscode-esp-idf-extension/blob/master/docs/tutorial/install.md
