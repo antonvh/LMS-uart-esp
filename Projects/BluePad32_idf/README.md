@@ -10,7 +10,7 @@ esptool.py -p <port> --baud 500000 write_flash 0x1000 bluepad32_firmware.bin
 
 Connect the LMS-ESP32 module to your Spike PRIME or Robot Inventor and run the program `bluepad32_spike.py` in the `SPIKE` directory.
 
-Once the controller is connected, you should see two dots on the robot 5x5 display, where each dot can be controlled by one of the analogue joysticks.
+Once the controller is connected, you should see two dots on the robot 5x5 display, where each dot can be controlled by one of the analogue joysticks. When the left button on the robot is pressed, the LEDs on the controller are incremented by one. By pressing the right button on the robot activates the rumble of the controller.
 
 ## Installation of ESP-IDF
 
