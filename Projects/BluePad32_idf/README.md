@@ -89,8 +89,8 @@ the menu option needed to change is as follows:
 * enable Component config > HTTP Server > WebSocket server support
 
 if further configs are needed but is advanced please see..
-https://docs.espressif.com/projects/esp-idf/en/latest/esp32/api-reference/kconfig.html#config-httpd-ws-support
-https://docs.espressif.com/projects/esp-idf/en/latest/esp32/api-reference/protocols/esp_http_server.html
+* https://docs.espressif.com/projects/esp-idf/en/latest/esp32/api-reference/kconfig.html#config-httpd-ws-support
+* https://docs.espressif.com/projects/esp-idf/en/latest/esp32/api-reference/protocols/esp_http_server.html
 
 
 edit arduino_main.cpp with the following:
@@ -128,7 +128,38 @@ To include 3rd party Arduino libraries in your project, you have to:
 
 You can quickly test by adding your library in components/arduino/libraries and modify components/arduino/CMakeLists.txt 
 
-for example using [UartRemote-Aduino](https://github.com/antonvh/UartRemote/tree/master/Arduino) 
+#### Example ESP32Servo [ESP32Servo](https://gitlab.com/ricardoquesada/esp-idf-arduino-bluepad32-template#example-adding-esp32servo)
+
+
+in  `/LMS-uart-esp/Projects/BluePad32_idf/BluePad32_Uartremote/components`
+
+```
+git clone https://github.com/madhephaestus/ESP32Servo.git
+cd ESP32Servo
+cat << EOF > component.mk
+COMPONENT_ADD_INCLUDEDIRS := src
+COMPONENT_SRCDIRS := src
+EOF
+cat << EOF > CMakeLists.txt
+idf_component_register(SRC_DIRS "src"
+                    INCLUDE_DIRS "src"
+                    REQUIRES "arduino")
+EOF
+```
+
+now in `/LMS-uart-esp/Projects/BluePad32_idf/BluePad32_Uartremote/main`
+
+edit CMakeLists.txt to incluide the following
+
+* REQUIRES "${requires}" "UartRemote" `"ESP32Servo"`)
+
+Add this include in your arduino_main.cpp file
+`#include <ESP32Servo.h>`
+
+now compile with `idf.build` from the /LMS-uart-esp/Projects/BluePad32_idf/BluePad32_Uartremote/ location
+
+
+#### example using [UartRemote-Aduino](https://github.com/antonvh/UartRemote/tree/master/Arduino) 
 
 * copied UartRemote-Arduino into components/arduino/libraries
 
