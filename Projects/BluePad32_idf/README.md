@@ -158,38 +158,3 @@ Add this include in your arduino_main.cpp file
 
 now compile with `idf.build` from the /LMS-uart-esp/Projects/BluePad32_idf/BluePad32_Uartremote/ location
 
-
-#### example using [UartRemote-Aduino](https://github.com/antonvh/UartRemote/tree/master/Arduino) 
-
-* copied UartRemote-Arduino into components/arduino/libraries
-
-in components/arduino/CMakeLists.txt make the following changes:
-
-under
-
-```
-set(LIBRARY_SRCS
-```
-
-add:
-
-```
-  libraries/UartRemote/src/UartRemote.cpp
-  libraries/UartRemote/src/struct.c
-  libraries/UartRemote/src/struct_endian.c
-
-```
-
-under
-
-```
-set(includedirs
-  variants/${IDF_TARGET}/
-  cores/esp32/
-```
-
-add:
-
-```
-libraries/UartRemote/src
-```
