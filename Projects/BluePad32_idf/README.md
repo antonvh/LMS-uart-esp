@@ -22,6 +22,34 @@ you must have idf.py working to continue open a shell/console and test the follo
 
 you should have seen something like: *Done! You can now compile ESP-IDF projects. Go to the project directory and run: idf.py build.* If so you are ready to proceed, if not you must correct the issues.
 
+## restore a project based on BluePad32 arduino code
+
+From your command shell where you have esp-idf ready (install step) enter the working directory of LMS-uart-esp/Projects/BluePad32_idf and clone the esp-idf-arduino-bluepad32-template.git into a new project folder say: BluePad32_demo
+
+```
+cd LMS-uart-esp/Projects/BluePad32_idf
+git clone --recursive https://gitlab.com/ricardoquesada/esp-idf-arduino-bluepad32-template.git BluePad32_demo
+```
+
+In the root of the repository, add the projectdirecotry `BluePad32_demo` to the `.gitignore` file:
+
+`echo 'Projects/BluePad32_idf/BluePad32_demo/' >> .gitignore`
+
+
+Copy the files that were changed into the project directory BluePad32_demo using:
+
+`./restore_files.sh BluePad32_test`
+
+Build the full project with included extra files:
+
+```
+cd BluePad32_demo
+idf.py build
+```
+
+
+
+
 ## Set-up of IDF-ESP32-Arduino with BluePad32 and UartRemote
 
 Quick-start with this project https://github.com/ricardoquesada/bluepad32/blob/main/docs/plat_arduino.md we used option A. This will setup a IDE with BluePad32 and its requirements including Aduino. For more troubleshooting or details on the Aduino on ESP32 see [here](https://github.com/espressif/arduino-esp32)
