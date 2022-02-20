@@ -47,7 +47,7 @@ Reads `len` bytes from i2c device (connected to the Grove port) at address `adre
 
 Sets led number `led_nr` to color `(red,greem,blue)`. Use led_show to display the leds.
 
-**`ur.call('neopixel_show`)**
+**`ur.call('neopixel_show)`**
 
 Shows current led configuration.
 
@@ -55,7 +55,7 @@ Shows current led configuration.
 
 Initates NeoPixel with `number_leds` leds on Pin `pin`.
 
-**`ur.call('fft')'**
+**`ur.call('fft')`**
 
 Returns an array of 5 values containing the measured audio power in 5 frequency bands, each rougly 500Hz broad.
 
