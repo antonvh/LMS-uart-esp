@@ -29,12 +29,31 @@ limitations under the License.
 #include <Bluepad32.h>
 #include <UartRemote.h>
 #include <Adafruit_NeoPixel.h>
+#include <arduinoFFT.h>
 
 const i2s_port_t I2S_PORT = I2S_NUM_0;
 
 static GamepadPtr myGamepad;
 
 UartRemote uartremote;
+
+arduinoFFT FFT = arduinoFFT(); /* Create FFT object */
+/*
+These values can be changed in order to evaluate the functions
+*/
+const uint16_t samples = 64; //This value MUST ALWAYS be a power of 2
+const double signalFrequency = 1000;
+const double samplingFrequency = 5000;
+const uint8_t amplitude = 100;
+/*
+These are the input and output vectors
+Input vectors receive computed results from FFT
+*/
+double vReal[samples];
+double vImag[samples];
+int16_t rawsamples[samples];
+
+float spectrum[5] = {};
 
 Arguments args;
 
@@ -235,7 +254,11 @@ void neopixel_show(Arguments args) {
    uartremote.send_command("neopixel_showack","B",0);
 }
 
+void fft(Arguments args){
+    uartremote.send_command("fftack","5f",
+              spectrum[0],spectrum[1],spectrum[2],spectrum[3],spectrum[4]);
 
+}
 // Arduino setup function. Runs in CPU 1
 void setup() {
     Serial.begin(115200);
@@ -256,6 +279,7 @@ void setup() {
     uartremote.add_command("neopixel",&neopixel);
     uartremote.add_command("neopixel_show",&neopixel_show);
     uartremote.add_command("neopixel_init",&neopixel_init);
+    uartremote.add_command("fft",&fft);
     String fv = BP32.firmwareVersion();
     Serial.print("Firmware: ");
     Serial.println(fv);
@@ -264,7 +288,7 @@ void setup() {
     BP32.setup(&onConnectedGamepad, &onDisconnectedGamepad);
 
 
-#define SAMPLE_RATE 16000
+#define SAMPLE_RATE 5000
 
     // I2S
 const i2s_config_t i2s_config = {
@@ -318,12 +342,39 @@ void loop() {
         }
     }
     delay(10);
-    int32_t sample = 0;
-   
-size_t i2s_bytes_read;
-    i2s_read(I2S_PORT, (char *)&sample, 1, &i2s_bytes_read, 100);
 
-  if (i2s_bytes_read > 0) {
-    Serial.println(sample);
-  }
+   
+    // 64 samples @ 5000 Hz = 12.8ms chunks of samples --> FFT --> 32 frequency points
+
+    size_t i2s_bytes_read;
+    i2s_read(I2S_PORT, rawsamples, 64, &i2s_bytes_read, 100);
+    int32_t blockSum = rawsamples[0];
+
+    for (uint16_t i = 1; i < 64; i++)
+    {
+        blockSum += rawsamples[i];
+    }
+
+    // Compute average value for the current sample block
+    int16_t blockAvg = blockSum / 64;
+    // Constant for normalizing int16 input values to floating point range -1.0 to 1.0
+    const float kInt16MaxInv = 1.0f / __INT16_MAX__;
+    for (uint16_t i = 0; i < samples; i++)
+    {
+        vReal[i] = (rawsamples[i]-blockAvg)*kInt16MaxInv;/* Build data with positive and negative values*/
+        vImag[i] = 0.0; //Imaginary part must be zeroed in case of looping to avoid wrong calculations and overflows
+    }
+    // FFT.DCRemoval(vReal, samples);
+    FFT.Windowing(vReal, samples, FFT_WIN_TYP_HAMMING, FFT_FORWARD);	/* Weigh data */
+    FFT.Compute(vReal, vImag, samples, FFT_FORWARD); /* Compute FFT */
+    FFT.ComplexToMagnitude(vReal, vImag, samples); /* Compute magnitudes */
+    // make 5 bins of the power spectrum
+    for (uint8_t i=0; i<5; i++) {
+        double s=0;
+        for (uint8_t j=0; j<6; j++ ) {
+           s+=vReal[i*6+j+1]; // +1 skip dc compontent
+        }
+        spectrum[i]=s; // update spectrum array
+    }
+ 
 }
