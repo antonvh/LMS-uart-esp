@@ -1,4 +1,0 @@
-components/Adafruit_NeoPixel
-components/UartRemote
-main/arduino_main.cpp
-main/CMakeLists.txt
