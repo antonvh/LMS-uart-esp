@@ -30,6 +30,7 @@ limitations under the License.
 #include <UartRemote.h>
 #include <Adafruit_NeoPixel.h>
 #include <arduinoFFT.h>
+#include <ESP32Servo.h>
 
 const i2s_port_t I2S_PORT = I2S_NUM_0;
 
@@ -57,7 +58,7 @@ float spectrum[5] = {};
 
 Arguments args;
 
-#define LED_PIN 21
+#define LED_PIN 12
 #define LED_COUNT 64
 
 // use pointer allows to dynamically change nrumber of leds or pin
@@ -65,7 +66,18 @@ Arguments args;
 // delete object before initiating a new one
 Adafruit_NeoPixel* strip = new Adafruit_NeoPixel(LED_COUNT,LED_PIN); //, NEO_GRB + NEO_KHZ800);
 
+Servo servo1;
+Servo servo2;
+Servo servo3;
+Servo servo4;
 
+int servo1Pin = 21;
+int servo2Pin = 22;
+int servo3Pin = 23;
+int servo4Pin = 25;
+
+int minUs = 1000;
+int maxUs = 2000;
 
 // This callback gets called any time a new gamepad is connected.
 // Up to 4 gamepads can be connected at the same time.
@@ -138,16 +150,6 @@ void rumble(Arguments args) {
     uartremote.send_command("rumbleack","B",0);
 }
 
-void servo(Arguments args) {
-    /*
-    call("servo","Bi",servo_nr,servo_pwm)
-    */
-    uint8_t servo_nr;
-    uint32_t servo_pwm;
-    unpack(args,&servo_nr,&servo_pwm);
-    Serial.printf("servo_nr %d, pwm%d\n",servo_nr,servo_pwm);
-    uartremote.send_command("servoack","B",0);
-}
 
 uint8_t scan_i2c(uint8_t addresses[]) {
     byte error, address; //variable for error and I2C address
@@ -259,6 +261,23 @@ void fft(Arguments args){
               spectrum[0],spectrum[1],spectrum[2],spectrum[3],spectrum[4]);
 
 }
+
+void servo(Arguments args) {
+   /*
+    call("servo","Bi",servo_nr,servo_pos)
+    */
+    uint8_t servo_nr;
+    uint32_t servo_pos;
+    unpack(args,&servo_nr,&servo_pos);
+    Serial.printf("servo_nr %d, pos%d\n",servo_nr,servo_pos);
+    if (servo_nr==1) {
+        servo1.write(servo_pos);
+    }
+    uartremote.send_command("servoack","B",0);
+}
+
+
+
 // Arduino setup function. Runs in CPU 1
 void setup() {
     Serial.begin(115200);
@@ -272,7 +291,6 @@ void setup() {
     uartremote.add_command("gamepad",&gamepad);
     uartremote.add_command("led", &led);
     uartremote.add_command("rumble", &rumble);
-    uartremote.add_command("servo", &servo);
     uartremote.add_command("i2c_scan", &i2c_scan);
     uartremote.add_command("i2c_read", &i2c_read);
     uartremote.add_command("i2c_read_reg", &i2c_read_reg);
@@ -280,6 +298,7 @@ void setup() {
     uartremote.add_command("neopixel_show",&neopixel_show);
     uartremote.add_command("neopixel_init",&neopixel_init);
     uartremote.add_command("fft",&fft);
+    uartremote.add_command("servo",&servo);
     String fv = BP32.firmwareVersion();
     Serial.print("Firmware: ");
     Serial.println(fv);
@@ -324,6 +343,22 @@ if (err != ESP_OK)
 }
 
 Serial.println("I2S driver installed! :-)");
+
+// servo's
+	ESP32PWM::allocateTimer(0);
+	//ESP32PWM::allocateTimer(1);
+	//ESP32PWM::allocateTimer(2);
+	//ESP32PWM::allocateTimer(3);
+	Serial.begin(115200);
+	servo1.setPeriodHertz(50);      // Standard 50hz servo
+	//servo2.setPeriodHertz(50);      // Standard 50hz servo
+	//servo3.setPeriodHertz(330);      // Standard 50hz servo
+	//servo4.setPeriodHertz(200);      // Standard 50hz servo
+    servo1.attach(servo1Pin, minUs, maxUs);
+	//servo2.attach(servo2Pin, minUs, maxUs);
+	//servo3.attach(servo3Pin, minUs, maxUs);
+	//servo4.attach(servo4Pin, minUs, maxUs);
+
 
 }
 

@@ -1,5 +1,6 @@
 components/Adafruit_NeoPixel
 components/UartRemote
 components/arduinoFFT
+components/ESP32Servo
 main/arduino_main.cpp
 main/CMakeLists.txt

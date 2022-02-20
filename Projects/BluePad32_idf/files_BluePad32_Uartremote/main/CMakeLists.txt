@@ -10,4 +10,4 @@ endif()
 
 idf_component_register(SRCS "${srcs}"
                     INCLUDE_DIRS "."
-		    REQUIRES "${requires}" "UartRemote" "Adafruit_NeoPixel" "arduinoFFT")
+		    REQUIRES "${requires}" "UartRemote" "Adafruit_NeoPixel" "arduinoFFT" "ESP32Servo")
