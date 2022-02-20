@@ -47,7 +47,7 @@ cd BluePad32_demo
 idf.py build
 ```
 
-
+**On Mac osx the option cp --parent option does not exist. Copy files manually from `files_xxxx` to the project directory**
 
 
 ## Set-up of IDF-ESP32-Arduino with BluePad32 and UartRemote
