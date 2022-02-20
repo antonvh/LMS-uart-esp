@@ -1,5 +1,15 @@
 # Combined firmware
 
+## Prebuild firmware
+
+The firmware in this directory can be flahed on the ESP32 using the folliwing command:
+
+```
+esptool.py --port /dev/ttyUSB0 --baud 500000 write_flash 0x1000  bluepad32_uartremote_firmware.bin
+```
+
+## Features
+
 This is a firmware that supported BluePad32. Furthermore, the following commands are integrated in the firmware:
 
 ```
