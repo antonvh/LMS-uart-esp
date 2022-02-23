@@ -21,6 +21,10 @@ limitations under the License.
 #error "Must only be compiled when using Bluepad32 Arduino platform"
 #endif // !CONFIG_BLUEPAD32_PLATFORM_ARDUINO
 
+// watchdog structs
+#include "soc/timer_group_struct.h"
+#include "soc/timer_group_reg.h"
+
 #include "driver/i2s.h"
 
 
@@ -55,6 +59,8 @@ double vImag[samples];
 int16_t rawsamples[samples];
 
 float spectrum[5] = {};
+
+uint32_t audio_power=0;
 
 Arguments args;
 
@@ -262,6 +268,12 @@ void fft(Arguments args){
 
 }
 
+void audio(Arguments args){
+    uartremote.send_command("audioack","I",audio_power);
+
+}
+
+
 void servo(Arguments args) {
    /*
     call("servo","Bi",servo_nr,servo_pos)
@@ -270,13 +282,48 @@ void servo(Arguments args) {
     uint32_t servo_pos;
     unpack(args,&servo_nr,&servo_pos);
     Serial.printf("servo_nr %d, pos%d\n",servo_nr,servo_pos);
-    if (servo_nr==1) {
-        servo1.write(servo_pos);
-    }
+    switch (servo_nr) {
+        case 1: servo1.write(servo_pos);
+                break;
+        case 2: servo2.write(servo_pos);
+                break;
+        case 3: servo3.write(servo_pos);
+                break;
+        case 4: servo4.write(servo_pos);
+                break;
+        default:
+                break;
+                
+    } 
+   
     uartremote.send_command("servoack","B",0);
 }
 
-
+void echo(Arguments args) {
+    uint32_t n;
+    float f;
+    unpack(args,&n,&f);
+    switch (n) {
+        case 1: 
+            uartremote.send_command("echoack","f",f);
+            break;
+        case 2: 
+            uartremote.send_command("echoack","2f",f,2*f);
+            break;
+        case 3: 
+            uartremote.send_command("echoack","3f",f,2*f,3*f);
+            break;
+        case 4: 
+            uartremote.send_command("echoack","4f",f,2*f,3*f,4*f);
+            break;
+        case 5: 
+            uartremote.send_command("echoack","5f",f,2*f,3*f,4*f,5*f);
+            break;
+        default:
+            uartremote.send_command("echoack","f",0);
+    }
+   
+}
 
 // Arduino setup function. Runs in CPU 1
 void setup() {
@@ -297,8 +344,11 @@ void setup() {
     uartremote.add_command("neopixel",&neopixel);
     uartremote.add_command("neopixel_show",&neopixel_show);
     uartremote.add_command("neopixel_init",&neopixel_init);
-    uartremote.add_command("fft",&fft);
+    // uartremote.add_command("fft",&fft);
+    uartremote.add_command("audio",&audio);
     uartremote.add_command("servo",&servo);
+    uartremote.add_command("echo",&echo);
+
     String fv = BP32.firmwareVersion();
     Serial.print("Firmware: ");
     Serial.println(fv);
@@ -346,63 +396,76 @@ Serial.println("I2S driver installed! :-)");
 
 // servo's
 	ESP32PWM::allocateTimer(0);
-	//ESP32PWM::allocateTimer(1);
-	//ESP32PWM::allocateTimer(2);
-	//ESP32PWM::allocateTimer(3);
+	ESP32PWM::allocateTimer(1);
+	ESP32PWM::allocateTimer(2);
+	ESP32PWM::allocateTimer(3);
 	Serial.begin(115200);
 	servo1.setPeriodHertz(50);      // Standard 50hz servo
-	//servo2.setPeriodHertz(50);      // Standard 50hz servo
-	//servo3.setPeriodHertz(330);      // Standard 50hz servo
-	//servo4.setPeriodHertz(200);      // Standard 50hz servo
+	servo2.setPeriodHertz(50);      // Standard 50hz servo
+	servo3.setPeriodHertz(50);      // Standard 50hz servo
+	servo4.setPeriodHertz(50);      // Standard 50hz servo
     servo1.attach(servo1Pin, minUs, maxUs);
-	//servo2.attach(servo2Pin, minUs, maxUs);
-	//servo3.attach(servo3Pin, minUs, maxUs);
-	//servo4.attach(servo4Pin, minUs, maxUs);
+	servo2.attach(servo2Pin, minUs, maxUs);
+	servo3.attach(servo3Pin, minUs, maxUs);
+	servo4.attach(servo4Pin, minUs, maxUs);
 
 
 }
 
+int refresh_BP32=0;
 // Arduino loop function. Runs in CPU 1
 void loop() {
     // This call fetches all the gamepad info from the NINA (ESP32) module.
     // Just call this function in your main loop.
     // The gamepads pointer (the ones received in the callbacks) gets updated
     // automatically.
-    BP32.update();
-
+    refresh_BP32++;
+    if (refresh_BP32 == 10) {
+        BP32.update();
+        refresh_BP32=0;
+    }
     if (uartremote.available()>0) {
         int error = uartremote.receive_execute();
         if (error==1) {
             printf("error in receiving command\n");
         }
     }
-    delay(10);
+    delay(1);
+
+    // https://github.com/espressif/arduino-esp32/issues/595
+    TIMERG0.wdt_wprotect=TIMG_WDT_WKEY_VALUE;
+    TIMERG0.wdt_feed=1;
+    TIMERG0.wdt_wprotect=0;
+
 
    
     // 64 samples @ 5000 Hz = 12.8ms chunks of samples --> FFT --> 32 frequency points
-
+    /*
     size_t i2s_bytes_read;
     i2s_read(I2S_PORT, rawsamples, 64, &i2s_bytes_read, 100);
     int32_t blockSum = rawsamples[0];
 
     for (uint16_t i = 1; i < 64; i++)
     {
-        blockSum += rawsamples[i];
+        // blockSum += rawsamples[i]
+        blockSum += abs(rawsamples[i]); // abs
     }
-
+    audio_power=blockSum;
+    */
+    /*
     // Compute average value for the current sample block
     int16_t blockAvg = blockSum / 64;
     // Constant for normalizing int16 input values to floating point range -1.0 to 1.0
     const float kInt16MaxInv = 1.0f / __INT16_MAX__;
     for (uint16_t i = 0; i < samples; i++)
     {
-        vReal[i] = (rawsamples[i]-blockAvg)*kInt16MaxInv;/* Build data with positive and negative values*/
+        vReal[i] = (rawsamples[i]-blockAvg)*kInt16MaxInv;// Build data with positive and negative values
         vImag[i] = 0.0; //Imaginary part must be zeroed in case of looping to avoid wrong calculations and overflows
     }
     // FFT.DCRemoval(vReal, samples);
-    FFT.Windowing(vReal, samples, FFT_WIN_TYP_HAMMING, FFT_FORWARD);	/* Weigh data */
-    FFT.Compute(vReal, vImag, samples, FFT_FORWARD); /* Compute FFT */
-    FFT.ComplexToMagnitude(vReal, vImag, samples); /* Compute magnitudes */
+    FFT.Windowing(vReal, samples, FFT_WIN_TYP_HAMMING, FFT_FORWARD);	// Weigh data 
+    FFT.Compute(vReal, vImag, samples, FFT_FORWARD); // Compute FFT 
+    FFT.ComplexToMagnitude(vReal, vImag, samples); // Compute magnitudes 
     // make 5 bins of the power spectrum
     for (uint8_t i=0; i<5; i++) {
         double s=0;
@@ -411,5 +474,6 @@ void loop() {
         }
         spectrum[i]=s; // update spectrum array
     }
+    */
  
 }

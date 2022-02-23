@@ -4,6 +4,7 @@
 UartRemote::UartRemote() {
   // to do: make dynamic deficition for rx and tx pins
   UART.begin(115200, SERIAL_8N1, RXD1, TXD1);
+  Serial.setRxBufferSize(256); // increase receive buffer to 256 bytes
 }
 
 
@@ -27,7 +28,8 @@ void UartRemote::command(const char* cmd,Arguments args) {
 
 unsigned char UartRemote::readserial1() {
   while (UART.available()==0) {
-    delay(10);
+    delay(1);
+    //delayMicroseconds(50); // wait '5 bits' @ 115200 baud
   }
   return UART.read();
 }
@@ -43,7 +45,7 @@ int UartRemote::available()
 }
 
 void UartRemote::flush() {
-    delay(100);
+    delay(10);
     while (available()) {
         UART.read();
     }
