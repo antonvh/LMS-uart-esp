@@ -22,8 +22,8 @@ old_dpad=0
 
 t_old=ticks_ms()+2000     
 while True:
-    if u.available():
-            u.reply_command(u.receive_command())
+    #if u.available():
+    #        u.reply_command(u.receive_command())
     if hub.button.left.was_pressed():
         led+=1
         led&=15;
