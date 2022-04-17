@@ -8,12 +8,17 @@ The original Lego Sensors, such as the color sensor and the distance sensor of t
 
 ## Further information
 
-A [good desciption](https://github.com/pybricks/technical-info/blob/master/uart-protocol.md) of the protoocl can be found in the PyBricks documentation 
+A [good desciption](https://github.com/pybricks/technical-info/blob/master/uart-protocol.md) of the protocol can be found in the PyBricks documentation 
 
 The LPF2 protocol for the EV3 is very similar to that for the SPIKE. A description of this subset can be found in the links below, and can be helpfull for understanding the protocol as a whole:
 - [UART protocol spoken by LEGO EV3 sensors](https://sourceforge.net/p/lejos/wiki/UART%20Sensor%20Protocol/)
 - [An Arduino implementatie for the EV3 protocol](https://github.com/lawrie/EV3_Dexter_Industries_Sensors/tree/master/EV3_arduino)
 - https://www.philohome.com/wedo2reverse/wedo2.htm
+
+## LMS-ESP32 library
+
+the file `LPF2_esp32.py` needs to be loaded on the LMS-ESP32 board. A small demo is provided where `LPF2_test_esp32.py` need to be run on the LMS-ESP32 board. This implements a sensor with 3 modes. Mode 0 is a counter from 0 to 9, Mode 1 is a counter, but multiplies with 1001, counting from 0 to 9009, and Mode 3 is a float where the count value is multiplies with 1.001.
+On the SPIKE prime, the program `LPF2_SPIKE_test_esp32.py` switches modes from the emulated sensor and shows the read out of the value.
 
 ## counting test
 
