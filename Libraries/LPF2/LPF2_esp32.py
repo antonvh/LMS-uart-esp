@@ -58,8 +58,18 @@ def mode(name,size = 1, type=DATA8, format = '3.0',  raw = [0,100], percent = [0
           fig,dec = format.split('.')
           fred = [name, [size,type,int(fig),int(dec)],raw,percent,SI,symbol,functionmap,view]
           return fred
-               
+     
+
+def default_cmd_callback(size,buf):
+         print("received command")
+         print("size=",size)
+         print("len=",len(buf))
+         print("data=",binascii.hexlify(buf))
+
 class LPF2(object):
+    #------ callback command
+     
+
      def __init__(self, uartChannel, txPin, rxPin, modes = defaultModes, type = WeDo_Ultrasonic, timer = 4, freq = 5):
           self.txPin = txPin
           self.rxPin = rxPin
@@ -73,7 +83,12 @@ class LPF2(object):
           self.freq = freq
           self.oldbuffer =  bytes([])
           self.textBuffer = bytearray(b'                ')
-          
+          self.cmd_call_back=default_cmd_callback
+
+# define own call back     
+     def set_call_back(self,cb):
+         self.cmd_call_back=cb
+         
 # -------- Payload definition
          
      def load_payload(self, type, array):   # note it must be a power of 2 length          
@@ -91,11 +106,6 @@ class LPF2(object):
           payload = bytearray([CMD_Data | (bit << CMD_LLL_SHIFT) | self.current_mode])+value
           self.payload = self.addChksm(payload)
 
-#------ callback command
-     def cmd_callback(self, buf):
-         print("received command")
-         print("len=",len(buf))
-         print("data=",binascii.hexlify(buf))
 
 
 #----- comm stuff
@@ -121,31 +131,33 @@ class LPF2(object):
                               self.current_mode = mode
                               print("change mode=",mode)
                     elif chr == 0x46:     # sending over a string
-                         print("string")
+                         print("cmd recv")
                          zero = self.readchar()
                          b9 = self.readchar()
                          ck = 0xff ^ zero ^ b9
-                         print("zero=%02X,b9=%0x2,ck=%02X"%(zero,b9,ck))
+                         #print("zero=%02X,b9=%02x,ck=%02X"%(zero,b9,ck))
                          if ((zero == 0) & (b9 == 0xb9)):   # intro bytes for the string
+                              ck=0xff # reset checksum for command
                               char = self.readchar()    # size and mode
                               size = 2**((char & 0b111000)>>3)
-                              print("size=",size)
+                              #print("size=",size)
                               mode = char & 0b111
                               ck = ck ^ char
-                              print("char=%02x,ck=%02x"%(char,ck))
+                              #print("char=%02x,ck=%02x"%(char,ck))
                               for i in range(len(self.textBuffer)):
                                    self.textBuffer[i] = ord(b'\x00')
                               for i in range(size):
                                    self.textBuffer[i] = self.readchar()
                                    ck = ck ^ self.textBuffer[i]
-                                   print("textbuf=%02X,ck=%02X"%(self.textBuffer[i],ck))
-                              print(self.textBuffer)
-                              print("cmd=%02X"%char)
+                                   #print("textbuf=%02X,ck=%02X"%(self.textBuffer[i],ck))
+                              #print(self.textBuffer)
+                              #print("cmd=%02X"%char)
                               cksm = self.readchar()
-                              print("cksm=%02X, ck=%02X"%(cksm,ck))
+                              #print("cksm=%02X, ck=%02X"%(cksm,ck))
                               if cksm == ck:
-                                   if (char&CMD_DATA == CMD_DATA):
-                                       cmd_call_back(self.textBuffer)
+                                   if (char&CMD_Data == CMD_Data):
+                                       print("calling cb")
+                                       self.cmd_call_back(size,self.textBuffer)
                     # elif chr<=0x7c and (chr & 0x44) == 0x44:     # write command?
                     #      l=(chr& 0b111000)>>3
                     #      print('write chr,l',chr,l)
