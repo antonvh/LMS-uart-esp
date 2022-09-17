@@ -75,7 +75,7 @@ class LPF2(object):
           self.textBuffer = bytearray(b'                ')
           
 # -------- Payload definition
-
+         
      def load_payload(self, type, array):   # note it must be a power of 2 length          
           if isinstance(array,list):
                bit = math.floor(log2(length[type]*len(array)))  
@@ -90,7 +90,14 @@ class LPF2(object):
                #print("load_payload",bit,value)
           payload = bytearray([CMD_Data | (bit << CMD_LLL_SHIFT) | self.current_mode])+value
           self.payload = self.addChksm(payload)
-          
+
+#------ callback command
+     def cmd_callback(self, buf):
+         print("received command")
+         print("len=",len(buf))
+         print("data=",binascii.hexlify(buf))
+
+
 #----- comm stuff
 
      def readchar(self):
@@ -118,20 +125,27 @@ class LPF2(object):
                          zero = self.readchar()
                          b9 = self.readchar()
                          ck = 0xff ^ zero ^ b9
+                         print("zero=%02X,b9=%0x2,ck=%02X"%(zero,b9,ck))
                          if ((zero == 0) & (b9 == 0xb9)):   # intro bytes for the string
                               char = self.readchar()    # size and mode
                               size = 2**((char & 0b111000)>>3)
+                              print("size=",size)
                               mode = char & 0b111
                               ck = ck ^ char
+                              print("char=%02x,ck=%02x"%(char,ck))
                               for i in range(len(self.textBuffer)):
-                                   self.textBuffer[i] = ord(b' ')
+                                   self.textBuffer[i] = ord(b'\x00')
                               for i in range(size):
                                    self.textBuffer[i] = self.readchar()
                                    ck = ck ^ self.textBuffer[i]
+                                   print("textbuf=%02X,ck=%02X"%(self.textBuffer[i],ck))
                               print(self.textBuffer)
+                              print("cmd=%02X"%char)
                               cksm = self.readchar()
+                              print("cksm=%02X, ck=%02X"%(cksm,ck))
                               if cksm == ck:
-                                   pass
+                                   if (char&CMD_DATA == CMD_DATA):
+                                       cmd_call_back(self.textBuffer)
                     # elif chr<=0x7c and (chr & 0x44) == 0x44:     # write command?
                     #      l=(chr& 0b111000)>>3
                     #      print('write chr,l',chr,l)

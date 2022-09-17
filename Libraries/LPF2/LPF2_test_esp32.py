@@ -17,7 +17,7 @@ LPF2.mode('float_array',size = 4, format = '2.1', type = LPF2.DATAF)
 
 # Name, Format [# datasets, type, figures, decimals], 
 # raw [min,max], Percent [min,max], SI [min,max], Symbol, functionMap [type, ?], view
-mode0 = ['LPF2-DETECT',[1,LPF2.DATA8,3,0],[0,10],[0,100],[0,10],'',[LPF2.ABSOLUTE,0],True]
+mode0 = ['LPF2-DETECT',[2,LPF2.DATA8,5,0],[0,1023],[0,100],[0,1023],'',[LPF2.ABSOLUTE,0],True]
 mode1 = ['LPF2-COUNT',[1,LPF2.DATA32,4,0],[0,100],[0,100],[0,100],'CNT',[LPF2.ABSOLUTE,0],True]
 mode2 = ['LPF2-CAL',[1,LPF2.DATAF,8,3],[0,1023],[0,100],[0,1023],'RAW',[LPF2.ABSOLUTE,LPF2.ABSOLUTE],False]
 modes2 = [mode0,mode1,mode2]     
@@ -31,6 +31,12 @@ lpf2 = LPF2.ESP_LPF2(2, txpin,rxpin, modes2, LPF2.SPIKE_Ultrasonic, timer = -1, 
 # use EV3_LPF2 or Prime_LPF2 - also make sure to select the port type on the EV3 to be ev3-uart
 
 lpf2.initialize()
+
+def cb(size,buf):
+    print('own calback')
+    print(size,[i for i in buf])
+
+lpf2.set_callback(cb)
 
 value = 0
 
