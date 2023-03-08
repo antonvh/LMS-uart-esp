@@ -3,7 +3,7 @@ from ulab import numpy as np
 from ulab import scipy as spy
 import time
 from uartremote import *
-
+import ulab
 
 SCK_PIN=33
 SD_PIN=32
@@ -85,7 +85,10 @@ def spec():
     q=q*hamming(128)
     q=q-np.mean(q) # get rid of DC component
     # perform FFT and take abolute value of complex numbers
-    z=spy.signal.spectrogram(q)
+    # use the following line for pre 1.19 versions of micropython
+    # z=spy.signal.spectrogram(q)
+    # use the follwing line for Micropython 1.19.1
+    z=ulab.utils.spectrogram(q)
     # reshape only positive frequency elements in n bins
     zs=z[:60].reshape((5,12))
     # calculate sum of each bin
