@@ -56,19 +56,19 @@ while True:
             ddx=mx-4
             ddy=my-4
             if ddx>0:
-                dx=5
+                dx=ddx
             elif ddx<0:
-                dx=-5
+                dx=ddx
             else:
                 ddx=0
             if ddy>0:
-                dy=2
+                dy=ddy
             elif ddy<0:
-                dy=-2
+                dy=ddy
             else:
                 ddy=0
             print(mx,my,dx,dy)
-            move_delta(dx,dy)
+            move_delta(ddx,ddy)
     except:
        print('q=',q)
     # 300 .. 359 0..45
