@@ -1,5 +1,7 @@
 from mindstorms import Motor
 import math
+from mindstorms.control import wait_for_seconds
+# wait for 3 seconds (pause the program flow)
 from projects.uartremote import *
 
 ur=UartRemote('D')
@@ -16,61 +18,62 @@ def goto_zero():
     # -70 (rechts) .. 145 (links)
     motor_f.run_for_degrees(-pos_f,20)
 
-def move_delta(dx,dy):
+def move_delta(dxr,dyr):
+    dx=int(dxr)
+    dy=int(dyr)
     pos_e=motor_e.get_position()
     pos_f=motor_f.get_position()
-    if pos_e>200:
-        pos_e=pos_e-360
-    # -60 (omhoog) .. 45
-    if pos_f>200:
+    if pos_e>180:
+        pos_e-=360
+    if pos_f>180:
         pos_f-=360
-    # -70 (rechts) .. 145 (links)
-    if pos_e<45 and pos_e+dy>-60:
-        motor_e.start(-dy)
-    elif pos_e<45 and dy<0:
-        motor_e.start(-dy)
-    elif pos_e>-60 and dy>0:
-        motor_e.start(-dy)
-           
+    print(pos_e,pos_f,dy,dx)
+    """ positive is downwards. dy+ need to move up
+    """
+    if dy<0:
+        if pos_e<45:
+            #motor_e.run_for_degrees(dy,-50)
+            motor_e.start(-dy)
+    elif dy>0:
+        if pos_e>-60:
+            #motor_e.run_for_degrees(dy,50)
+            motor_e.start(-dy)
     else:
         motor_e.start(0)
-    if pos_f+dx<145 and pos_f+dx>-70:
-        print("move dy",dx)
-        motor_f.start(-dx)
+    ''' motor f: clockwise = pos. Dx=positive -> clockwise
+    '''
+    if dx<0:
+        if pos_f<145 :
+            print("f<145,dx",-dx)
+            #motor_f.run_for_degrees(dx,50)
+            motor_f.start(-dx)
+    elif dx>0:
+        if pos_f>-70:
+            print("f>-70,dx",dx)
+            #motor_f.run_for_degrees(dx,-50)
+            motor_f.start(-dx)
     else:
         motor_f.start(0)
-
+    
 # Create your objects here.
 
 motor_e = Motor('E')
 motor_f = Motor('F')
 goto_zero()
 while True:
-    #for i in range(1):
-    try:
+    wait_for_seconds(0.05)
+    for i in range(1):
+    #try:
         ack,q=ur.call('get_pos')
         m,avg,mx,my=q
         dx=0
         dy=0
         if m>avg+3:
-            ddx=mx-4
-            ddy=my-4
-            if ddx>0:
-                dx=ddx
-            elif ddx<0:
-                dx=ddx
-            else:
-                ddx=0
-            if ddy>0:
-                dy=ddy
-            elif ddy<0:
-                dy=ddy
-            else:
-                ddy=0
-            print(mx,my,dx,dy)
+            ddx=mx-3.5
+            ddy=my-3.5
             move_delta(ddx,ddy)
-    except:
-       print('q=',q)
+    #except:
+    #   print('q=',q)
     # 300 .. 359 0..45
 # Write your program here.
 
