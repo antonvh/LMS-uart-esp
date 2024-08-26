@@ -1,3 +1,9 @@
+# LEGACY Library. This is old and unmaintained.
+
+Use mpy-robot-tools, SerialTalk and PUPRemote instead.
+
+---
+
 # Anton's MINDSTORMS Hacks Breakout board - libraries and API
 
 ## Hi there!
